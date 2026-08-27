@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Grade 4 Maths Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ocean: #0284C7;
+    --ocean-dark: #075985;
+    --ocean-light: #E0F2FE;
+    --aqua: #06B6D4;
+    --aqua-dark: #0E7490;
+    --aqua-light: #CFFAFE;
+    --coral: #FB7185;
+    --coral-dark: #E11D48;
+    --coral-light: #FFE4E6;
+    --sand: #D9A441;
+    --sand-dark: #A8791F;
+    --sand-light: #FBF0DA;
+    --grey-bg: #F2FAFB;
+    --card-bg: #FFFFFF;
+    --border: #D9EEF3;
+    --text: #12303B;
+    --text-soft: #4F7480;
+    --good: #157F3C;
+    --good-bg: #E6F5EA;
+    --bad: #C0392B;
+    --bad-bg: #FBEAEA;
+    --shade: var(--ocean);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(circle at 6% 10%, rgba(6,182,212,0.08) 0, transparent 40%),
+      radial-gradient(circle at 94% 16%, rgba(251,113,133,0.07) 0, transparent 42%),
+      radial-gradient(circle at 50% 96%, rgba(217,164,65,0.08) 0, transparent 45%),
+      var(--grey-bg);
+    color: var(--text);
+  }
+  h1, h2, h3, .tile h3, button { font-family: 'Baloo 2', -apple-system, BlinkMacSystemFont, sans-serif; }
+  header {
+    position: relative;
+    background: linear-gradient(120deg, var(--ocean-dark) 0%, var(--ocean) 50%, var(--aqua) 100%);
+    color: #fff;
+    padding: 26px 20px 40px;
+    text-align: center;
+    overflow: hidden;
+  }
+  header h1 { margin: 0 0 4px; font-size: 1.7rem; font-weight: 800; letter-spacing: 0.02em; }
+  header p { margin: 0; color: #E3F7FB; font-size: 0.92rem; }
+  header .wave { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: 30px; display: block; }
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 10px rgba(2,132,199,0.07);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .section-heading {
+    font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--ocean-dark);
+    font-size: 1.1rem; margin: 24px 0 10px; padding-left: 2px;
+  }
+  .section-heading:first-child { margin-top: 4px; }
+  .tile {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    border-top: 4px solid var(--tile-color, var(--ocean));
+  }
+  .tile:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(2,132,199,0.16); }
+  .tile .dot {
+    flex: 0 0 auto;
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem;
+    background: var(--tile-bg, var(--ocean-light));
+    color: var(--tile-color, var(--ocean));
+  }
+  .tile h3 { margin: 0 0 4px; font-size: 1.0rem; color: var(--ocean-dark); font-weight: 700; }
+  .tile p { margin: 0; font-size: 0.82rem; color: var(--text-soft); }
+  .tile .badge { display: inline-block; font-size: 0.68rem; font-weight: 700; color: var(--coral-dark); background: var(--coral-light); border-radius: 8px; padding: 2px 7px; margin-top: 6px; }
+  .backbtn {
+    background: none; border: none; color: var(--coral-dark); font-weight: 700;
+    cursor: pointer; font-size: 0.92rem; padding: 4px 0; margin-bottom: 10px;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .backbtn:hover { text-decoration: underline; }
+  h2.activity-title { color: var(--ocean-dark); margin: 0 0 6px; font-size: 1.4rem; font-weight: 800; }
+  .subtext { color: var(--text-soft); font-size: 0.92rem; margin: 0 0 14px; line-height: 1.4; }
+  .levelnote { display: inline-block; font-size: 0.72rem; font-weight: 700; color: var(--coral-dark); background: var(--coral-light); border-radius: 8px; padding: 3px 9px; margin: 0 0 12px; }
+
+  .tutor-box { margin-bottom: 16px; }
+  button.tutor-toggle {
+    background: var(--sand-light); color: #6B4E14; border: 1.5px dashed var(--sand);
+    border-radius: 10px; padding: 8px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+  }
+  button.tutor-toggle:hover { background: #F5E3BC; }
+  .tutor-panel {
+    display: none; margin-top: 10px; background: var(--sand-light); border-radius: 10px;
+    padding: 12px 14px; font-size: 0.86rem; color: #5C4110; line-height: 1.5; border-left: 4px solid var(--sand);
+  }
+
+  button.action {
+    background: linear-gradient(120deg, var(--coral), #FB8FA0); color: #fff; border: none; border-radius: 10px;
+    padding: 10px 18px; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    margin-right: 8px; margin-top: 8px;
+  }
+  button.action:hover { filter: brightness(0.95); }
+  button.secondary {
+    background: #fff; color: var(--ocean-dark); border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 10px 18px; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    margin-right: 8px; margin-top: 8px;
+  }
+  button.secondary:hover { border-color: var(--ocean); }
+  button.small { padding: 6px 12px; font-size: 0.85rem; border-radius: 8px; }
+  input[type=text], input[type=number] {
+    border: 1.5px solid var(--border); border-radius: 10px; padding: 9px 12px;
+    font-size: 1rem; width: 130px; margin-right: 8px;
+  }
+  input[type=text]:focus, input[type=number]:focus { outline: 2px solid var(--coral); border-color: var(--coral); }
+  .feedback {
+    margin-top: 14px; padding: 12px 14px; border-radius: 12px; font-weight: 700;
+    display: none; font-size: 0.95rem;
+  }
+  .feedback.good { display: block; background: var(--good-bg); color: var(--good); }
+  .feedback.bad { display: block; background: var(--bad-bg); color: var(--bad); }
+  .feedback.info { display: block; background: var(--aqua-light); color: var(--aqua-dark); font-weight: 600; }
+  .scorepill {
+    display: inline-block; background: var(--aqua-light); color: var(--aqua-dark);
+    font-weight: 800; font-size: 0.85rem; padding: 5px 12px; border-radius: 20px; margin-bottom: 12px;
+  }
+  .q-box {
+    font-size: 1.15rem; font-weight: 700; color: var(--ocean-dark); margin: 14px 0;
+    background: var(--ocean-light); border-radius: 12px; padding: 14px 16px;
+  }
+  .mcq-opts { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .mcq-opt {
+    border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 16px;
+    cursor: pointer; font-weight: 700; color: var(--ocean-dark); background: #fff;
+  }
+  .mcq-opt:hover { border-color: var(--coral); }
+  .mcq-opt.correct { background: var(--good-bg); border-color: var(--good); color: var(--good); }
+  .mcq-opt.wrong { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+  .fracbar { display: flex; gap: 2px; margin: 6px 0; }
+  .fracbar .seg { flex: 1; height: 34px; border: 1.5px solid var(--ocean-dark); background: #fff; }
+  .fracbar .seg.filled { background: var(--coral); }
+  .fracbar .seg:first-child { border-radius: 6px 0 0 6px; }
+  .fracbar .seg:last-child { border-radius: 0 6px 6px 0; }
+  .fraclabel { font-size: 0.85rem; color: var(--text-soft); margin-bottom: 2px; }
+  .pattern-grid { display: grid; gap: 3px; margin: 8px 0; }
+  .pattern-grid .blk { width: 22px; height: 22px; border-radius: 4px; background: var(--border); }
+  .pattern-grid .blk.on { background: var(--coral); }
+  .pattern-step { display: inline-block; text-align: center; margin: 0 16px 10px 0; vertical-align: top; }
+  .pattern-step .count { font-weight: 800; color: var(--ocean-dark); margin-top: 4px; }
+  .hint-toggle { color: var(--aqua-dark); background: none; border: none; cursor: pointer; font-size: 0.88rem; font-weight: 700; padding: 0; margin-top: 10px; }
+  .hint-text { display: none; margin-top: 8px; font-size: 0.88rem; color: var(--text-soft); background: var(--aqua-light); padding: 10px 12px; border-radius: 10px; }
+  .posgrid { display: inline-grid; gap: 2px; margin: 10px 0; }
+  .posgrid .pcell { width: 42px; height: 42px; background: #fff; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+  .posgrid .pcell.clickable { cursor: pointer; }
+  .posgrid .pcell.clickable:hover { background: var(--ocean-light); }
+  .posgrid .pcell.start { background: var(--sand-light); border-color: var(--sand); }
+  .posgrid .pcell.picked { background: var(--coral-light); border-color: var(--coral); }
+  .posgrid .pcell.headcell { background: var(--ocean-dark); color: #fff; font-weight: 700; font-size: 0.8rem; }
+  footer { text-align: center; color: var(--text-soft); font-size: 0.8rem; padding: 20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Grade 4 Maths Practice</h1>
+  <p>CAPS aligned practice, mostly Term 2 and Term 3, with a few bonus topics marked below</p>
+  <svg class="wave" viewBox="0 0 1440 60" preserveAspectRatio="none">
+    <path d="M0,30 C240,60 480,0 720,18 C960,36 1200,60 1440,28 L1440,60 L0,60 Z" fill="#F2FAFB"></path>
+  </svg>
+</header>
+<main id="app"></main>
+<footer>Built for independent practice between sessions. All content authored to match CAPS Grade 4, not from an official past paper bank.</footer>
+
+<script>
+// ---------- Utilities ----------
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
+function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = randInt(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a || 1; }
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function fracBar(numerator, denominator) {
+  let segs = '';
+  for (let i = 0; i < denominator; i++) segs += `<div class="seg ${i < numerator ? 'filled' : ''}"></div>`;
+  return `<div class="fracbar">${segs}</div>`;
+}
+
+const app = document.getElementById('app');
+const BEACH = ['ocean', 'aqua', 'coral', 'sand'];
+
+// ---------- Tutor explanations ----------
+const TUTOR_NOTES = {
+  placevalue: "Grade 4 numbers go up to 9999, so this checks the same skill as bundling on a place value chart, just one column further than Grade 3. If she cannot do this confidently for 3 digit numbers yet, it is worth stepping back before pushing into thousands.",
+  compare: "Comparing starts from the leftmost digit, the biggest place value column, not the last digit. If she compares from the right, that is the exact misconception to address, and a place value chart makes it visible.",
+  doublehalf: "Doubling and halving are mental math anchors that support multiplication and division later, doubling is really multiplying by 2, halving is dividing by 2. If she has to count on her fingers for double 6, that fact is worth drilling on its own before moving on.",
+  fillten: "This is the mental strategy behind carrying and borrowing, knowing how far a number is from the next multiple of ten makes column addition and subtraction click. Say it out loud as a question, for example forty seven and how much more makes fifty.",
+  addsub: "By Term 2, Grade 4 learners are expected to add and subtract 4 digit numbers, usually with regrouping. If the column method breaks down, go back to expanded notation, writing each number out in thousands, hundreds, tens and units, before returning to the short method. Start on an easier level here if 4 digits are still shaky.",
+  multiply: "CAPS builds this up in stages, 2 digit by 1 digit first, then 2 digit by 2 digit. Do not move to the harder mode until the easier one is fluent, since the strategies, like breaking numbers apart, build directly on each other.",
+  divide: "CAPS Grade 4 introduces division as the inverse of multiplication, so if she knows that 6 times 7 is 42, she already knows that 42 divided by 6 is 7. Point that connection out explicitly. The remainder mode is a natural next step once exact division is solid.",
+  numsentence: "A number sentence with a missing number is algebra in disguise. Encourage her to say the sentence in words first, for example twenty four plus what number makes sixty one, rather than jumping straight to an operation.",
+  tables: "Multiplication and division both depend on this fluency. A few minutes of mixed recall most days beats one long weekly drill.",
+  comparefrac: "This is the exact CAPS Grade 4 skill, comparing fractions with different denominators using a picture, not a rule. Resist teaching a shortcut for finding common denominators yet, the visual comparison here is what builds the number sense that later shortcuts rely on.",
+  addfrac: "Grade 4 CAPS only expects addition and subtraction of fractions with the same denominator. If a worksheet shows different denominators, that is Grade 5 content, so it is fine to say so and come back to it later.",
+  length: "Millimetres, centimetres and metres are the units Grade 4 uses most, kilometres are introduced but used less often. A tape measure or metre stick at home makes these conversions concrete rather than a memorised rule.",
+  capacity: "Millilitres and litres are easiest to feel using real containers, an empty two litre bottle or a measuring jug is worth more than several worksheets on its own.",
+  mass: "Grams and kilograms work the same way as the other units, a kitchen scale is a genuinely useful manipulative here, weighing real household items builds a sense of scale a worksheet alone cannot.",
+  time: "CAPS places formal time work in Term 4, so if you are working through Term 2 and 3 in order this is a preview, not a repeat of something she has already covered. Reading an analogue clock still depends on place value thinking, since the minute hand jumps in groups of 5.",
+  shapes3d: "Flat faces versus curved surfaces is the core Grade 4 distinction. A tin can, a ball and a cereal box are all sitting in the kitchen, so this is another good topic to teach with real objects rather than only pictures. Counting edges and vertices is slightly beyond the Grade 4 wording but is good solid extension practice once faces are secure.",
+  symmetry: "Line symmetry is genuine Grade 4 Term 3 content. A real mirror placed on the line is the fastest way to check an answer, if the reflection matches, the line is a line of symmetry.",
+  gridref: "This is the actual Grade 4 CAPS position skill, using letters across the top and numbers up the side, like a simple map or a battleships style grid. It is a different skill from describing a movement, which comes next as a bonus topic.",
+  angles: "This one is a preview of Grade 5, Grade 4 CAPS only covers straight versus curved sides. It is still worth introducing gently if she is ready, comparing an angle to the corner of a book, a right angle, is the easiest way in.",
+  translate: "This is also a preview of Grade 5, formal translations are not Grade 4 content. Grade 4 only uses alpha-numeric grid references, so treat this as an optional stretch activity rather than core practice.",
+  numpattern: "CAPS Grade 4 patterns either add or subtract the same amount each time, or multiply by the same amount each time. Ask her to say the rule out loud before finding the next number, guessing without a rule is not the skill being tested here. The complex level goes beyond a constant rule, which is good stretch thinking but should not be the first thing she tries.",
+  geopattern: "These patterns grow in a picture, not just in a list of numbers, so counting the blocks in each step by hand, out loud, before answering is more valuable here than mental arithmetic alone.",
+};
+function tutorHTML(key) {
+  return `
+    <div class="tutor-box">
+      <button class="tutor-toggle" onclick="toggleTutor('${key}')">For the tutor: what this is really practising</button>
+      <div class="tutor-panel" id="tutor-${key}">${TUTOR_NOTES[key]}</div>
+    </div>
+  `;
+}
+function toggleTutor(key) {
+  const panel = document.getElementById('tutor-' + key);
+  panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+}
+
+// ---------- Activity registry ----------
+const SECTIONS = [
+  { title: 'Number Sense', keys: ['placevalue', 'compare', 'doublehalf', 'fillten'] },
+  { title: 'Operations', keys: ['addsub', 'multiply', 'divide', 'numsentence', 'tables'] },
+  { title: 'Fractions', keys: ['comparefrac', 'addfrac'] },
+  { title: 'Measurement', keys: ['length', 'capacity', 'mass', 'time'] },
+  { title: 'Space and Shape', keys: ['shapes3d', 'symmetry', 'gridref', 'angles', 'translate'] },
+  { title: 'Patterns', keys: ['numpattern', 'geopattern'] },
+];
+const ACTIVITIES = {
+  placevalue: { icon: '🔢', title: 'Place Value Explorer', desc: 'Find the value of a digit in a 4 digit number.' },
+  compare: { icon: '⚖️', title: 'Compare and Order', desc: 'Choose the correct sign, less than, greater than, or equal to.' },
+  doublehalf: { icon: '🪞', title: 'Double and Half', desc: 'Double or halve a number, with 3 difficulty levels.' },
+  fillten: { icon: '🎯', title: 'Filling Up Tens', desc: 'How much more to reach the next friendly number.' },
+  addsub: { icon: '➕', title: 'Add and Subtract Blitz', desc: 'Choose 2, 3 or 4 digit numbers.' },
+  multiply: { icon: '✖️', title: 'Multiplication Practice', desc: '2 digit by 1 digit, and 2 digit by 2 digit.' },
+  divide: { icon: '➗', title: 'Division Practice', desc: 'With an exact answer, or with a remainder.' },
+  numsentence: { icon: '🧩', title: 'Number Sentences', desc: 'Find the missing number in a number sentence.' },
+  tables: { icon: '📐', title: 'Times Tables Blitz', desc: 'Pick which tables to drill, then answer fast.' },
+  comparefrac: { icon: '🍕', title: 'Compare Fractions', desc: 'Which fraction is bigger? Use the picture to decide.' },
+  addfrac: { icon: '🍰', title: 'Add and Subtract Fractions', desc: 'Same denominator fractions, with instant checking.' },
+  length: { icon: '📏', title: 'Length', desc: 'Convert millimetres, centimetres, metres and kilometres.' },
+  capacity: { icon: '🧃', title: 'Capacity and Volume', desc: 'Convert millilitres and litres.' },
+  mass: { icon: '🏋️', title: 'Mass', desc: 'Convert grams and kilograms.' },
+  time: { icon: '🕐', title: 'Time', desc: 'Read the clock and solve time problems.', badge: 'Term 4 preview' },
+  shapes3d: { icon: '📦', title: '3D Object Properties', desc: 'Faces, flat surfaces and curved surfaces, 8 different objects.' },
+  symmetry: { icon: '🦋', title: 'Symmetry', desc: 'Does the shape have a line of symmetry where it is drawn?' },
+  gridref: { icon: '🗺️', title: 'Grid References', desc: 'Locate an object using letters and numbers on a grid.', badge: 'Term 4 preview' },
+  angles: { icon: '📐', title: 'Angles', desc: 'Right angle, smaller, or bigger.', badge: 'Grade 5 preview' },
+  translate: { icon: '🧭', title: 'Translations', desc: 'Follow a move on the grid.', badge: 'Grade 5 preview' },
+  numpattern: { icon: '🔁', title: 'Number Patterns', desc: 'Simple, medium or complex sequences.' },
+  geopattern: { icon: '🔶', title: 'Growing Patterns', desc: 'Count the blocks, simple to complex.' },
+};
+
+function renderHome() {
+  let html = '';
+  SECTIONS.forEach(sec => {
+    html += `<div class="section-heading">${sec.title}</div><div class="grid">`;
+    sec.keys.forEach((key, i) => {
+      const a = ACTIVITIES[key];
+      const c = BEACH[i % BEACH.length];
+      html += `
+        <div class="tile" style="--tile-color: var(--${c}); --tile-bg: var(--${c}-light);" onclick="goTo('${key}')">
+          <div class="dot">${a.icon}</div>
+          <div><h3>${a.title}</h3><p>${a.desc}</p>${a.badge ? `<div class="badge">${a.badge}</div>` : ''}</div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  });
+  app.innerHTML = html;
+}
+
+function backBtn() {
+  return `<button class="backbtn" onclick="goTo('home')">&#8592; All activities</button>`;
+}
+function levelNote(a) {
+  return a.badge ? `<div class="levelnote">${a.badge}</div>` : '';
+}
+
+function goTo(key) {
+  if (key === 'home') { renderHome(); return; }
+  const builders = {
+    placevalue: renderPlaceValue, compare: renderCompare, doublehalf: renderDoubleHalf, fillten: renderFillTen,
+    addsub: renderAddSub, multiply: renderMultiply, divide: renderDivide, numsentence: renderNumSentence,
+    tables: renderTables, comparefrac: renderCompareFrac, addfrac: renderAddFrac,
+    length: renderLength, capacity: renderCapacity, mass: renderMass, time: renderTime,
+    shapes3d: renderShapes3D, symmetry: renderSymmetry, gridref: renderGridRef,
+    angles: renderAngles, translate: renderTranslate,
+    numpattern: renderNumPattern, geopattern: renderGeoPattern,
+  };
+  window.scrollTo(0, 0);
+  builders[key]();
+}
+
+function scoreHTML(state) {
+  return `<span class="scorepill">Score: ${state.correct} of ${state.attempted}</span>`;
+}
+
+// =====================================================================
+// 1. PLACE VALUE EXPLORER (4 digit numbers)
+// =====================================================================
+let pvState = { correct: 0, attempted: 0, answer: null };
+function renderPlaceValue() {
+  pvState = { correct: 0, attempted: 0, answer: null };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🔢 Place Value Explorer</h2>
+      <p class="subtext">What is the <em>value</em> of the highlighted digit? Not just its name, its real value in the number.</p>
+      ${tutorHTML('placevalue')}
+      <div id="pv-score">${scoreHTML(pvState)}</div>
+      <div id="pv-question"></div>
+      <div id="pv-feedback" class="feedback"></div>
+    </div>
+  `;
+  newPVQuestion();
+}
+function newPVQuestion() {
+  const num = randInt(1000, 9999);
+  const numStr = String(num);
+  const pos = randInt(0, 3);
+  const digit = parseInt(numStr[pos]);
+  const placeValueExp = numStr.length - 1 - pos;
+  const correct = digit * Math.pow(10, placeValueExp);
+  pvState.answer = correct;
+  const display = numStr.split('').map((d, i) => i === pos ? `<span style="color:#E11D48; text-decoration:underline;">${d}</span>` : d).join('');
+  let options = [correct, digit, correct + Math.pow(10, placeValueExp), Math.max(1, correct - Math.pow(10, placeValueExp))];
+  options = [...new Set(options)];
+  while (options.length < 4) options.push(correct + randInt(1, 9));
+  const finalOpts = shuffle(options.slice(0, 4));
+  document.getElementById('pv-question').innerHTML = `
+    <div class="q-box">In the number <strong>${display}</strong>, what is the value of the underlined digit?</div>
+    <div class="mcq-opts">${finalOpts.map(o => `<div class="mcq-opt" onclick="checkPV(this, ${o})">${o.toLocaleString('en-ZA').replace(/,/g,' ')}</div>`).join('')}</div>
+    <button class="secondary small" onclick="newPVQuestion()">Skip, new number</button>
+  `;
+  document.getElementById('pv-feedback').className = 'feedback';
+}
+function checkPV(el, val) {
+  pvState.attempted++;
+  const opts = document.querySelectorAll('#pv-question .mcq-opt');
+  const fb = document.getElementById('pv-feedback');
+  if (val === pvState.answer) {
+    pvState.correct++;
+    el.classList.add('correct');
+    fb.className = 'feedback good';
+    fb.textContent = 'Yes, that is right! New question loading.';
+    opts.forEach(o => o.onclick = null);
+    setTimeout(newPVQuestion, 1100);
+  } else {
+    el.classList.add('wrong');
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The correct value is ${pvState.answer.toLocaleString('en-ZA').replace(/,/g,' ')}. Look at which column that digit sits in.`;
+    opts.forEach(o => o.onclick = null);
+  }
+  document.getElementById('pv-score').innerHTML = scoreHTML(pvState);
+}
+
+// =====================================================================
+// 2. COMPARE AND ORDER
+// =====================================================================
+let cpState = { correct: 0, attempted: 0, answer: null };
+function renderCompare() {
+  cpState = { correct: 0, attempted: 0, answer: null };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">⚖️ Compare and Order</h2>
+      <p class="subtext">Choose the sign that belongs between the two numbers.</p>
+      ${tutorHTML('compare')}
+      <div id="cp-score">${scoreHTML(cpState)}</div>
+      <div id="cp-question"></div>
+      <div id="cp-feedback" class="feedback"></div>
+    </div>
+  `;
+  newCPQuestion();
+}
+function newCPQuestion() {
+  let a = randInt(100, 9999), b = randInt(100, 9999);
+  if (Math.random() < 0.25) b = a;
+  cpState.answer = a === b ? '=' : (a > b ? '>' : '<');
+  document.getElementById('cp-question').innerHTML = `
+    <div class="q-box">${a.toLocaleString('en-ZA').replace(/,/g,' ')} &nbsp; ___ &nbsp; ${b.toLocaleString('en-ZA').replace(/,/g,' ')}</div>
+    <div class="mcq-opts">
+      <div class="mcq-opt" onclick="checkCP(this, '<')" style="font-size:1.3rem;">&lt;</div>
+      <div class="mcq-opt" onclick="checkCP(this, '>')" style="font-size:1.3rem;">&gt;</div>
+      <div class="mcq-opt" onclick="checkCP(this, '=')" style="font-size:1.3rem;">=</div>
+    </div>
+    <button class="secondary small" onclick="newCPQuestion()">New numbers</button>
+  `;
+  document.getElementById('cp-feedback').className = 'feedback';
+}
+function checkCP(el, val) {
+  cpState.attempted++;
+  const opts = document.querySelectorAll('#cp-question .mcq-opt');
+  const fb = document.getElementById('cp-feedback');
+  if (val === cpState.answer) {
+    cpState.correct++;
+    el.classList.add('correct');
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! New question loading.';
+    opts.forEach(o => o.onclick = null);
+    setTimeout(newCPQuestion, 900);
+  } else {
+    el.classList.add('wrong');
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The correct sign was ${cpState.answer}. Start from the leftmost digit of each number.`;
+    opts.forEach(o => o.onclick = null);
+  }
+  document.getElementById('cp-score').innerHTML = scoreHTML(cpState);
+}
+
+// =====================================================================
+// 3. DOUBLE AND HALF
+// =====================================================================
+let dhState = { correct: 0, attempted: 0, answer: null, level: 1 };
+function renderDoubleHalf() {
+  dhState = { correct: 0, attempted: 0, answer: null, level: 1 };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🪞 Double and Half</h2>
+      <p class="subtext">Double the number, or find half of it.</p>
+      ${tutorHTML('doublehalf')}
+      <div class="mcq-opts">
+        <div class="mcq-opt" id="dh-lvl-1" onclick="setDHLevel(1)">Level 1</div>
+        <div class="mcq-opt" id="dh-lvl-2" onclick="setDHLevel(2)">Level 2</div>
+        <div class="mcq-opt" id="dh-lvl-3" onclick="setDHLevel(3)">Level 3</div>
+      </div>
+      <div id="dh-score">${scoreHTML(dhState)}</div>
+      <div id="dh-question"></div>
+      <div id="dh-feedback" class="feedback"></div>
+    </div>
+  `;
+  markDHLevel();
+  newDHQuestion();
+}
+function setDHLevel(l) { dhState.level = l; markDHLevel(); newDHQuestion(); }
+function markDHLevel() {
+  [1,2,3].forEach(l => document.getElementById('dh-lvl-' + l).classList.toggle('correct', dhState.level === l));
+}
+function newDHQuestion() {
+  const isDouble = Math.random() < 0.5;
+  let n;
+  if (dhState.level === 1) n = randInt(1, 25) * (isDouble ? 1 : 2);
+  else if (dhState.level === 2) n = randInt(10, 60) * (isDouble ? 1 : 2);
+  else n = randInt(50, 250) * (isDouble ? 1 : 2);
+  dhState.answer = isDouble ? n * 2 : n / 2;
+  document.getElementById('dh-question').innerHTML = `
+    <div class="q-box">${isDouble ? `Double ${n}` : `Half of ${n}`} = <input type="number" id="dh-in" autofocus /></div>
+    <button class="action" onclick="checkDH()">Check</button>
+    <button class="secondary" onclick="newDHQuestion()">Skip</button>
+  `;
+  document.getElementById('dh-feedback').className = 'feedback';
+  const inputEl = document.getElementById('dh-in');
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') checkDH(); });
+}
+function checkDH() {
+  const v = parseFloat(document.getElementById('dh-in').value);
+  dhState.attempted++;
+  const fb = document.getElementById('dh-feedback');
+  if (v === dhState.answer) {
+    dhState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! Next one.';
+    setTimeout(newDHQuestion, 800);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The answer was ${dhState.answer}.`;
+  }
+  document.getElementById('dh-score').innerHTML = scoreHTML(dhState);
+}
+
+// =====================================================================
+// 4. FILLING UP TENS
+// =====================================================================
+let ftState = { correct: 0, attempted: 0, answer: null };
+function renderFillTen() {
+  ftState = { correct: 0, attempted: 0, answer: null };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🎯 Filling Up Tens</h2>
+      <p class="subtext">How much more does the number need to reach the next friendly number?</p>
+      ${tutorHTML('fillten')}
+      <div id="ft-score">${scoreHTML(ftState)}</div>
+      <div id="ft-question"></div>
+      <div id="ft-feedback" class="feedback"></div>
+    </div>
+  `;
+  newFTQuestion();
+}
+function newFTQuestion() {
+  const mode = pick(['ten', 'hundred']);
+  let start, target;
+  if (mode === 'ten') { target = randInt(2, 99) * 10; start = target - randInt(1, 9); }
+  else { target = randInt(2, 19) * 100; start = target - randInt(1, 99); }
+  ftState.answer = target - start;
+  document.getElementById('ft-question').innerHTML = `
+    <div class="q-box">${start} + ___ = ${target}</div>
+    <input type="number" id="ft-in" autofocus />
+    <button class="action" onclick="checkFT()">Check</button>
+    <button class="secondary" onclick="newFTQuestion()">Skip</button>
+  `;
+  document.getElementById('ft-feedback').className = 'feedback';
+  const inputEl = document.getElementById('ft-in');
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') checkFT(); });
+}
+function checkFT() {
+  const v = parseInt(document.getElementById('ft-in').value);
+  ftState.attempted++;
+  const fb = document.getElementById('ft-feedback');
+  if (v === ftState.answer) {
+    ftState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! Next one.';
+    setTimeout(newFTQuestion, 800);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The answer was ${ftState.answer}.`;
+  }
+  document.getElementById('ft-score').innerHTML = scoreHTML(ftState);
+}
+
+// =====================================================================
+// 5. ADD AND SUBTRACT BLITZ
+// =====================================================================
+let asState = { correct: 0, attempted: 0, answer: null, digits: 4 };
+function renderAddSub() {
+  asState = { correct: 0, attempted: 0, answer: null, digits: 4 };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">➕ Add and Subtract Blitz</h2>
+      <p class="subtext">Choose a level. Work it out on paper first if you need to, then type the answer.</p>
+      ${tutorHTML('addsub')}
+      <div class="mcq-opts">
+        <div class="mcq-opt" id="as-d2" onclick="setASDigits(2)">2 digit</div>
+        <div class="mcq-opt" id="as-d3" onclick="setASDigits(3)">3 digit</div>
+        <div class="mcq-opt" id="as-d4" onclick="setASDigits(4)">4 digit</div>
+      </div>
+      <div id="as-score">${scoreHTML(asState)}</div>
+      <div id="as-question"></div>
+      <div id="as-feedback" class="feedback"></div>
+    </div>
+  `;
+  markASDigits();
+  newASQuestion();
+}
+function setASDigits(d) { asState.digits = d; markASDigits(); newASQuestion(); }
+function markASDigits() {
+  [2,3,4].forEach(d => document.getElementById('as-d' + d).classList.toggle('correct', asState.digits === d));
+}
+function newASQuestion() {
+  const isAdd = Math.random() < 0.5;
+  const lo = Math.pow(10, asState.digits - 1), hi = Math.pow(10, asState.digits) - 1;
+  let a = randInt(lo, hi), b = randInt(lo, hi);
+  if (!isAdd && b > a) [a, b] = [b, a];
+  asState.answer = isAdd ? a + b : a - b;
+  document.getElementById('as-question').innerHTML = `
+    <div class="q-box">${a} ${isAdd ? '+' : '-'} ${b} = <input type="number" id="as-in" autofocus /></div>
+    <button class="action" onclick="checkAS()">Check</button>
+    <button class="secondary" onclick="newASQuestion()">Skip</button>
+  `;
+  document.getElementById('as-feedback').className = 'feedback';
+  const inputEl = document.getElementById('as-in');
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') checkAS(); });
+}
+function checkAS() {
+  const v = parseInt(document.getElementById('as-in').value);
+  asState.attempted++;
+  const fb = document.getElementById('as-feedback');
+  if (v === asState.answer) {
+    asState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! Next one.';
+    setTimeout(newASQuestion, 900);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The answer was ${asState.answer}.`;
+  }
+  document.getElementById('as-score').innerHTML = scoreHTML(asState);
+}
+
+// =====================================================================
+// 6. MULTIPLICATION PRACTICE
+// =====================================================================
+let mpState = { correct: 0, attempted: 0, answer: null, mode: '2x1' };
+function renderMultiply() {
+  mpState = { correct: 0, attempted: 0, answer: null, mode: '2x1' };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">✖️ Multiplication Practice</h2>
+      <p class="subtext">Choose your level, then answer as many as you can.</p>
+      ${tutorHTML('multiply')}
+      <div class="mcq-opts">
+        <div class="mcq-opt" id="mp-mode-2x1" onclick="setMPMode('2x1')">2 digit by 1 digit</div>
+        <div class="mcq-opt" id="mp-mode-2x2" onclick="setMPMode('2x2')">2 digit by 2 digit</div>
+      </div>
+      <div id="mp-score">${scoreHTML(mpState)}</div>
+      <div id="mp-question"></div>
+      <div id="mp-feedback" class="feedback"></div>
+    </div>
+  `;
+  markMPMode();
+  newMPQuestion();
+}
+function setMPMode(mode) { mpState.mode = mode; markMPMode(); newMPQuestion(); }
+function markMPMode() {
+  document.getElementById('mp-mode-2x1').classList.toggle('correct', mpState.mode === '2x1');
+  document.getElementById('mp-mode-2x2').classList.toggle('correct', mpState.mode === '2x2');
+}
+function newMPQuestion() {
+  let a, b;
+  if (mpState.mode === '2x1') { a = randInt(11, 99); b = randInt(2, 9); }
+  else { a = randInt(11, 99); b = randInt(11, 99); }
+  mpState.answer = a * b;
+  document.getElementById('mp-question').innerHTML = `
+    <div class="q-box">${a} &times; ${b} = <input type="number" id="mp-in" autofocus /></div>
+    <button class="action" onclick="checkMP()">Check</button>
+    <button class="secondary" onclick="newMPQuestion()">Skip</button>
+  `;
+  document.getElementById('mp-feedback').className = 'feedback';
+  const inputEl = document.getElementById('mp-in');
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') checkMP(); });
+}
+function checkMP() {
+  const v = parseInt(document.getElementById('mp-in').value);
+  mpState.attempted++;
+  const fb = document.getElementById('mp-feedback');
+  if (v === mpState.answer) {
+    mpState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! Next one.';
+    setTimeout(newMPQuestion, 900);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The answer was ${mpState.answer}.`;
+  }
+  document.getElementById('mp-score').innerHTML = scoreHTML(mpState);
+}
+
+// =====================================================================
+// 7. DIVISION PRACTICE
+// =====================================================================
+let dvState = { correct: 0, attempted: 0, answer: null, remainder: 0, mode: 'exact' };
+function renderDivide() {
+  dvState = { correct: 0, attempted: 0, answer: null, remainder: 0, mode: 'exact' };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">➗ Division Practice</h2>
+      <p class="subtext">A 3 digit number divided by a 1 digit number. Think about the matching multiplication fact.</p>
+      ${tutorHTML('divide')}
+      <div class="mcq-opts">
+        <div class="mcq-opt" id="dv-mode-exact" onclick="setDVMode('exact')">Exact answer</div>
+        <div class="mcq-opt" id="dv-mode-rem" onclick="setDVMode('remainder')">With a remainder</div>
+      </div>
+      <div id="dv-score">${scoreHTML(dvState)}</div>
+      <div id="dv-question"></div>
+      <div id="dv-feedback" class="feedback"></div>
+    </div>
+  `;
+  markDVMode();
+  newDVQuestion();
+}
+function setDVMode(m) { dvState.mode = m; markDVMode(); newDVQuestion(); }
+function markDVMode() {
+  document.getElementById('dv-mode-exact').classList.toggle('correct', dvState.mode === 'exact');
+  document.getElementById('dv-mode-rem').classList.toggle('correct', dvState.mode === 'remainder');
+}
+function newDVQuestion() {
+  const divisor = randInt(2, 9);
+  let quotient, dividend, remainder = 0;
+  if (dvState.mode === 'exact') {
+    do { quotient = randInt(12, 99); dividend = divisor * quotient; } while (dividend < 100 || dividend > 999);
+  } else {
+    do {
+      quotient = randInt(12, 99);
+      remainder = randInt(1, divisor - 1);
+      dividend = divisor * quotient + remainder;
+    } while (dividend < 100 || dividend > 999);
+  }
+  dvState.answer = quotient; dvState.remainder = remainder;
+  document.getElementById('dv-question').innerHTML = `
+    <div class="q-box">${dividend} &divide; ${divisor} = ___ ${dvState.mode === 'remainder' ? 'remainder ___' : ''}</div>
+    Answer: <input type="number" id="dv-in" autofocus style="width:80px;" />
+    ${dvState.mode === 'remainder' ? 'Remainder: <input type="number" id="dv-rem" style="width:80px;" />' : ''}
+    <button class="action" onclick="checkDV()">Check</button>
+    <button class="secondary" onclick="newDVQuestion()">Skip</button>
+  `;
+  document.getElementById('dv-feedback').className = 'feedback';
+  const inputEl = document.getElementById('dv-in');
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') checkDV(); });
+}
+function checkDV() {
+  const v = parseInt(document.getElementById('dv-in').value);
+  const remEl = document.getElementById('dv-rem');
+  const r = remEl ? parseInt(remEl.value) : 0;
+  dvState.attempted++;
+  const fb = document.getElementById('dv-feedback');
+  const ok = dvState.mode === 'exact' ? (v === dvState.answer) : (v === dvState.answer && r === dvState.remainder);
+  if (ok) {
+    dvState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! Next one.';
+    setTimeout(newDVQuestion, 900);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = dvState.mode === 'exact' ? `Not quite. The answer was ${dvState.answer}.` : `Not quite. The answer was ${dvState.answer} remainder ${dvState.remainder}.`;
+  }
+  document.getElementById('dv-score').innerHTML = scoreHTML(dvState);
+}
+
+// =====================================================================
+// 8. NUMBER SENTENCES
+// =====================================================================
+let nsState = { correct: 0, attempted: 0, answer: null };
+function renderNumSentence() {
+  nsState = { correct: 0, attempted: 0, answer: null };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🧩 Number Sentences</h2>
+      <p class="subtext">Find the missing number that makes the sentence true.</p>
+      ${tutorHTML('numsentence')}
+      <div id="ns-score">${scoreHTML(nsState)}</div>
+      <div id="ns-question"></div>
+      <div id="ns-feedback" class="feedback"></div>
+    </div>
+  `;
+  newNSQuestion();
+}
+function newNSQuestion() {
+  const op = pick(['+', '-', 'x', '/']);
+  let text, answer;
+  if (op === '+') { const a = randInt(10, 200), b = randInt(10, 200); text = `${a} + ___ = ${a + b}`; answer = b; }
+  else if (op === '-') { const a = randInt(50, 300), b = randInt(10, a - 1); text = `${a} - ___ = ${a - b}`; answer = b; }
+  else if (op === 'x') { const a = randInt(2, 12), b = randInt(2, 12); text = `${a} &times; ___ = ${a * b}`; answer = b; }
+  else { const b = randInt(2, 9), q = randInt(2, 12); text = `___ &divide; ${b} = ${q}`; answer = b * q; }
+  nsState.answer = answer;
+  document.getElementById('ns-question').innerHTML = `
+    <div class="q-box">${text}</div>
+    <input type="number" id="ns-in" autofocus />
+    <button class="action" onclick="checkNS()">Check</button>
+    <button class="secondary" onclick="newNSQuestion()">Skip</button>
+  `;
+  document.getElementById('ns-feedback').className = 'feedback';
+  const inputEl = document.getElementById('ns-in');
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') checkNS(); });
+}
+function checkNS() {
+  const v = parseInt(document.getElementById('ns-in').value);
+  nsState.attempted++;
+  const fb = document.getElementById('ns-feedback');
+  if (v === nsState.answer) {
+    nsState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! Next one.';
+    setTimeout(newNSQuestion, 900);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The missing number was ${nsState.answer}.`;
+  }
+  document.getElementById('ns-score').innerHTML = scoreHTML(nsState);
+}
+
+// =====================================================================
+// 9. TIMES TABLES BLITZ
+// =====================================================================
+let ttState = { correct: 0, attempted: 0, answer: null, tables: [2,5,10] };
+function renderTables() {
+  ttState = { correct: 0, attempted: 0, answer: null, tables: [2,5,10] };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">📐 Times Tables Blitz</h2>
+      <p class="subtext">Choose which tables to focus on, then answer as fast as you can.</p>
+      ${tutorHTML('tables')}
+      <div id="tt-picker"></div>
+      <div id="tt-score">${scoreHTML(ttState)}</div>
+      <div id="tt-question"></div>
+      <div id="tt-feedback" class="feedback"></div>
+    </div>
+  `;
+  renderTTPicker();
+  newTTQuestion();
+}
+function renderTTPicker() {
+  const all = [2,3,4,5,6,7,8,9,10,11,12];
+  document.getElementById('tt-picker').innerHTML = `
+    <div class="mcq-opts" style="margin-bottom:6px;">
+      ${all.map(n => `<div class="mcq-opt ${ttState.tables.includes(n) ? 'correct' : ''}" style="padding:6px 12px;" onclick="toggleTable(${n})">${n} times</div>`).join('')}
+    </div>
+  `;
+}
+function toggleTable(n) {
+  if (ttState.tables.includes(n)) { if (ttState.tables.length > 1) ttState.tables = ttState.tables.filter(x => x !== n); }
+  else { ttState.tables.push(n); }
+  renderTTPicker();
+}
+function newTTQuestion() {
+  const a = pick(ttState.tables);
+  const b = randInt(1, 12);
+  ttState.answer = a * b;
+  document.getElementById('tt-question').innerHTML = `
+    <div class="q-box">${a} &times; ${b} = <input type="number" id="tt-in" autofocus /></div>
+    <button class="action" onclick="checkTT()">Check</button>
+    <button class="secondary" onclick="newTTQuestion()">Skip</button>
+  `;
+  document.getElementById('tt-feedback').className = 'feedback';
+  const inputEl = document.getElementById('tt-in');
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') checkTT(); });
+}
+function checkTT() {
+  const v = parseInt(document.getElementById('tt-in').value);
+  ttState.attempted++;
+  const fb = document.getElementById('tt-feedback');
+  if (v === ttState.answer) {
+    ttState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! Next one.';
+    setTimeout(newTTQuestion, 600);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The answer was ${ttState.answer}.`;
+    setTimeout(newTTQuestion, 1500);
+  }
+  document.getElementById('tt-score').innerHTML = scoreHTML(ttState);
+}
+
+// =====================================================================
+// 10. COMPARE FRACTIONS
+// =====================================================================
+let cfState = { answer: null, correct: 0, attempted: 0 };
+function renderCompareFrac() {
+  cfState = { answer: null, correct: 0, attempted: 0 };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🍕 Compare Fractions</h2>
+      <p class="subtext">Look at the two pictures. Which fraction is bigger, or are they equal?</p>
+      ${tutorHTML('comparefrac')}
+      <div id="cf-score">${scoreHTML(cfState)}</div>
+      <div id="cf-question"></div>
+      <div id="cf-feedback" class="feedback"></div>
+    </div>
+  `;
+  newCFQuestion();
+}
+function fracValue(n, d) { return n / d; }
+function newCFQuestion() {
+  const denoms = [2,3,4,5,6,7,8];
+  const d1 = pick(denoms), d2 = pick(denoms);
+  const n1 = randInt(1, d1 - 1), n2 = randInt(1, d2 - 1);
+  const v1 = fracValue(n1, d1), v2 = fracValue(n2, d2);
+  cfState.answer = Math.abs(v1 - v2) < 0.0001 ? 'equal' : (v1 > v2 ? 'left' : 'right');
+  document.getElementById('cf-question').innerHTML = `
+    <div style="display:flex; gap:24px; flex-wrap:wrap; margin:14px 0;">
+      <div><div class="fraclabel">${n1}/${d1}</div>${fracBar(n1, d1)}</div>
+      <div><div class="fraclabel">${n2}/${d2}</div>${fracBar(n2, d2)}</div>
+    </div>
+    <div class="mcq-opts">
+      <div class="mcq-opt" onclick="checkCF(this, 'left')">Left is bigger</div>
+      <div class="mcq-opt" onclick="checkCF(this, 'right')">Right is bigger</div>
+      <div class="mcq-opt" onclick="checkCF(this, 'equal')">They are equal</div>
+    </div>
+    <button class="secondary small" onclick="newCFQuestion()">New fractions</button>
+  `;
+  document.getElementById('cf-feedback').className = 'feedback';
+}
+function checkCF(el, val) {
+  cfState.attempted++;
+  const opts = document.querySelectorAll('#cf-question .mcq-opt');
+  const fb = document.getElementById('cf-feedback');
+  if (val === cfState.answer) {
+    cfState.correct++;
+    el.classList.add('correct');
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! New question loading.';
+    opts.forEach(o => o.onclick = null);
+    setTimeout(newCFQuestion, 1100);
+  } else {
+    el.classList.add('wrong');
+    const answerText = cfState.answer === 'equal' ? 'they are equal' : (cfState.answer === 'left' ? 'the left one is bigger' : 'the right one is bigger');
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. Look at the shaded parts again, ${answerText}.`;
+    opts.forEach(o => o.onclick = null);
+  }
+  document.getElementById('cf-score').innerHTML = scoreHTML(cfState);
+}
+
+// =====================================================================
+// 11. ADD AND SUBTRACT FRACTIONS (same denominator)
+// =====================================================================
+let afState = { num: 0, den: 0, correct: 0, attempted: 0 };
+function renderAddFrac() {
+  afState = { num: 0, den: 0, correct: 0, attempted: 0 };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🍰 Add and Subtract Fractions</h2>
+      <p class="subtext">Same denominator throughout. Type your answer as a fraction, for example 3/4.</p>
+      ${tutorHTML('addfrac')}
+      <div id="af-score">${scoreHTML(afState)}</div>
+      <div id="af-question"></div>
+      <div id="af-feedback" class="feedback"></div>
+    </div>
+  `;
+  newAFQuestion();
+}
+function newAFQuestion() {
+  const den = pick([2,3,4,5,6,7,8]);
+  const isAdd = Math.random() < 0.5;
+  let n1, n2, num;
+  if (isAdd) { n1 = randInt(1, den - 1); n2 = randInt(1, den - n1); num = n1 + n2; }
+  else { n1 = randInt(1, den - 1); n2 = randInt(1, n1); num = n1 - n2; }
+  afState.num = num; afState.den = den;
+  document.getElementById('af-question').innerHTML = `
+    <div class="q-box">${n1}/${den} ${isAdd ? '+' : '-'} ${n2}/${den} = <input type="text" id="af-in" placeholder="for example 5/${den}" style="width:90px;" /></div>
+    <button class="action" onclick="checkAF()">Check</button>
+    <button class="secondary" onclick="newAFQuestion()">Skip</button>
+  `;
+  document.getElementById('af-feedback').className = 'feedback';
+}
+function checkAF() {
+  const raw = (document.getElementById('af-in').value || '').trim();
+  const parts = raw.split('/');
+  afState.attempted++;
+  const fb = document.getElementById('af-feedback');
+  let ok = false;
+  if (parts.length === 2) {
+    const un = parseInt(parts[0]), ud = parseInt(parts[1]);
+    if (!isNaN(un) && !isNaN(ud) && ud !== 0) ok = un * afState.den === afState.num * ud;
+  } else if (parts.length === 1 && parseInt(parts[0]) === 0 && afState.num === 0) {
+    ok = true;
+  }
+  if (ok) {
+    afState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = `Correct! (${afState.num}/${afState.den}). Next one.`;
+    setTimeout(newAFQuestion, 1100);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The answer was ${afState.num}/${afState.den}.`;
+  }
+  document.getElementById('af-score').innerHTML = scoreHTML(afState);
+}
+
+// =====================================================================
+// 12, 13, 14. MEASUREMENT (length, capacity, mass) share one engine
+// =====================================================================
+const MEASURE_CONFIG = {
+  length: { units: [['mm','cm',10], ['cm','m',100], ['m','km',1000]] },
+  capacity: { units: [['ml','l',1000]] },
+  mass: { units: [['g','kg',1000]] },
+};
+let measState = { correct: 0, attempted: 0, answer: null, kind: null };
+function renderLength() { renderMeasure('length', '📏', 'Length'); }
+function renderCapacity() { renderMeasure('capacity', '🧃', 'Capacity and Volume'); }
+function renderMass() { renderMeasure('mass', '🏋️', 'Mass'); }
+function renderMeasure(kind, icon, title) {
+  measState = { correct: 0, attempted: 0, answer: null, kind };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">${icon} ${title}</h2>
+      <p class="subtext">Convert between units. Fill in the missing number.</p>
+      ${tutorHTML(kind)}
+      <div id="ms-score">${scoreHTML(measState)}</div>
+      <div id="ms-question"></div>
+      <div id="ms-feedback" class="feedback"></div>
+    </div>
+  `;
+  newMSQuestion();
+}
+function newMSQuestion() {
+  const cfg = MEASURE_CONFIG[measState.kind];
+  const [small, big, factor] = pick(cfg.units);
+  const smallToBig = Math.random() < 0.5;
+  let qText, answer;
+  if (smallToBig) {
+    const bigVal = randInt(1, 20);
+    const smallVal = bigVal * factor;
+    qText = `${smallVal} ${small} = ___ ${big}`;
+    answer = bigVal;
+  } else {
+    const bigVal = randInt(1, 20);
+    const smallVal = bigVal * factor;
+    qText = `${bigVal} ${big} = ___ ${small}`;
+    answer = smallVal;
+  }
+  measState.answer = answer;
+  document.getElementById('ms-question').innerHTML = `
+    <div class="q-box">${qText}</div>
+    <input type="number" id="ms-in" autofocus />
+    <button class="action" onclick="checkMS()">Check</button>
+    <button class="secondary" onclick="newMSQuestion()">Skip</button>
+  `;
+  document.getElementById('ms-feedback').className = 'feedback';
+  const inputEl = document.getElementById('ms-in');
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') checkMS(); });
+}
+function checkMS() {
+  const v = parseFloat(document.getElementById('ms-in').value);
+  measState.attempted++;
+  const fb = document.getElementById('ms-feedback');
+  if (v === measState.answer) {
+    measState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! Next one.';
+    setTimeout(newMSQuestion, 900);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The answer was ${measState.answer}.`;
+  }
+  document.getElementById('ms-score').innerHTML = scoreHTML(measState);
+}
+
+// =====================================================================
+// 15. TIME
+// =====================================================================
+let tmState = { correct: 0, attempted: 0, answerMin: null, mode: 'read' };
+function clockSVG(h, m) {
+  const hourAngle = (h % 12) * 30 + m * 0.5;
+  const minAngle = m * 6;
+  const cx = 60, cy = 60, r = 54;
+  const ticks = [];
+  for (let i = 0; i < 12; i++) {
+    const ang = i * 30 * Math.PI / 180;
+    const x1 = cx + (r - 6) * Math.sin(ang), y1 = cy - (r - 6) * Math.cos(ang);
+    const x2 = cx + r * Math.sin(ang), y2 = cy - r * Math.cos(ang);
+    ticks.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#0284C7" stroke-width="2"/>`);
+  }
+  const hx = cx + 28 * Math.sin(hourAngle * Math.PI / 180), hy = cy - 28 * Math.cos(hourAngle * Math.PI / 180);
+  const mx = cx + 42 * Math.sin(minAngle * Math.PI / 180), my = cy - 42 * Math.cos(minAngle * Math.PI / 180);
+  return `<svg width="140" height="140" viewBox="0 0 120 120">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="#fff" stroke="#075985" stroke-width="3"/>
+    ${ticks.join('')}
+    <line x1="${cx}" y1="${cy}" x2="${hx}" y2="${hy}" stroke="#075985" stroke-width="4" stroke-linecap="round"/>
+    <line x1="${cx}" y1="${cy}" x2="${mx}" y2="${my}" stroke="#FB7185" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="3" fill="#075985"/>
+  </svg>`;
+}
+function renderTime() {
+  tmState = { correct: 0, attempted: 0, answerMin: null, mode: 'read' };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🕐 Time</h2>
+      ${levelNote(ACTIVITIES.time)}
+      <p class="subtext">Read the clock, or work out how much time has passed.</p>
+      ${tutorHTML('time')}
+      <div class="mcq-opts">
+        <div class="mcq-opt" id="tm-mode-read" onclick="setTMMode('read')">Read the clock</div>
+        <div class="mcq-opt" id="tm-mode-elapsed" onclick="setTMMode('elapsed')">Elapsed time</div>
+      </div>
+      <div id="tm-score">${scoreHTML(tmState)}</div>
+      <div id="tm-question"></div>
+      <div id="tm-feedback" class="feedback"></div>
+    </div>
+  `;
+  markTMMode();
+  newTMQuestion();
+}
+function setTMMode(m) { tmState.mode = m; markTMMode(); newTMQuestion(); }
+function markTMMode() {
+  document.getElementById('tm-mode-read').classList.toggle('correct', tmState.mode === 'read');
+  document.getElementById('tm-mode-elapsed').classList.toggle('correct', tmState.mode === 'elapsed');
+}
+function newTMQuestion() {
+  if (tmState.mode === 'read') {
+    const h = randInt(1, 12), m = pick([0,5,10,15,20,25,30,35,40,45,50,55]);
+    tmState.answerMin = h * 60 + m; // encode for exact matching, but we ask for hour and minute separately
+    tmState.h = h; tmState.m = m;
+    document.getElementById('tm-question').innerHTML = `
+      <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
+        ${clockSVG(h, m)}
+        <div>
+          Hour: <input type="number" id="tm-h" style="width:70px;" min="1" max="12" />
+          Minutes: <input type="number" id="tm-m" style="width:70px;" min="0" max="59" />
+        </div>
+      </div>
+      <button class="action" onclick="checkTM()">Check</button>
+      <button class="secondary" onclick="newTMQuestion()">New time</button>
+    `;
+  } else {
+    const startH = randInt(1, 11), startM = pick([0,15,30,45]);
+    const durMin = pick([15,20,30,45,60,90,120]);
+    let totalStart = startH * 60 + startM;
+    tmState.answerMin = durMin;
+    tmState.startText = `${startH}:${String(startM).padStart(2,'0')}`;
+    const endTotal = totalStart + durMin;
+    const endH = Math.floor(endTotal / 60) % 12 || 12;
+    const endM = endTotal % 60;
+    tmState.endText = `${endH}:${String(endM).padStart(2,'0')}`;
+    document.getElementById('tm-question').innerHTML = `
+      <div class="q-box">A movie starts at ${tmState.startText} and ends at ${tmState.endText}. How many minutes long is the movie?</div>
+      <input type="number" id="tm-elapsed" autofocus />
+      <button class="action" onclick="checkTM()">Check</button>
+      <button class="secondary" onclick="newTMQuestion()">New question</button>
+    `;
+  }
+  document.getElementById('tm-feedback').className = 'feedback';
+}
+function checkTM() {
+  const fb = document.getElementById('tm-feedback');
+  tmState.attempted++;
+  if (tmState.mode === 'read') {
+    const h = parseInt(document.getElementById('tm-h').value);
+    const m = parseInt(document.getElementById('tm-m').value);
+    if (h === tmState.h && m === tmState.m) {
+      tmState.correct++;
+      fb.className = 'feedback good';
+      fb.textContent = 'Correct! Next one.';
+      setTimeout(newTMQuestion, 900);
+    } else {
+      fb.className = 'feedback bad';
+      fb.textContent = `Not quite. The clock shows ${tmState.h}:${String(tmState.m).padStart(2,'0')}.`;
+    }
+  } else {
+    const v = parseInt(document.getElementById('tm-elapsed').value);
+    if (v === tmState.answerMin) {
+      tmState.correct++;
+      fb.className = 'feedback good';
+      fb.textContent = 'Correct! Next one.';
+      setTimeout(newTMQuestion, 900);
+    } else {
+      fb.className = 'feedback bad';
+      fb.textContent = `Not quite. The movie was ${tmState.answerMin} minutes long.`;
+    }
+  }
+  document.getElementById('tm-score').innerHTML = scoreHTML(tmState);
+}
+
+// =====================================================================
+// 16. 3D OBJECT PROPERTIES (verified geometric facts)
+// =====================================================================
+const SHAPES_3D = [
+  { name: 'Cube', icon: '🧊', flat: 6, curved: 0, edges: 12, vertices: 8 },
+  { name: 'Rectangular prism', icon: '📦', flat: 6, curved: 0, edges: 12, vertices: 8 },
+  { name: 'Triangular prism', icon: '🍫', flat: 5, curved: 0, edges: 9, vertices: 6 },
+  { name: 'Square pyramid', icon: '🏛️', flat: 5, curved: 0, edges: 8, vertices: 5 },
+  { name: 'Triangular pyramid', icon: '🔻', flat: 4, curved: 0, edges: 6, vertices: 4 },
+  { name: 'Cylinder', icon: '🥫', flat: 2, curved: 1, edges: 2, vertices: 0 },
+  { name: 'Cone', icon: '🍦', flat: 1, curved: 1, edges: 1, vertices: 1 },
+  { name: 'Sphere', icon: '⚽', flat: 0, curved: 1, edges: 0, vertices: 0 },
+];
+let s3State = { shape: null, field: null, answer: null, correct: 0, attempted: 0, level: 'easy' };
+function renderShapes3D() {
+  s3State = { shape: null, field: null, answer: null, correct: 0, attempted: 0, level: 'easy' };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">📦 3D Object Properties</h2>
+      <p class="subtext">Multiple choice. Think about flat faces and curved surfaces.</p>
+      ${tutorHTML('shapes3d')}
+      <div class="mcq-opts">
+        <div class="mcq-opt" id="s3-lvl-easy" onclick="setS3Level('easy')">Faces and surfaces</div>
+        <div class="mcq-opt" id="s3-lvl-hard" onclick="setS3Level('hard')">Challenge: edges and vertices</div>
+      </div>
+      <div id="s3-score">${scoreHTML(s3State)}</div>
+      <div id="s3-question"></div>
+      <div id="s3-feedback" class="feedback"></div>
+    </div>
+  `;
+  markS3Level();
+  newS3Question();
+}
+function setS3Level(l) { s3State.level = l; markS3Level(); newS3Question(); }
+function markS3Level() {
+  document.getElementById('s3-lvl-easy').classList.toggle('correct', s3State.level === 'easy');
+  document.getElementById('s3-lvl-hard').classList.toggle('correct', s3State.level === 'hard');
+}
+function newS3Question() {
+  const shape = pick(SHAPES_3D);
+  const field = s3State.level === 'easy' ? pick(['flat', 'curved']) : pick(['edges', 'vertices']);
+  s3State.shape = shape; s3State.field = field; s3State.answer = shape[field];
+  const labels = { flat: 'flat faces', curved: 'curved surfaces', edges: 'edges', vertices: 'vertices' };
+  const label = labels[field];
+  const options = shuffle([...new Set([shape[field], Math.max(0, shape[field]-1), shape[field]+1, shape[field]+2])]).slice(0,4);
+  document.getElementById('s3-question').innerHTML = `
+    <div class="q-box">${shape.icon} How many ${label} does a <strong>${shape.name}</strong> have?</div>
+    <div class="mcq-opts">${options.map(o => `<div class="mcq-opt" onclick="checkS3(this, ${o})">${o}</div>`).join('')}</div>
+    <button class="secondary small" onclick="newS3Question()">New question</button>
+  `;
+  document.getElementById('s3-feedback').className = 'feedback';
+}
+function checkS3(el, val) {
+  s3State.attempted++;
+  const opts = document.querySelectorAll('#s3-question .mcq-opt');
+  const fb = document.getElementById('s3-feedback');
+  const labels = { flat: 'flat faces', curved: 'curved surfaces', edges: 'edges', vertices: 'vertices' };
+  const label = labels[s3State.field];
+  if (val === s3State.answer) {
+    s3State.correct++;
+    el.classList.add('correct');
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! New question loading.';
+    opts.forEach(o => o.onclick = null);
+    setTimeout(newS3Question, 1000);
+  } else {
+    el.classList.add('wrong');
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. A ${s3State.shape.name} has ${s3State.answer} ${label}.`;
+    opts.forEach(o => o.onclick = null);
+  }
+  document.getElementById('s3-score').innerHTML = scoreHTML(s3State);
+}
+
+// =====================================================================
+// 17. SYMMETRY
+// =====================================================================
+let syState = { correct: 0, attempted: 0, answer: null };
+const SYMMETRY_SHAPES = [
+  { grid: [[0,1,0],[1,1,1],[0,1,0]], symmetric: true, cols: 3 },
+  { grid: [[1,1],[1,1]], symmetric: true, cols: 2 },
+  { grid: [[1,0,0],[1,1,0],[1,1,1]], symmetric: false, cols: 3 },
+  { grid: [[0,1,1,1],[1,1,1,1]], symmetric: false, cols: 4 },
+  { grid: [[1,0,1],[0,1,0],[1,0,1]], symmetric: true, cols: 3 },
+  { grid: [[1,1,0],[0,1,0],[0,1,1]], symmetric: false, cols: 3 },
+  { grid: [[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1]], symmetric: true, cols: 5 },
+];
+function renderSymmetry() {
+  syState = { correct: 0, attempted: 0, answer: null };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🦋 Symmetry</h2>
+      <p class="subtext">Imagine folding the shape down the middle dashed line. Do both sides match exactly?</p>
+      ${tutorHTML('symmetry')}
+      <div id="sy-score">${scoreHTML(syState)}</div>
+      <div id="sy-question"></div>
+      <div id="sy-feedback" class="feedback"></div>
+    </div>
+  `;
+  newSYQuestion();
+}
+function newSYQuestion() {
+  const shape = pick(SYMMETRY_SHAPES);
+  syState.shape = shape;
+  syState.answer = shape.symmetric;
+  const mid = (shape.cols - 1) / 2;
+  let html = `<div class="pattern-grid" style="grid-template-columns: repeat(${shape.cols}, 26px);">`;
+  shape.grid.forEach(row => {
+    row.forEach((cell, c) => {
+      const isMid = Math.abs(c - mid) < 0.01;
+      html += `<div class="blk ${cell ? 'on' : ''}" style="${isMid ? 'box-shadow: 0 0 0 2px #D9A441;' : ''}"></div>`;
+    });
+  });
+  html += '</div>';
+  document.getElementById('sy-question').innerHTML = `
+    <div>${html}</div>
+    <div class="mcq-opts">
+      <div class="mcq-opt" onclick="checkSY(this, true)">Yes, it has a line of symmetry</div>
+      <div class="mcq-opt" onclick="checkSY(this, false)">No, it does not</div>
+    </div>
+    <button class="secondary small" onclick="newSYQuestion()">New shape</button>
+  `;
+  document.getElementById('sy-feedback').className = 'feedback';
+}
+function checkSY(el, val) {
+  syState.attempted++;
+  const opts = document.querySelectorAll('#sy-question .mcq-opt');
+  const fb = document.getElementById('sy-feedback');
+  if (val === syState.answer) {
+    syState.correct++;
+    el.classList.add('correct');
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! New shape loading.';
+    opts.forEach(o => o.onclick = null);
+    setTimeout(newSYQuestion, 1100);
+  } else {
+    el.classList.add('wrong');
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. This shape ${syState.answer ? 'does' : 'does not'} have a line of symmetry down the marked line.`;
+    opts.forEach(o => o.onclick = null);
+  }
+  document.getElementById('sy-score').innerHTML = scoreHTML(syState);
+}
+
+// =====================================================================
+// 18. GRID REFERENCES
+// =====================================================================
+let grState = { correct: 0, attempted: 0, col: 0, row: 0 };
+const GRID_ITEMS = ['🏖️','⛵','🐚','🦀','🌴','⭐'];
+function renderGridRef() {
+  grState = { correct: 0, attempted: 0, col: 0, row: 0 };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🗺️ Grid References</h2>
+      ${levelNote(ACTIVITIES.gridref)}
+      <p class="subtext">Type the grid reference of the marked object, letter first, then number, for example C3.</p>
+      ${tutorHTML('gridref')}
+      <div id="gr-score">${scoreHTML(grState)}</div>
+      <div id="gr-question"></div>
+      <div id="gr-feedback" class="feedback"></div>
+    </div>
+  `;
+  newGRQuestion();
+}
+function newGRQuestion() {
+  const cols = 5, rows = 5;
+  const letters = ['A','B','C','D','E'];
+  const c = randInt(0, cols - 1), r = randInt(0, rows - 1);
+  grState.col = c; grState.row = r;
+  const item = pick(GRID_ITEMS);
+  let html = `<div class="posgrid" style="grid-template-columns: 42px repeat(${cols}, 42px);">`;
+  html += `<div class="pcell headcell"></div>`;
+  letters.forEach(l => html += `<div class="pcell headcell">${l}</div>`);
+  for (let rr = rows - 1; rr >= 0; rr--) {
+    html += `<div class="pcell headcell">${rr + 1}</div>`;
+    for (let cc = 0; cc < cols; cc++) {
+      html += `<div class="pcell">${(cc === c && rr === r) ? item : ''}</div>`;
+    }
+  }
+  html += '</div>';
+  document.getElementById('gr-question').innerHTML = `
+    <div>${html}</div>
+    <div class="q-box">What is the grid reference of ${item}?</div>
+    <input type="text" id="gr-in" placeholder="for example C3" autofocus />
+    <button class="action" onclick="checkGR()">Check</button>
+    <button class="secondary" onclick="newGRQuestion()">New position</button>
+  `;
+  document.getElementById('gr-feedback').className = 'feedback';
+}
+function checkGR() {
+  const letters = ['A','B','C','D','E'];
+  const raw = (document.getElementById('gr-in').value || '').trim().toUpperCase();
+  grState.attempted++;
+  const fb = document.getElementById('gr-feedback');
+  const correctRef = letters[grState.col] + (grState.row + 1);
+  if (raw === correctRef) {
+    grState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! Next one.';
+    setTimeout(newGRQuestion, 1000);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The correct reference was ${correctRef}.`;
+  }
+  document.getElementById('gr-score').innerHTML = scoreHTML(grState);
+}
+
+// =====================================================================
+// 19. ANGLES (Grade 5 preview)
+// =====================================================================
+let anState = { correct: 0, attempted: 0, answer: null };
+function angleSVG(deg) {
+  const cx = 20, cy = 100, len = 90;
+  const rad = deg * Math.PI / 180;
+  const x2 = cx + len * Math.cos(rad), y2 = cy - len * Math.sin(rad);
+  return `<svg width="200" height="120" viewBox="0 0 200 120">
+    <line x1="${cx}" y1="${cy}" x2="${cx + len}" y2="${cy}" stroke="#075985" stroke-width="4" stroke-linecap="round"/>
+    <line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="#FB7185" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="4" fill="#0284C7"/>
+  </svg>`;
+}
+function renderAngles() {
+  anState = { correct: 0, attempted: 0, answer: null };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">📐 Angles</h2>
+      ${levelNote(ACTIVITIES.angles)}
+      <p class="subtext">Is the angle a right angle, smaller than a right angle, or bigger than a right angle?</p>
+      ${tutorHTML('angles')}
+      <div id="an-score">${scoreHTML(anState)}</div>
+      <div id="an-question"></div>
+      <div id="an-feedback" class="feedback"></div>
+    </div>
+  `;
+  newANQuestion();
+}
+function newANQuestion() {
+  const cat = pick(['acute', 'right', 'obtuse']);
+  let deg;
+  if (cat === 'acute') deg = randInt(20, 75);
+  else if (cat === 'right') deg = 90;
+  else deg = randInt(105, 160);
+  anState.answer = cat;
+  document.getElementById('an-question').innerHTML = `
+    <div>${angleSVG(deg)}</div>
+    <div class="mcq-opts">
+      <div class="mcq-opt" onclick="checkAN(this, 'acute')">Smaller than a right angle</div>
+      <div class="mcq-opt" onclick="checkAN(this, 'right')">A right angle</div>
+      <div class="mcq-opt" onclick="checkAN(this, 'obtuse')">Bigger than a right angle</div>
+    </div>
+    <button class="secondary small" onclick="newANQuestion()">New angle</button>
+  `;
+  document.getElementById('an-feedback').className = 'feedback';
+}
+function checkAN(el, val) {
+  anState.attempted++;
+  const opts = document.querySelectorAll('#an-question .mcq-opt');
+  const fb = document.getElementById('an-feedback');
+  const labels = { acute: 'smaller than a right angle', right: 'a right angle', obtuse: 'bigger than a right angle' };
+  if (val === anState.answer) {
+    anState.correct++;
+    el.classList.add('correct');
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! New angle loading.';
+    opts.forEach(o => o.onclick = null);
+    setTimeout(newANQuestion, 1100);
+  } else {
+    el.classList.add('wrong');
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. This angle is ${labels[anState.answer]}. Compare it to the corner of a book or piece of paper, that is a right angle.`;
+    opts.forEach(o => o.onclick = null);
+  }
+  document.getElementById('an-score').innerHTML = scoreHTML(anState);
+}
+
+// =====================================================================
+// 20. TRANSLATIONS (Grade 5 preview)
+// =====================================================================
+let trState = { correct: 0, attempted: 0, startCol: 0, startRow: 0, dCol: 0, dRow: 0, picked: null };
+function renderTranslate() {
+  trState = { correct: 0, attempted: 0, startCol: 0, startRow: 0, dCol: 0, dRow: 0, picked: null };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🧭 Translations</h2>
+      ${levelNote(ACTIVITIES.translate)}
+      <p class="subtext">Start at the star. Follow the instruction, then click the square it lands on.</p>
+      ${tutorHTML('translate')}
+      <div id="tr-score">${scoreHTML(trState)}</div>
+      <div id="tr-question"></div>
+      <div id="tr-feedback" class="feedback"></div>
+    </div>
+  `;
+  newTRQuestion();
+}
+function newTRQuestion() {
+  const size = 6;
+  const startCol = randInt(0, size - 1), startRow = randInt(0, size - 1);
+  let dCol, dRow, tries = 0;
+  do {
+    dCol = randInt(-3, 3); dRow = randInt(-3, 3);
+    tries++;
+  } while ((dCol === 0 && dRow === 0 || startCol + dCol < 0 || startCol + dCol >= size || startRow + dRow < 0 || startRow + dRow >= size) && tries < 200);
+  trState = { ...trState, startCol, startRow, dCol, dRow, size, picked: null };
+  const rightText = dCol > 0 ? `${dCol} right` : (dCol < 0 ? `${-dCol} left` : '');
+  const vertText = dRow > 0 ? `${dRow} up` : (dRow < 0 ? `${-dRow} down` : '');
+  const instr = [rightText, vertText].filter(Boolean).join(' and ');
+  let html = `<div class="posgrid" id="tr-grid" style="grid-template-columns: repeat(${size}, 42px);">`;
+  for (let rr = size - 1; rr >= 0; rr--) {
+    for (let cc = 0; cc < size; cc++) {
+      const isStart = cc === startCol && rr === startRow;
+      html += `<div class="pcell clickable ${isStart ? 'start' : ''}" data-col="${cc}" data-row="${rr}" onclick="pickTR(this, ${cc}, ${rr})">${isStart ? '⭐' : ''}</div>`;
+    }
+  }
+  html += '</div>';
+  document.getElementById('tr-question').innerHTML = `
+    <div class="q-box">Move the star ${instr}. Click the square it lands on.</div>
+    ${html}
+    <button class="action" onclick="checkTR()">Check</button>
+    <button class="secondary" onclick="newTRQuestion()">New move</button>
+  `;
+  document.getElementById('tr-feedback').className = 'feedback';
+}
+function pickTR(el, c, r) {
+  document.querySelectorAll('#tr-grid .pcell').forEach(p => p.classList.remove('picked'));
+  el.classList.add('picked');
+  trState.picked = { c, r };
+}
+function checkTR() {
+  trState.attempted++;
+  const fb = document.getElementById('tr-feedback');
+  const targetCol = trState.startCol + trState.dCol, targetRow = trState.startRow + trState.dRow;
+  if (!trState.picked) {
+    fb.className = 'feedback info';
+    fb.textContent = 'Click a square on the grid first.';
+    return;
+  }
+  if (trState.picked.c === targetCol && trState.picked.r === targetRow) {
+    trState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! Next move.';
+    setTimeout(newTRQuestion, 1000);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = 'Not quite. Count the squares again, one at a time, in each direction.';
+  }
+  document.getElementById('tr-score').innerHTML = scoreHTML(trState);
+}
+
+// =====================================================================
+// 21. NUMBER PATTERNS
+// =====================================================================
+let npState = { answer: null, correct: 0, attempted: 0, level: 'simple' };
+function renderNumPattern() {
+  npState = { answer: null, correct: 0, attempted: 0, level: 'simple' };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🔁 Number Patterns</h2>
+      <p class="subtext">Work out the rule, then find the next number in the sequence.</p>
+      ${tutorHTML('numpattern')}
+      <div class="mcq-opts">
+        <div class="mcq-opt" id="np-lvl-simple" onclick="setNPLevel('simple')">Simple</div>
+        <div class="mcq-opt" id="np-lvl-medium" onclick="setNPLevel('medium')">Medium</div>
+        <div class="mcq-opt" id="np-lvl-complex" onclick="setNPLevel('complex')">Complex</div>
+      </div>
+      <div id="np-score">${scoreHTML(npState)}</div>
+      <div id="np-question"></div>
+      <div id="np-feedback" class="feedback"></div>
+    </div>
+  `;
+  markNPLevel();
+  newNPQuestion();
+}
+function setNPLevel(l) { npState.level = l; markNPLevel(); newNPQuestion(); }
+function markNPLevel() {
+  ['simple','medium','complex'].forEach(l => document.getElementById('np-lvl-' + l).classList.toggle('correct', npState.level === l));
+}
+function newNPQuestion() {
+  let seq = [];
+  if (npState.level === 'simple') {
+    const start = randInt(1, 30), step = randInt(1, 5);
+    const down = Math.random() < 0.4;
+    seq = [0,1,2,3,4].map(i => down ? start + (30 - start > 0 ? 40 : 0) - i * step : start + i * step);
+    if (down) { const s2 = randInt(60, 99); seq = [0,1,2,3,4].map(i => s2 - i * step); }
+  } else if (npState.level === 'medium') {
+    const type = pick(['add', 'subtract', 'multiply']);
+    if (type === 'add') { const start = randInt(1, 50), step = randInt(6, 15); seq = [0,1,2,3,4].map(i => start + i * step); }
+    else if (type === 'subtract') { const start = randInt(80, 200), step = randInt(6, 15); seq = [0,1,2,3,4].map(i => start - i * step); }
+    else { const start = randInt(1, 5), step = 2; seq = [0,1,2,3,4].map(i => start * Math.pow(step, i)); }
+  } else {
+    const type = pick(['multiply3', 'increasingdiff', 'twostep']);
+    if (type === 'multiply3') { const start = randInt(1, 4); seq = [0,1,2,3,4].map(i => start * Math.pow(3, i)); }
+    else if (type === 'increasingdiff') { let cur = randInt(1, 5); seq = [cur]; let d = randInt(1, 3); for (let i = 0; i < 4; i++) { cur += d; seq.push(cur); d += 1; } }
+    else { let cur = randInt(1, 6); seq = [cur]; for (let i = 0; i < 4; i++) { cur = cur * 2 + 1; seq.push(cur); } }
+  }
+  npState.answer = seq[4];
+  document.getElementById('np-question').innerHTML = `
+    <div class="q-box">${seq.slice(0,4).join(', ')}, <input type="number" id="np-in" style="width:90px;" autofocus /></div>
+    <button class="action" onclick="checkNP()">Check</button>
+    <button class="secondary" onclick="newNPQuestion()">New pattern</button>
+  `;
+  document.getElementById('np-feedback').className = 'feedback';
+  const inputEl = document.getElementById('np-in');
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') checkNP(); });
+}
+function checkNP() {
+  const v = parseInt(document.getElementById('np-in').value);
+  npState.attempted++;
+  const fb = document.getElementById('np-feedback');
+  if (v === npState.answer) {
+    npState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! Next one.';
+    setTimeout(newNPQuestion, 1000);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The next number was ${npState.answer}.`;
+  }
+  document.getElementById('np-score').innerHTML = scoreHTML(npState);
+}
+
+// =====================================================================
+// 22. GROWING (GEOMETRIC) PATTERNS
+// =====================================================================
+let gpState = { type: null, answer: null, correct: 0, attempted: 0, level: 'simple' };
+function patternCount(type, n) {
+  if (type === 'triangle') return n * (n + 1) / 2;
+  if (type === 'square') return n * n;
+  if (type === 'staircase') return 2 * n - 1;
+  if (type === 'cross') return 4 * n - 3;
+  if (type === 'hollow') return n === 1 ? 1 : 4 * (n - 1);
+  return n;
+}
+function renderPatternStep(type, n) {
+  let html = '';
+  if (type === 'square') {
+    html = `<div class="pattern-grid" style="grid-template-columns: repeat(${n}, 22px);">`;
+    for (let i = 0; i < n * n; i++) html += '<div class="blk on"></div>';
+    html += '</div>';
+  } else if (type === 'triangle') {
+    html = `<div class="pattern-grid" style="grid-template-columns: repeat(${n}, 22px);">`;
+    for (let r = 1; r <= n; r++) for (let c = 1; c <= n; c++) html += `<div class="blk ${c <= r ? 'on' : ''}" style="visibility:${c <= r ? 'visible' : 'hidden'};"></div>`;
+    html += '</div>';
+  } else if (type === 'staircase') {
+    html = `<div class="pattern-grid" style="grid-template-columns: repeat(${n}, 22px);">`;
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) html += `<div class="blk ${(r === 0 || c === 0) ? 'on' : ''}"></div>`;
+    html += '</div>';
+  } else if (type === 'cross') {
+    const size = 2 * n - 1;
+    const mid = n - 1;
+    html = `<div class="pattern-grid" style="grid-template-columns: repeat(${size}, 22px);">`;
+    for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) html += `<div class="blk ${(r === mid || c === mid) ? 'on' : ''}"></div>`;
+    html += '</div>';
+  } else if (type === 'hollow') {
+    html = `<div class="pattern-grid" style="grid-template-columns: repeat(${n}, 22px);">`;
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) { const on = r === 0 || c === 0 || r === n - 1 || c === n - 1; html += `<div class="blk ${on ? 'on' : ''}"></div>`; }
+    html += '</div>';
+  }
+  return html;
+}
+function renderGeoPattern() {
+  gpState = { type: null, answer: null, correct: 0, attempted: 0, level: 'simple' };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🔶 Growing Patterns</h2>
+      <p class="subtext">Count the blocks in each step. How many blocks will the next step have?</p>
+      ${tutorHTML('geopattern')}
+      <div class="mcq-opts">
+        <div class="mcq-opt" id="gp-lvl-simple" onclick="setGPLevel('simple')">Simple</div>
+        <div class="mcq-opt" id="gp-lvl-medium" onclick="setGPLevel('medium')">Medium</div>
+        <div class="mcq-opt" id="gp-lvl-complex" onclick="setGPLevel('complex')">Complex</div>
+      </div>
+      <div id="gp-score">${scoreHTML(gpState)}</div>
+      <div id="gp-question"></div>
+      <div id="gp-feedback" class="feedback"></div>
+    </div>
+  `;
+  markGPLevel();
+  newGPQuestion();
+}
+function setGPLevel(l) { gpState.level = l; markGPLevel(); newGPQuestion(); }
+function markGPLevel() {
+  ['simple','medium','complex'].forEach(l => document.getElementById('gp-lvl-' + l).classList.toggle('correct', gpState.level === l));
+}
+function newGPQuestion() {
+  const pools = { simple: ['staircase'], medium: ['triangle', 'square'], complex: ['cross', 'hollow'] };
+  gpState.type = pick(pools[gpState.level]);
+  const nextStep = 4;
+  gpState.answer = patternCount(gpState.type, nextStep);
+  const stepsHTML = [1,2,3].map(n => `
+    <div class="pattern-step">
+      ${renderPatternStep(gpState.type, n)}
+      <div class="count">Step ${n}: ${patternCount(gpState.type, n)}</div>
+    </div>
+  `).join('');
+  document.getElementById('gp-question').innerHTML = `
+    <div>${stepsHTML}</div>
+    <div class="q-box">How many blocks will step 4 have? <input type="number" id="gp-in" style="width:90px;" /></div>
+    <button class="action" onclick="checkGP()">Check</button>
+    <button class="secondary" onclick="newGPQuestion()">New pattern</button>
+  `;
+  document.getElementById('gp-feedback').className = 'feedback';
+}
+function checkGP() {
+  const v = parseInt(document.getElementById('gp-in').value);
+  gpState.attempted++;
+  const fb = document.getElementById('gp-feedback');
+  if (v === gpState.answer) {
+    gpState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! Next one.';
+    setTimeout(newGPQuestion, 1100);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. Step 4 has ${gpState.answer} blocks. Try counting step 3 again and see how many more are added.`;
+  }
+  document.getElementById('gp-score').innerHTML = scoreHTML(gpState);
+}
+
+// ---------- init ----------
+renderHome();
+</script>
+</body>
+</html>

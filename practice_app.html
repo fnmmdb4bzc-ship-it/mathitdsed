@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Grade 6 Maths Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #7C3AED;
+    --purple-dark: #5B21B6;
+    --purple-light: #F1E8FE;
+    --blue: #2563EB;
+    --blue-light: #DCEAFE;
+    --orange: #F97316;
+    --orange-light: #FFEAD5;
+    --pink: #EC4899;
+    --pink-light: #FCE3F1;
+    --grey-bg: #FAF7FC;
+    --card-bg: #FFFFFF;
+    --border: #E7DEF5;
+    --text: #241B36;
+    --text-soft: #6B5C86;
+    --good: #157F3C;
+    --good-bg: #E6F5EA;
+    --bad: #C0392B;
+    --bad-bg: #FBEAEA;
+    --shade: var(--purple);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(circle at 8% 12%, rgba(124,58,237,0.06) 0, transparent 40%),
+      radial-gradient(circle at 92% 18%, rgba(236,72,153,0.07) 0, transparent 42%),
+      radial-gradient(circle at 50% 95%, rgba(249,115,22,0.06) 0, transparent 45%),
+      var(--grey-bg);
+    color: var(--text);
+  }
+  h1, h2, h3, .tile h3, button { font-family: 'Baloo 2', -apple-system, BlinkMacSystemFont, sans-serif; }
+  header {
+    background: linear-gradient(120deg, var(--purple) 0%, #A24BE0 45%, var(--pink) 100%);
+    color: #fff;
+    padding: 26px 20px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 4px; font-size: 1.7rem; font-weight: 800; letter-spacing: 0.02em; }
+  header p { margin: 0; color: #F3E4FB; font-size: 0.92rem; }
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 10px rgba(124,58,237,0.07);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .tile {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    border-top: 4px solid var(--tile-color, var(--purple));
+  }
+  .tile:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(124,58,237,0.16); }
+  .tile .dot {
+    flex: 0 0 auto;
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem;
+    background: var(--tile-bg, var(--purple-light));
+    color: var(--tile-color, var(--purple));
+  }
+  .tile h3 { margin: 0 0 4px; font-size: 1.04rem; color: var(--purple-dark); font-weight: 700; }
+  .tile p { margin: 0; font-size: 0.85rem; color: var(--text-soft); }
+  .backbtn {
+    background: none; border: none; color: var(--pink); font-weight: 700;
+    cursor: pointer; font-size: 0.92rem; padding: 4px 0; margin-bottom: 10px;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .backbtn:hover { text-decoration: underline; }
+  h2.activity-title { color: var(--purple-dark); margin: 0 0 6px; font-size: 1.4rem; font-weight: 800; }
+  .subtext { color: var(--text-soft); font-size: 0.92rem; margin: 0 0 14px; line-height: 1.4; }
+
+  .tutor-box { margin-bottom: 16px; }
+  button.tutor-toggle {
+    background: var(--orange-light); color: #9A4A0C; border: 1.5px dashed var(--orange);
+    border-radius: 10px; padding: 8px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+  }
+  button.tutor-toggle:hover { background: #FFDDB3; }
+  .tutor-panel {
+    display: none; margin-top: 10px; background: var(--orange-light); border-radius: 10px;
+    padding: 12px 14px; font-size: 0.86rem; color: #6B3B0E; line-height: 1.5; border-left: 4px solid var(--orange);
+  }
+
+  button.action {
+    background: linear-gradient(120deg, var(--orange), #FB8B3D); color: #fff; border: none; border-radius: 10px;
+    padding: 10px 18px; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    margin-right: 8px; margin-top: 8px;
+  }
+  button.action:hover { filter: brightness(0.95); }
+  button.secondary {
+    background: #fff; color: var(--purple-dark); border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 10px 18px; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    margin-right: 8px; margin-top: 8px;
+  }
+  button.secondary:hover { border-color: var(--purple); }
+  button.small { padding: 6px 12px; font-size: 0.85rem; border-radius: 8px; }
+  input[type=text], input[type=number] {
+    border: 1.5px solid var(--border); border-radius: 10px; padding: 9px 12px;
+    font-size: 1rem; width: 130px; margin-right: 8px;
+  }
+  input[type=text]:focus, input[type=number]:focus { outline: 2px solid var(--pink); border-color: var(--pink); }
+  .feedback {
+    margin-top: 14px; padding: 12px 14px; border-radius: 12px; font-weight: 700;
+    display: none; font-size: 0.95rem;
+  }
+  .feedback.good { display: block; background: var(--good-bg); color: var(--good); }
+  .feedback.bad { display: block; background: var(--bad-bg); color: var(--bad); }
+  .feedback.info { display: block; background: var(--blue-light); color: var(--blue); font-weight: 600; }
+  .scorepill {
+    display: inline-block; background: var(--pink-light); color: var(--pink);
+    font-weight: 800; font-size: 0.85rem; padding: 5px 12px; border-radius: 20px; margin-bottom: 12px;
+  }
+  .q-box {
+    font-size: 1.15rem; font-weight: 700; color: var(--purple-dark); margin: 14px 0;
+    background: var(--blue-light); border-radius: 12px; padding: 14px 16px;
+  }
+  table.quiztable { border-collapse: collapse; width: 100%; margin: 10px 0; }
+  table.quiztable th, table.quiztable td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; font-size: 0.9rem; }
+  table.quiztable th { background: var(--purple); color: #fff; }
+  .mcq-opts { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .mcq-opt {
+    border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 16px;
+    cursor: pointer; font-weight: 700; color: var(--purple-dark); background: #fff;
+  }
+  .mcq-opt:hover { border-color: var(--pink); }
+  .mcq-opt.correct { background: var(--good-bg); border-color: var(--good); color: var(--good); }
+  .mcq-opt.wrong { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+  .gridwrap { display: inline-block; }
+  .hundred-grid { display: grid; grid-template-columns: repeat(10, 26px); gap: 2px; margin: 14px 0; }
+  .hundred-grid .cell {
+    width: 26px; height: 26px; border: 1px solid #D7C9EF; border-radius: 3px; cursor: pointer; background: #fff;
+  }
+  .hundred-grid .cell.shaded { background: var(--shade); border-color: var(--purple-dark); }
+  .readout { display: flex; gap: 18px; flex-wrap: wrap; margin: 12px 0; }
+  .readout .box { background: var(--purple-light); border-radius: 12px; padding: 10px 16px; text-align: center; min-width: 90px; }
+  .readout .box .val { font-size: 1.25rem; font-weight: 800; color: var(--purple-dark); }
+  .readout .box .lbl { font-size: 0.75rem; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.03em; }
+  .mirror-grid { display: grid; grid-template-columns: repeat(12, 30px); gap: 2px; margin: 14px 0; width: max-content; }
+  .mirror-grid .cell { width: 30px; height: 30px; border: 1px solid #D7C9EF; background: #fff; }
+  .mirror-grid .cell.given { background: var(--blue); border-color: var(--purple-dark); }
+  .mirror-grid .cell.clickable { cursor: pointer; }
+  .mirror-grid .cell.userfill { background: var(--pink); border-color: var(--purple-dark); }
+  .mirror-grid .mirrorline { border-right: 3px solid var(--orange) !important; }
+  .tally-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .tally-row input[type=text] { width: 110px; }
+  .tally-row .count { font-weight: 800; color: var(--purple-dark); min-width: 24px; text-align: center; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 18px; height: 180px; margin: 18px 0 6px; border-bottom: 2px solid var(--border); padding: 0 6px; }
+  .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; width: 60px; }
+  .bar-col .num { font-weight: 800; color: var(--purple-dark); font-size: 0.85rem; margin-bottom: 4px; }
+  .bar-col .bar { width: 40px; border-radius: 8px 8px 0 0; transition: height 0.2s ease; }
+  .bar-col .lbl { margin-top: 6px; font-size: 0.78rem; color: var(--text-soft); text-align: center; }
+  .hint-toggle { color: var(--blue); background: none; border: none; cursor: pointer; font-size: 0.88rem; font-weight: 700; padding: 0; margin-top: 10px; }
+  .hint-text { display: none; margin-top: 8px; font-size: 0.88rem; color: var(--text-soft); background: var(--blue-light); padding: 10px 12px; border-radius: 10px; }
+  .accuracy-note { background: var(--pink-light); border: 1px solid #F3BEDD; border-radius: 14px; padding: 14px 16px; font-size: 0.85rem; color: #7A1D53; margin-bottom: 16px; line-height: 1.4; }
+  footer { text-align: center; color: var(--text-soft); font-size: 0.8rem; padding: 20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Grade 6 Maths Practice</h1>
+  <p>Foundation skills and Term 3 CAPS topics, a companion to the Intervention Plan</p>
+</header>
+<main id="app"></main>
+<footer>Built for independent practice between tutoring sessions. All content authored for this plan, not from an official past paper bank.</footer>
+
+<script>
+// ---------- Utilities ----------
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
+function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = randInt(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a || 1; }
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+const app = document.getElementById('app');
+const GROOVY = ['purple', 'blue', 'orange', 'pink'];
+
+// ---------- Tutor explanations ----------
+const TUTOR_NOTES = {
+  placevalue: "This checks whether she understands that a digit's value depends on its position, not just the digit itself. If she keeps picking the digit rather than its column value, go back to physical bundling with base ten blocks or bundled sticks before returning to this activity.",
+  rounding: "Rounding depends completely on secure place value. If she gets the nearest 10 right but not the nearest 100, that usually means the ones and tens boundary is solid but the tens and hundreds boundary is not yet.",
+  bonds: "Speed here is a stand in for automatic recall. If she is counting on her fingers instead of just knowing the answer, that is not a problem to fix in one sitting, it just means more short daily practice, five minutes at a time, works better than one long session.",
+  tables: "Let her choose easier tables first, such as 2, 5 and 10, to build confidence before adding harder ones. Getting the strategy right, like skip counting or doubling, matters more than raw speed while a fact is still new.",
+  factfamily: "This shows whether she sees addition and subtraction, or multiplication and division, as connected operations rather than four separate unrelated rules. Seeing that connection is what makes later algebra manageable.",
+  equivfrac: "Finding an equivalent fraction is really a multiplication skill in disguise, since the top and bottom are multiplied by the same number. If she is stuck, go back to the fraction wall in the plan and let her see it physically first.",
+  fdp: "The hundred grid is the single best bridge between fractions, decimals and percentages, because all three are just different ways of describing the same shaded amount. It is worth spending real time here, even if it feels slow, since it pays off across the whole percentage and decimal unit.",
+  fracops: "Same denominator fractions are the easiest case, because the pieces are already the same size. This is the right place to build confidence before ever tackling fractions with different denominators.",
+  ratio: "Encourage her to draw or group real objects before writing any numbers. Ratio only really clicks once it is felt physically as groups, not just as a colon between two digits.",
+  shapes: "This depends less on the shaky number sense and more on memorised properties, so it is a good confidence booster to use on a harder day.",
+  mirror: "Reflections are about position, not calculation, so this is another good low pressure topic. If she struggles, physically fold a piece of paper in half and let her watch the mirror image appear as you unfold it.",
+  databars: "Data handling works best with real, personally meaningful data. If she is involved in collecting the information herself, reading the finished graph becomes far more motivating than a ready made worksheet.",
+  wordprobs: "These combine several Term 3 skills in one question, which is exactly what a test will do. If the maths is right but the answer is still wrong, that is often a reading comprehension issue, so read the question aloud together first.",
+};
+function tutorHTML(key) {
+  return `
+    <div class="tutor-box">
+      <button class="tutor-toggle" onclick="toggleTutor('${key}')">For the tutor: what this is really practising</button>
+      <div class="tutor-panel" id="tutor-${key}">${TUTOR_NOTES[key]}</div>
+    </div>
+  `;
+}
+function toggleTutor(key) {
+  const panel = document.getElementById('tutor-' + key);
+  panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+}
+
+// ---------- Activity registry ----------
+const ACTIVITIES = [
+  { key: 'placevalue', icon: '🔢', title: 'Place Value Detective', desc: 'Find the value of a digit in a number. Multiple choice.' },
+  { key: 'rounding', icon: '🎯', title: 'Round It', desc: 'Round numbers to the nearest 10 and 100.' },
+  { key: 'bonds', icon: '⚡', title: 'Number Bonds Blitz', desc: 'Rapid fire bonds to 20, with a running score.' },
+  { key: 'tables', icon: '✖️', title: 'Times Tables Blitz', desc: 'Pick which tables to drill, then answer fast.' },
+  { key: 'factfamily', icon: '🔺', title: 'Fact Family Builder', desc: 'Given 3 numbers, write all 4 related facts.' },
+  { key: 'equivfrac', icon: '🍰', title: 'Equivalent Fractions', desc: 'Convert a fraction to an equivalent one with a bigger denominator.' },
+  { key: 'fdp', icon: '💯', title: 'Fraction, Decimal, Percentage Grid', desc: 'Click to shade a 100 grid and watch all 3 forms update live.' },
+  { key: 'fracops', icon: '➕', title: 'Fraction Add and Subtract', desc: 'Practise adding and subtracting fractions with the same denominator.' },
+  { key: 'ratio', icon: '⚖️', title: 'Ratio Word Problems', desc: 'Real world ratio problems with instant checking.' },
+  { key: 'shapes', icon: '🔷', title: 'Shape Property Quiz', desc: 'Sides, vertices and equal sides questions on 2D shapes.' },
+  { key: 'mirror', icon: '🪞', title: 'Mirror Match', desc: 'Reflect a shape across the mirror line by clicking cells.' },
+  { key: 'databars', icon: '📊', title: 'Tally and Bar Chart Builder', desc: 'Tally a survey and watch a live bar chart build itself.' },
+  { key: 'wordprobs', icon: '📝', title: 'Mixed Word Problems', desc: 'Term 3 review problems mixing fractions, percentage, ratio and measurement.' },
+];
+
+function renderHome() {
+  app.innerHTML = `
+    <div class="grid">
+      ${ACTIVITIES.map((a, i) => {
+        const c = GROOVY[i % GROOVY.length];
+        return `
+        <div class="tile" style="--tile-color: var(--${c}); --tile-bg: var(--${c}-light);" onclick="goTo('${a.key}')">
+          <div class="dot">${a.icon}</div>
+          <div><h3>${a.title}</h3><p>${a.desc}</p></div>
+        </div>
+      `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function backBtn() {
+  return `<button class="backbtn" onclick="goTo('home')">&#8592; All activities</button>`;
+}
+
+function goTo(key) {
+  if (key === 'home') { renderHome(); return; }
+  const builders = {
+    placevalue: renderPlaceValue, rounding: renderRounding, bonds: renderBonds,
+    tables: renderTables, factfamily: renderFactFamily, equivfrac: renderEquivFrac,
+    fdp: renderFDP, fracops: renderFracOps, ratio: renderRatio, shapes: renderShapes,
+    mirror: renderMirror, databars: renderDataBars, wordprobs: renderWordProblems,
+  };
+  window.scrollTo(0, 0);
+  builders[key]();
+}
+
+// generic score tracker rendered into a span
+function scoreHTML(state) {
+  return `<span class="scorepill">Score: ${state.correct} of ${state.attempted}</span>`;
+}
+
+// =====================================================================
+// 1. PLACE VALUE DETECTIVE
+// =====================================================================
+let pvState = { correct: 0, attempted: 0, answer: null };
+function renderPlaceValue() {
+  pvState = { correct: 0, attempted: 0, answer: null };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🔢 Place Value Detective</h2>
+      <p class="subtext">What is the <em>value</em> of the highlighted digit? Not just its name, its real value in the number.</p>
+      ${tutorHTML('placevalue')}
+      <div id="pv-score">${scoreHTML(pvState)}</div>
+      <div id="pv-question"></div>
+      <div id="pv-feedback" class="feedback"></div>
+    </div>
+  `;
+  newPVQuestion();
+}
+function newPVQuestion() {
+  const digits = randInt(3, 5);
+  let num = randInt(Math.pow(10, digits - 1), Math.pow(10, digits) - 1);
+  const numStr = String(num);
+  const pos = randInt(0, numStr.length - 1); // index from left
+  const digit = parseInt(numStr[pos]);
+  const placeValueExp = numStr.length - 1 - pos;
+  const correct = digit * Math.pow(10, placeValueExp);
+  pvState.answer = correct;
+
+  // build highlighted display
+  const display = numStr.split('').map((d, i) =>
+    i === pos ? `<span style="color:#EA580C; text-decoration:underline;">${d}</span>` : d
+  ).join('');
+
+  const options = shuffle([
+    correct,
+    digit, // common error: value of digit ignoring place
+    correct + Math.pow(10, placeValueExp), // off by one place step
+    Math.max(1, correct - Math.pow(10, placeValueExp)),
+  ].filter((v, i, arr) => arr.indexOf(v) === i).concat(correct)).filter((v,i,arr)=>arr.indexOf(v)===i);
+  // ensure exactly 4 unique options including correct
+  while (options.length < 4) options.push(correct + randInt(1,9));
+  const finalOpts = shuffle(options.slice(0, 4).includes(correct) ? options.slice(0,4) : [correct, ...options.slice(0,3)]);
+
+  document.getElementById('pv-question').innerHTML = `
+    <div class="q-box">In the number <strong>${display}</strong>, what is the value of the underlined digit?</div>
+    <div class="mcq-opts">
+      ${finalOpts.map(o => `<div class="mcq-opt" onclick="checkPV(this, ${o})">${o.toLocaleString('en-ZA').replace(/,/g,' ')}</div>`).join('')}
+    </div>
+    <button class="secondary small" onclick="newPVQuestion()">Skip, new number</button>
+  `;
+  document.getElementById('pv-feedback').className = 'feedback';
+}
+function checkPV(el, val) {
+  pvState.attempted++;
+  const opts = document.querySelectorAll('#pv-question .mcq-opt');
+  const fb = document.getElementById('pv-feedback');
+  if (val === pvState.answer) {
+    pvState.correct++;
+    el.classList.add('correct');
+    fb.className = 'feedback good';
+    fb.textContent = 'Yes, that is right! New question loading.';
+    opts.forEach(o => o.onclick = null);
+    setTimeout(newPVQuestion, 1100);
+  } else {
+    el.classList.add('wrong');
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The correct value is ${pvState.answer.toLocaleString('en-ZA').replace(/,/g,' ')}. Look at which column that digit sits in.`;
+    opts.forEach(o => o.onclick = null);
+  }
+  document.getElementById('pv-score').innerHTML = scoreHTML(pvState);
+}
+
+// =====================================================================
+// 2. ROUNDING
+// =====================================================================
+let rdState = { correct: 0, attempted: 0, ans10: null, ans100: null };
+function renderRounding() {
+  rdState = { correct: 0, attempted: 0, ans10: null, ans100: null };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🎯 Round It</h2>
+      <p class="subtext">Round the number to the nearest 10, then the nearest 100.</p>
+      ${tutorHTML('rounding')}
+      <div id="rd-score">${scoreHTML(rdState)}</div>
+      <div id="rd-question"></div>
+      <div id="rd-feedback" class="feedback"></div>
+    </div>
+  `;
+  newRDQuestion();
+}
+function newRDQuestion() {
+  const num = randInt(105, 986);
+  rdState.ans10 = Math.round(num / 10) * 10;
+  rdState.ans100 = Math.round(num / 100) * 100;
+  document.getElementById('rd-question').innerHTML = `
+    <div class="q-box">Number: ${num}</div>
+    <div>
+      Nearest 10: <input type="number" id="rd-in10" />
+      Nearest 100: <input type="number" id="rd-in100" />
+    </div>
+    <button class="action" onclick="checkRD()">Check</button>
+    <button class="secondary" onclick="newRDQuestion()">New number</button>
+  `;
+  document.getElementById('rd-feedback').className = 'feedback';
+}
+function checkRD() {
+  const v10 = parseInt(document.getElementById('rd-in10').value);
+  const v100 = parseInt(document.getElementById('rd-in100').value);
+  rdState.attempted++;
+  const fb = document.getElementById('rd-feedback');
+  const ok10 = v10 === rdState.ans10, ok100 = v100 === rdState.ans100;
+  if (ok10 && ok100) {
+    rdState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Both correct!';
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Nearest 10 should be ${rdState.ans10}, nearest 100 should be ${rdState.ans100}. ${!ok10 ? 'Check the units digit for rounding to 10.' : ''} ${!ok100 ? 'Check the tens digit for rounding to 100.' : ''}`;
+  }
+  document.getElementById('rd-score').innerHTML = scoreHTML(rdState);
+}
+
+// =====================================================================
+// 3. NUMBER BONDS BLITZ
+// =====================================================================
+let bondState = { correct: 0, attempted: 0, answer: null };
+function renderBonds() {
+  bondState = { correct: 0, attempted: 0, answer: null };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">⚡ Number Bonds Blitz</h2>
+      <p class="subtext">Fill in the missing number as fast as you can. Press Enter or click Check.</p>
+      ${tutorHTML('bonds')}
+      <div id="bd-score">${scoreHTML(bondState)}</div>
+      <div id="bd-question"></div>
+      <div id="bd-feedback" class="feedback"></div>
+    </div>
+  `;
+  newBondQuestion();
+}
+function newBondQuestion() {
+  const target = pick([10, 20]);
+  const a = randInt(1, target - 1);
+  const b = target - a;
+  const blankIsA = Math.random() < 0.5;
+  bondState.answer = blankIsA ? a : b;
+  const exprHTML = blankIsA
+    ? `<input type="number" id="bd-in" autofocus /> + ${b} = ${target}`
+    : `${a} + <input type="number" id="bd-in" autofocus /> = ${target}`;
+  document.getElementById('bd-question').innerHTML = `
+    <div class="q-box">${exprHTML}</div>
+    <button class="action" onclick="checkBond()">Check</button>
+    <button class="secondary" onclick="newBondQuestion()">Skip</button>
+  `;
+  document.getElementById('bd-feedback').className = 'feedback';
+  const inputEl = document.getElementById('bd-in');
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') checkBond(); });
+}
+function checkBond() {
+  const v = parseInt(document.getElementById('bd-in').value);
+  bondState.attempted++;
+  const fb = document.getElementById('bd-feedback');
+  if (v === bondState.answer) {
+    bondState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! Next one.';
+    setTimeout(newBondQuestion, 700);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The answer was ${bondState.answer}.`;
+    setTimeout(newBondQuestion, 1600);
+  }
+  document.getElementById('bd-score').innerHTML = scoreHTML(bondState);
+}
+
+// =====================================================================
+// 4. TIMES TABLES BLITZ
+// =====================================================================
+let ttState = { correct: 0, attempted: 0, answer: null, tables: [2,5,10] };
+function renderTables() {
+  ttState = { correct: 0, attempted: 0, answer: null, tables: [2,5,10] };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">✖️ Times Tables Blitz</h2>
+      <p class="subtext">Choose which tables to focus on, then answer as fast as you can.</p>
+      ${tutorHTML('tables')}
+      <div id="tt-picker"></div>
+      <div id="tt-score">${scoreHTML(ttState)}</div>
+      <div id="tt-question"></div>
+      <div id="tt-feedback" class="feedback"></div>
+    </div>
+  `;
+  renderTTPicker();
+  newTTQuestion();
+}
+function renderTTPicker() {
+  const all = [2,3,4,5,6,7,8,9,10,11,12];
+  document.getElementById('tt-picker').innerHTML = `
+    <div class="mcq-opts" style="margin-bottom:6px;">
+      ${all.map(n => `<div class="mcq-opt ${ttState.tables.includes(n) ? 'correct' : ''}" style="padding:6px 12px;" onclick="toggleTable(${n})">${n} times</div>`).join('')}
+    </div>
+  `;
+}
+function toggleTable(n) {
+  if (ttState.tables.includes(n)) {
+    if (ttState.tables.length > 1) ttState.tables = ttState.tables.filter(x => x !== n);
+  } else {
+    ttState.tables.push(n);
+  }
+  renderTTPicker();
+}
+function newTTQuestion() {
+  const a = pick(ttState.tables);
+  const b = randInt(1, 12);
+  ttState.answer = a * b;
+  document.getElementById('tt-question').innerHTML = `
+    <div class="q-box">${a} &times; ${b} = <input type="number" id="tt-in" autofocus /></div>
+    <button class="action" onclick="checkTT()">Check</button>
+    <button class="secondary" onclick="newTTQuestion()">Skip</button>
+  `;
+  document.getElementById('tt-feedback').className = 'feedback';
+  const inputEl = document.getElementById('tt-in');
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') checkTT(); });
+}
+function checkTT() {
+  const v = parseInt(document.getElementById('tt-in').value);
+  ttState.attempted++;
+  const fb = document.getElementById('tt-feedback');
+  if (v === ttState.answer) {
+    ttState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! Next one.';
+    setTimeout(newTTQuestion, 600);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The answer was ${ttState.answer}.`;
+    setTimeout(newTTQuestion, 1500);
+  }
+  document.getElementById('tt-score').innerHTML = scoreHTML(ttState);
+}
+
+// =====================================================================
+// 5. FACT FAMILY BUILDER
+// =====================================================================
+let ffState = { nums: [], type: 'add', correctFacts: [] };
+function renderFactFamily() {
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🔺 Fact Family Builder</h2>
+      <p class="subtext">Given the 3 numbers, type all 4 related facts, in any order. Use x, divide, plus or minus as needed.</p>
+      ${tutorHTML('factfamily')}
+      <div id="ff-question"></div>
+      <div id="ff-feedback" class="feedback"></div>
+    </div>
+  `;
+  newFFQuestion();
+}
+function newFFQuestion() {
+  ffState.type = pick(['add', 'mult']);
+  let a, b, c;
+  if (ffState.type === 'add') {
+    a = randInt(2, 15); b = randInt(2, 15); c = a + b;
+    ffState.correctFacts = [`${a}+${b}=${c}`, `${b}+${a}=${c}`, `${c}-${a}=${b}`, `${c}-${b}=${a}`];
+  } else {
+    a = randInt(2, 9); b = randInt(2, 9); c = a * b;
+    ffState.correctFacts = [`${a}x${b}=${c}`, `${b}x${a}=${c}`, `${c}/${a}=${b}`, `${c}/${b}=${a}`];
+  }
+  ffState.nums = [a, b, c];
+  document.getElementById('ff-question').innerHTML = `
+    <div class="q-box">Numbers: ${a}, ${b}, ${c}</div>
+    <div style="display:flex; flex-direction:column; gap:8px; max-width:280px;">
+      ${[1,2,3,4].map(i => `<input type="text" id="ff-fact${i}" placeholder="fact ${i}, for example ${ffState.type==='add' ? '3+4=7' : '3x4=12'}" />`).join('')}
+    </div>
+    <button class="action" onclick="checkFF()">Check</button>
+    <button class="secondary" onclick="newFFQuestion()">New numbers</button>
+  `;
+  document.getElementById('ff-feedback').className = 'feedback';
+}
+function normalizeFact(s) {
+  return s.replace(/\s+/g, '').replace(/×/g, 'x').replace(/\*/g, 'x').replace(/÷/g, '/').toLowerCase();
+}
+function checkFF() {
+  const entered = [1,2,3,4].map(i => normalizeFact(document.getElementById('ff-fact' + i).value || ''));
+  const correctSet = ffState.correctFacts.map(normalizeFact);
+  const matched = entered.filter(e => e && correctSet.includes(e));
+  const uniqueMatched = [...new Set(matched)];
+  const fb = document.getElementById('ff-feedback');
+  if (uniqueMatched.length === 4) {
+    fb.className = 'feedback good';
+    fb.textContent = 'All 4 facts correct! Great work.';
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `You got ${uniqueMatched.length} of 4. The full family is ${ffState.correctFacts.join(', ')}.`;
+  }
+}
+
+// =====================================================================
+// 6. EQUIVALENT FRACTIONS
+// =====================================================================
+let efState = { fromNum: 0, fromDen: 0, toDen: 0, answer: 0, correct: 0, attempted: 0 };
+function renderEquivFrac() {
+  efState = { fromNum: 0, fromDen: 0, toDen: 0, answer: 0, correct: 0, attempted: 0 };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🍰 Equivalent Fractions</h2>
+      <p class="subtext">Find the missing numerator to make an equivalent fraction.</p>
+      ${tutorHTML('equivfrac')}
+      <div id="ef-score">${scoreHTML(efState)}</div>
+      <div id="ef-question"></div>
+      <div id="ef-feedback" class="feedback"></div>
+    </div>
+  `;
+  newEFQuestion();
+}
+function newEFQuestion() {
+  const fromDen = pick([2,3,4,5,6]);
+  const fromNum = randInt(1, fromDen - 1);
+  const toDen = fromDen * pick([2,3,4]);
+  efState.fromNum = fromNum; efState.fromDen = fromDen; efState.toDen = toDen;
+  efState.answer = fromNum * (toDen / fromDen);
+  document.getElementById('ef-question').innerHTML = `
+    <div class="q-box">${fromNum}/${fromDen} = <input type="number" id="ef-in" style="width:70px;" /> / ${toDen}</div>
+    <button class="action" onclick="checkEF()">Check</button>
+    <button class="secondary" onclick="newEFQuestion()">Skip</button>
+  `;
+  document.getElementById('ef-feedback').className = 'feedback';
+}
+function checkEF() {
+  const v = parseInt(document.getElementById('ef-in').value);
+  efState.attempted++;
+  const fb = document.getElementById('ef-feedback');
+  if (v === efState.answer) {
+    efState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = `Correct! ${efState.fromNum}/${efState.fromDen} equals ${efState.answer}/${efState.toDen}. Next one.`;
+    setTimeout(newEFQuestion, 1100);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. Think: ${efState.fromDen} times what equals ${efState.toDen}? Then do the same to the top. Answer: ${efState.answer}.`;
+  }
+  document.getElementById('ef-score').innerHTML = scoreHTML(efState);
+}
+
+// =====================================================================
+// 7. FRACTION, DECIMAL, PERCENTAGE GRID
+// =====================================================================
+let fdpTarget = null;
+function renderFDP() {
+  fdpTarget = null;
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">💯 Fraction, Decimal, Percentage Grid</h2>
+      <p class="subtext">Click squares to shade them. Watch the fraction, decimal and percentage update live. Try New Target to be given an amount to shade.</p>
+      ${tutorHTML('fdp')}
+      <div id="fdp-target"></div>
+      <div class="gridwrap"><div class="hundred-grid" id="fdp-grid"></div></div>
+      <div class="readout" id="fdp-readout"></div>
+      <button class="secondary" onclick="clearFDP()">Clear grid</button>
+      <button class="action" onclick="newFDPTarget()">New Target</button>
+      <div id="fdp-feedback" class="feedback"></div>
+    </div>
+  `;
+  const grid = document.getElementById('fdp-grid');
+  for (let i = 0; i < 100; i++) {
+    const c = document.createElement('div');
+    c.className = 'cell';
+    c.dataset.i = i;
+    c.onclick = () => { c.classList.toggle('shaded'); updateFDPReadout(); };
+    grid.appendChild(c);
+  }
+  updateFDPReadout();
+}
+function clearFDP() {
+  document.querySelectorAll('#fdp-grid .cell.shaded').forEach(c => c.classList.remove('shaded'));
+  updateFDPReadout();
+}
+function updateFDPReadout() {
+  const count = document.querySelectorAll('#fdp-grid .cell.shaded').length;
+  const g = gcd(count || 1, 100);
+  const simpNum = count === 0 ? 0 : count / g;
+  const simpDen = count === 0 ? 1 : 100 / g;
+  document.getElementById('fdp-readout').innerHTML = `
+    <div class="box"><div class="val">${count}/100</div><div class="lbl">Fraction</div></div>
+    <div class="box"><div class="val">${simpNum}/${simpDen}</div><div class="lbl">Simplified</div></div>
+    <div class="box"><div class="val">0,${String(count).padStart(2,'0')}</div><div class="lbl">Decimal</div></div>
+    <div class="box"><div class="val">${count}%</div><div class="lbl">Percentage</div></div>
+  `;
+  if (fdpTarget !== null) {
+    const fb = document.getElementById('fdp-feedback');
+    if (count === fdpTarget) {
+      fb.className = 'feedback good';
+      fb.textContent = `Spot on, that is ${fdpTarget}% shaded!`;
+    } else {
+      fb.className = 'feedback info';
+      fb.textContent = `Target: shade ${fdpTarget}% (${fdpTarget} squares). Currently: ${count} squares.`;
+    }
+  }
+}
+function newFDPTarget() {
+  fdpTarget = pick([5,10,15,20,25,30,40,50,60,65,75,80,90]);
+  clearFDP();
+  document.getElementById('fdp-target').innerHTML = `<div class="q-box">Shade ${fdpTarget}% of the grid</div>`;
+}
+
+// =====================================================================
+// 8. FRACTION ADD AND SUBTRACT
+// =====================================================================
+let foState = { num: 0, den: 0, correct: 0, attempted: 0 };
+function renderFracOps() {
+  foState = { num: 0, den: 0, correct: 0, attempted: 0 };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">➕ Fraction Add and Subtract</h2>
+      <p class="subtext">Same denominator throughout. Type your answer as a fraction, for example 3/4. Do not worry about simplifying.</p>
+      ${tutorHTML('fracops')}
+      <div id="fo-score">${scoreHTML(foState)}</div>
+      <div id="fo-question"></div>
+      <div id="fo-feedback" class="feedback"></div>
+    </div>
+  `;
+  newFOQuestion();
+}
+function newFOQuestion() {
+  const den = pick([4,5,6,8,10,12]);
+  const isAdd = Math.random() < 0.5;
+  let n1 = randInt(1, den - 1), n2 = randInt(1, den - 1);
+  let num;
+  if (isAdd) { num = n1 + n2; }
+  else { if (n2 > n1) [n1, n2] = [n2, n1]; num = n1 - n2; }
+  foState.num = num; foState.den = den;
+  document.getElementById('fo-question').innerHTML = `
+    <div class="q-box">${n1}/${den} ${isAdd ? '+' : '-'} ${n2}/${den} = <input type="text" id="fo-in" placeholder="for example 5/${den}" style="width:90px;" /></div>
+    <button class="action" onclick="checkFO()">Check</button>
+    <button class="secondary" onclick="newFOQuestion()">Skip</button>
+  `;
+  document.getElementById('fo-feedback').className = 'feedback';
+}
+function checkFO() {
+  const raw = (document.getElementById('fo-in').value || '').trim();
+  const parts = raw.split('/');
+  foState.attempted++;
+  const fb = document.getElementById('fo-feedback');
+  let ok = false;
+  if (parts.length === 2) {
+    const un = parseInt(parts[0]), ud = parseInt(parts[1]);
+    if (!isNaN(un) && !isNaN(ud) && ud !== 0) {
+      ok = un * foState.den === foState.num * ud; // cross multiply equivalence
+    }
+  } else if (parts.length === 1 && parseInt(parts[0]) === 0 && foState.num === 0) {
+    ok = true;
+  }
+  if (ok) {
+    foState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = `Correct! (${foState.num}/${foState.den}). Next one.`;
+    setTimeout(newFOQuestion, 1100);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The answer was ${foState.num}/${foState.den}.`;
+  }
+  document.getElementById('fo-score').innerHTML = scoreHTML(foState);
+}
+
+// =====================================================================
+// 9. RATIO WORD PROBLEMS
+// =====================================================================
+let raState = { answer: 0, correct: 0, attempted: 0 };
+function renderRatio() {
+  raState = { answer: 0, correct: 0, attempted: 0 };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">⚖️ Ratio Word Problems</h2>
+      <p class="subtext">Group counters in your head, or with real ones, before typing the answer.</p>
+      ${tutorHTML('ratio')}
+      <div id="ra-score">${scoreHTML(raState)}</div>
+      <div id="ra-question"></div>
+      <div id="ra-feedback" class="feedback"></div>
+    </div>
+  `;
+  newRAQuestion();
+}
+const RATIO_TEMPLATES = [
+  (p1, p2, mult) => ({ q: `A fruit bowl has apples and bananas in the ratio ${p1} to ${p2}. If there are ${p1*mult} apples, how many bananas are there?`, a: p2 * mult }),
+  (p1, p2, mult) => ({ q: `A recipe uses flour and sugar in the ratio ${p1} to ${p2}. If you use ${p1*mult} cups of flour, how much sugar, in cups, do you need?`, a: p2 * mult }),
+  (p1, p2, mult) => ({ q: `In a class, the ratio of boys to girls is ${p1} to ${p2}. If there are ${p1*mult} boys, how many girls are there?`, a: p2 * mult }),
+  (p1, p2, mult) => ({ q: `A necklace uses red and blue beads in the ratio ${p1} to ${p2}. If there are ${p2*mult} blue beads, how many red beads are there?`, a: p1 * mult }),
+];
+function newRAQuestion() {
+  const p1 = randInt(1, 5), p2 = randInt(1, 5);
+  const mult = randInt(2, 6);
+  const t = pick(RATIO_TEMPLATES)(p1, p2, mult);
+  raState.answer = t.a;
+  document.getElementById('ra-question').innerHTML = `
+    <div class="q-box">${t.q}</div>
+    <input type="number" id="ra-in" />
+    <button class="action" onclick="checkRA()">Check</button>
+    <button class="secondary" onclick="newRAQuestion()">New problem</button>
+  `;
+  document.getElementById('ra-feedback').className = 'feedback';
+}
+function checkRA() {
+  const v = parseInt(document.getElementById('ra-in').value);
+  raState.attempted++;
+  const fb = document.getElementById('ra-feedback');
+  if (v === raState.answer) {
+    raState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct!';
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The answer was ${raState.answer}.`;
+  }
+  document.getElementById('ra-score').innerHTML = scoreHTML(raState);
+}
+
+// =====================================================================
+// 10. SHAPE PROPERTY QUIZ
+// =====================================================================
+const SHAPES = [
+  { name: 'Triangle', sides: 3, vertices: 3, equalSides: 'depends' },
+  { name: 'Square', sides: 4, vertices: 4, equalSides: 'Yes' },
+  { name: 'Rectangle', sides: 4, vertices: 4, equalSides: 'No, opposite sides equal' },
+  { name: 'Pentagon', sides: 5, vertices: 5, equalSides: 'depends' },
+  { name: 'Hexagon', sides: 6, vertices: 6, equalSides: 'depends' },
+  { name: 'Octagon', sides: 8, vertices: 8, equalSides: 'depends' },
+];
+let shState = { shape: null, field: null, answer: null, correct: 0, attempted: 0 };
+function renderShapes() {
+  shState = { shape: null, field: null, answer: null, correct: 0, attempted: 0 };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🔷 Shape Property Quiz</h2>
+      <p class="subtext">Multiple choice. How many sides or vertices does the shape have?</p>
+      ${tutorHTML('shapes')}
+      <div id="sh-score">${scoreHTML(shState)}</div>
+      <div id="sh-question"></div>
+      <div id="sh-feedback" class="feedback"></div>
+    </div>
+  `;
+  newSHQuestion();
+}
+function newSHQuestion() {
+  const shape = pick(SHAPES);
+  const field = pick(['sides', 'vertices']);
+  shState.shape = shape; shState.field = field; shState.answer = shape[field];
+  const options = shuffle([...new Set([shape[field], shape[field]-1, shape[field]+1, shape[field]+2])]).slice(0,4);
+  document.getElementById('sh-question').innerHTML = `
+    <div class="q-box">How many ${field} does a <strong>${shape.name}</strong> have?</div>
+    <div class="mcq-opts">${options.map(o => `<div class="mcq-opt" onclick="checkSH(this, ${o})">${o}</div>`).join('')}</div>
+    <button class="secondary small" onclick="newSHQuestion()">New question</button>
+  `;
+  document.getElementById('sh-feedback').className = 'feedback';
+}
+function checkSH(el, val) {
+  shState.attempted++;
+  const opts = document.querySelectorAll('#sh-question .mcq-opt');
+  const fb = document.getElementById('sh-feedback');
+  if (val === shState.answer) {
+    shState.correct++;
+    el.classList.add('correct');
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct! New question loading.';
+    opts.forEach(o => o.onclick = null);
+    setTimeout(newSHQuestion, 1000);
+  } else {
+    el.classList.add('wrong');
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. A ${shState.shape.name} has ${shState.answer} ${shState.field}.`;
+    opts.forEach(o => o.onclick = null);
+  }
+  document.getElementById('sh-score').innerHTML = scoreHTML(shState);
+}
+
+// =====================================================================
+// 11. MIRROR MATCH
+// =====================================================================
+const MIRROR_SHAPES = [
+  [[0,1],[1,1],[2,1],[2,2],[2,3]],
+  [[0,1],[0,2],[0,3],[1,2],[2,2]],
+  [[0,0],[1,0],[1,1],[2,1],[2,2],[3,2]],
+  [[1,2],[2,1],[2,2],[2,3],[3,2]],
+  [[0,3],[1,3],[2,0],[2,1],[2,2],[2,3]],
+];
+let mmState = { shape: null, userCells: new Set() };
+function renderMirror() {
+  mmState.shape = pick(MIRROR_SHAPES);
+  mmState.userCells = new Set();
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🪞 Mirror Match</h2>
+      <p class="subtext">The blue squares on the left are the shape. Click squares on the right of the orange mirror line to build the reflection.</p>
+      ${tutorHTML('mirror')}
+      <div class="gridwrap"><div class="mirror-grid" id="mm-grid"></div></div>
+      <button class="action" onclick="checkMirror()">Check</button>
+      <button class="secondary" onclick="renderMirror()">New Shape</button>
+      <button class="secondary" onclick="clearMirror()">Clear my side</button>
+      <div id="mm-feedback" class="feedback"></div>
+    </div>
+  `;
+  buildMirrorGrid();
+}
+function buildMirrorGrid() {
+  const grid = document.getElementById('mm-grid');
+  grid.innerHTML = '';
+  const rows = 5, cols = 12;
+  const givenSet = new Set(mmState.shape.map(([r,c]) => `${r},${c}`));
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      if (c === 5) cell.classList.add('mirrorline');
+      const key = `${r},${c}`;
+      if (givenSet.has(key)) {
+        cell.classList.add('given');
+      } else if (c >= 6) {
+        cell.classList.add('clickable');
+        cell.onclick = () => {
+          if (mmState.userCells.has(key)) { mmState.userCells.delete(key); cell.classList.remove('userfill'); }
+          else { mmState.userCells.add(key); cell.classList.add('userfill'); }
+        };
+      }
+      grid.appendChild(cell);
+    }
+  }
+}
+function clearMirror() {
+  mmState.userCells.clear();
+  document.querySelectorAll('#mm-grid .cell.userfill').forEach(c => c.classList.remove('userfill'));
+}
+function checkMirror() {
+  const expected = new Set(mmState.shape.map(([r,c]) => `${r},${11-c}`));
+  const fb = document.getElementById('mm-feedback');
+  const missing = [...expected].filter(k => !mmState.userCells.has(k)).length;
+  const extra = [...mmState.userCells].filter(k => !expected.has(k)).length;
+  if (missing === 0 && extra === 0) {
+    fb.className = 'feedback good';
+    fb.textContent = 'Perfect reflection!';
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite yet: ${missing} square(s) missing, ${extra} extra square(s). Remember, same row, mirrored column.`;
+  }
+}
+
+// =====================================================================
+// 12. TALLY AND BAR CHART BUILDER
+// =====================================================================
+let dbState = { labels: ['Apple','Banana','Grapes','Orange','Other'], counts: [0,0,0,0,0] };
+function renderDataBars() {
+  dbState = { labels: ['Apple','Banana','Grapes','Orange','Other'], counts: [0,0,0,0,0] };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">📊 Tally and Bar Chart Builder</h2>
+      <p class="subtext">Rename the categories if you like, for example for a different survey, then click plus 1 each time someone picks that answer. The bar chart builds itself live.</p>
+      ${tutorHTML('databars')}
+      <div id="db-rows"></div>
+      <div class="bar-chart" id="db-chart"></div>
+      <button class="secondary" onclick="resetDB()">Reset all counts</button>
+    </div>
+  `;
+  renderDBRows();
+  renderDBChart();
+}
+function renderDBRows() {
+  document.getElementById('db-rows').innerHTML = dbState.labels.map((lbl, i) => `
+    <div class="tally-row">
+      <input type="text" value="${esc(lbl)}" onchange="renameDB(${i}, this.value)" />
+      <button class="secondary small" onclick="bumpDB(${i}, -1)">minus 1</button>
+      <span class="count">${dbState.counts[i]}</span>
+      <button class="secondary small" onclick="bumpDB(${i}, 1)">plus 1</button>
+    </div>
+  `).join('');
+}
+function renameDB(i, val) { dbState.labels[i] = val || dbState.labels[i]; renderDBChart(); }
+function bumpDB(i, delta) {
+  dbState.counts[i] = Math.max(0, dbState.counts[i] + delta);
+  renderDBRows();
+  renderDBChart();
+}
+function resetDB() { dbState.counts = dbState.counts.map(() => 0); renderDBRows(); renderDBChart(); }
+function renderDBChart() {
+  const max = Math.max(5, ...dbState.counts) + 1;
+  document.getElementById('db-chart').innerHTML = dbState.labels.map((lbl, i) => {
+    const h = Math.round((dbState.counts[i] / max) * 150);
+    const c = GROOVY[i % GROOVY.length];
+    return `<div class="bar-col">
+      <div class="num">${dbState.counts[i]}</div>
+      <div class="bar" style="height:${h}px; background: var(--${c});"></div>
+      <div class="lbl">${esc(lbl)}</div>
+    </div>`;
+  }).join('');
+}
+
+// =====================================================================
+// 13. MIXED WORD PROBLEMS
+// =====================================================================
+let wpState = { answer: 0, hint: '', correct: 0, attempted: 0 };
+const WORD_PROBLEM_TEMPLATES = [
+  () => {
+    const total = pick([20,40,50,60,80,100]);
+    const pct = pick([10,20,25,50,75]);
+    const spend = total * pct / 100;
+    return { q: `${pick(['Thandi','Sipho','Aisha','Liam'])} has R${total}. They spend ${pct}% of it. How much money is left?`, a: total - spend, hint: `Find ${pct}% of R${total} first, then subtract it from R${total}.` };
+  },
+  () => {
+    const l = randInt(3, 12), w = randInt(2, 10);
+    return { q: `A rectangular garden is ${l} m long and ${w} m wide. What is its area, in square metres?`, a: l * w, hint: 'Area of a rectangle equals length times width.' };
+  },
+  () => {
+    const l = randInt(3, 12), w = randInt(2, 10);
+    return { q: `A rectangular garden is ${l} m long and ${w} m wide. What is its perimeter, in metres?`, a: 2 * (l + w), hint: 'Perimeter means add up all 4 sides, or 2 times (length plus width).' };
+  },
+  () => {
+    const den = pick([4,5,8,10]);
+    const eaten = randInt(1, den - 1);
+    return { q: `A pizza is cut into ${den} equal slices. Someone eats ${eaten} slices. What percentage of the pizza is left?`, a: Math.round(((den - eaten) / den) * 100), hint: `First find the fraction left (${den-eaten}/${den}), then convert it to a percentage.` };
+  },
+  () => {
+    const muffins12 = pick([200, 300, 400, 600]);
+    const wantMuffins = pick([3, 4, 6]);
+    return { q: `A recipe for 12 muffins uses ${muffins12} g of flour. How much flour is needed for ${wantMuffins} muffins?`, a: (muffins12 / 12) * wantMuffins, hint: 'Find how much flour is needed for 1 muffin first, then multiply.' };
+  },
+  () => {
+    const rand = randInt(100, 999);
+    const nearest = pick([10, 100]);
+    return { q: `Round ${rand} to the nearest ${nearest}.`, a: Math.round(rand / nearest) * nearest, hint: `Look at the digit right after the place you are rounding to.` };
+  },
+];
+function renderWordProblems() {
+  wpState = { answer: 0, hint: '', correct: 0, attempted: 0 };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">📝 Mixed Word Problems</h2>
+      <p class="subtext">Term 3 review, combining percentage, measurement, fractions, ratio and rounding.</p>
+      ${tutorHTML('wordprobs')}
+      <div id="wp-score">${scoreHTML(wpState)}</div>
+      <div id="wp-question"></div>
+      <div id="wp-feedback" class="feedback"></div>
+    </div>
+  `;
+  newWPQuestion();
+}
+function newWPQuestion() {
+  const t = pick(WORD_PROBLEM_TEMPLATES)();
+  wpState.answer = t.a; wpState.hint = t.hint;
+  document.getElementById('wp-question').innerHTML = `
+    <div class="q-box">${t.q}</div>
+    <input type="number" id="wp-in" step="any" />
+    <button class="action" onclick="checkWP()">Check</button>
+    <button class="secondary" onclick="newWPQuestion()">New problem</button>
+    <div><button class="hint-toggle" onclick="document.getElementById('wp-hint').style.display='block'">Show hint</button></div>
+    <div class="hint-text" id="wp-hint">${t.hint}</div>
+  `;
+  document.getElementById('wp-feedback').className = 'feedback';
+}
+function checkWP() {
+  const v = parseFloat(document.getElementById('wp-in').value);
+  wpState.attempted++;
+  const fb = document.getElementById('wp-feedback');
+  if (Math.abs(v - wpState.answer) < 0.01) {
+    wpState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = 'Correct!';
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = `Not quite. The answer was ${wpState.answer}. ${wpState.hint}`;
+  }
+  document.getElementById('wp-score').innerHTML = scoreHTML(wpState);
+}
+
+// ---------- init ----------
+renderHome();
+</script>
+</body>
+</html>
