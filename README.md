@@ -46,4 +46,23 @@ docker run --rm -p 8080:80 mathit
 # then open http://localhost:8080/
 ```
 
-See `Dockerfile` (nginx serving the static file as `index.html`).
+This uses `Dockerfile` (nginx serving the static file as `index.html`) and needs a
+container registry reachable to pull `nginx:alpine`.
+
+**If your network blocks Docker Hub / GHCR** (e.g. a locked-down CI runner or sandbox —
+this is the situation this repo was first containerized in), use the registry-free
+variant instead, which builds `FROM scratch` with no external pulls at all:
+
+```bash
+docker-offline/build.sh          # stages a local Node binary + its shared libs, builds mathit:offline
+docker run --rm -p 8080:8080 mathit:offline
+# then open http://localhost:8080/
+```
+
+`build.sh` only needs `node`, `ldd`, and `docker` on the host — it copies whatever
+Node binary is on `PATH` plus its handful of shared-library dependencies into
+`docker-offline/rootfs/` and builds from that, so the resulting image has nothing in
+it but that one static file server and `MathIT.html`. Verified working end to end
+(built, ran, and loaded correctly in a headless browser with zero console errors)
+in the environment this was first set up in, where `registry-1.docker.io` and
+`ghcr.io` both returned `403 Forbidden`.
