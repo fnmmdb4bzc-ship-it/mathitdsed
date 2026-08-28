@@ -387,6 +387,10 @@
 <main id="app"></main>
 <footer>Built for independent practice between sessions and for use during therapy. All content authored to match CAPS, not from an official past paper bank.</footer>
 
+<!-- Keycloak sign-in and the MathIT API client. Must load before the app
+     script below, which calls MathITAuth during start-up. -->
+<script src="/mathit-auth.js"></script>
+
 <script>
 
 // ---------- Utilities ----------
@@ -525,9 +529,19 @@ const TUTOR_NOTES = {
   g8_enlarge: "Enlargement by a scale factor greater than 1 makes a shape bigger, a scale factor between 0 and 1 makes it smaller, which surprises many learners the first time they meet it. Every length on the original shape gets multiplied by the same scale factor, that consistency is the property worth checking on any answer.",
 };
 function tutorHTML(key) {
+  // Same rule as backBtn/levelNote: Levels 7 and 8 are UK content and stay
+  // English even when the profile language is Afrikaans, so this uses the
+  // showAf guard rather than a plain tr().
+  //
+  // Only the toggle is translated. TUTOR_NOTES itself has no Afrikaans
+  // version, so the panel behind it stays English for now.
+  const showAf = currentLang === 'af' && currentLevel !== '7' && currentLevel !== '8';
+  const label = showAf
+    ? 'Vir die tutor: wat hier eintlik geoefen word'
+    : 'For the tutor: what this is really practising';
   return `
     <div class="tutor-box">
-      <button class="tutor-toggle" onclick="toggleTutor('${key}')">For the tutor: what this is really practising</button>
+      <button class="tutor-toggle" onclick="toggleTutor('${key}')">${label}</button>
       <div class="tutor-panel" id="tutor-${key}">${TUTOR_NOTES[key]}</div>
     </div>
   `;
@@ -816,57 +830,76 @@ function renderHome() {
 
 // =====================================================================
 // WELCOME / SIGN-IN / STREAK
-// A tutoring practice typically has several children sharing one device or
-// file, so this keeps a small list of profiles in localStorage rather than
-// a single hardcoded child. Each profile carries its own name, optional
-// birthday, and practice streak.
+// Each student signs in as themselves through Keycloak, and their profile
+// and progress live in the MathIT database rather than on the device. That
+// is what keeps one student from seeing another's work: the API derives the
+// student from the access token, so there is no device-local list of
+// children for anyone to browse.
+//
+// The mathit*Profile* helpers below keep their original names and shapes so
+// the rest of the app (which calls them in a dozen places) did not need to
+// change; only what backs them did.
 // =====================================================================
-const MATHIT_PROFILES_KEY = 'mathit_profiles_v1';
-const MATHIT_ACTIVE_KEY = 'mathit_active_profile_v1';
+
+// The signed-in student, as returned by GET /api/me. Null when signed out.
+let mathitServerProfile = null;
 
 function mathitLoadProfiles() {
-  try {
-    const raw = localStorage.getItem(MATHIT_PROFILES_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) { return []; }
+  return mathitServerProfile ? [mathitServerProfile] : [];
 }
+
+/**
+ * Pushes profile edits (name, birthday, language) back to the server.
+ * Fire-and-forget: a failed sync must never interrupt a child mid-practice,
+ * and the next successful call will carry the current values anyway.
+ */
 function mathitSaveProfiles(profiles) {
-  try { localStorage.setItem(MATHIT_PROFILES_KEY, JSON.stringify(profiles)); } catch (e) { /* storage unavailable; app still works, just without memory */ }
+  const p = profiles && profiles[0];
+  if (!p || !window.MathITAuth || !MathITAuth.isSignedIn()) return;
+  MathITAuth.updateProfile({
+    name: p.name,
+    birthday: p.birthday || null,
+    language: p.language === 'af' ? 'af' : 'en',
+  }).then(updated => { mathitServerProfile = mathitAdaptProfile(updated); })
+    .catch(err => console.warn('could not save profile:', err.message));
 }
+
 function mathitGetActiveName() {
-  try { return localStorage.getItem(MATHIT_ACTIVE_KEY) || null; } catch (e) { return null; }
+  return mathitServerProfile ? mathitServerProfile.name : null;
 }
+
+/** Signing out is the only way to "switch student" now. */
 function mathitSetActiveName(name) {
-  try {
-    if (name) localStorage.setItem(MATHIT_ACTIVE_KEY, name);
-    else localStorage.removeItem(MATHIT_ACTIVE_KEY);
-  } catch (e) { /* ignore */ }
+  if (!name && window.MathITAuth) MathITAuth.logout();
 }
+
 function mathitGetActiveProfile() {
-  const name = mathitGetActiveName();
-  if (!name) return null;
-  return mathitLoadProfiles().find(p => p.name === name) || null;
+  return mathitServerProfile;
+}
+
+/** Maps the API shape onto the profile shape the app already expects. */
+function mathitAdaptProfile(api) {
+  if (!api) return null;
+  return {
+    name: api.name || api.username,
+    username: api.username,
+    birthday: api.birthday || null,
+    language: api.language === 'af' ? 'af' : 'en',
+    streak: api.streak || 0,
+    lastPracticeDate: api.lastPracticeDate || null,
+    status: api.status,
+    isAdmin: Array.isArray(api.roles) && api.roles.includes('admin'),
+  };
 }
 function mathitTodayStr() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
-// Extends the streak if this is a fresh day continuing straight on from the
-// last practice day, resets it to 1 if a day (or more) was skipped, and
-// leaves it untouched if today has already been counted.
+// The streak is now advanced by the server, inside the same transaction that
+// records an answered question (see POST /api/me/practice). Doing it here as
+// well would double-count, and a device with a wrong clock could inflate it.
+// Kept as a no-op so the existing call sites read the same as before.
 function mathitUpdateStreak(profile) {
-  const today = mathitTodayStr();
-  if (profile.lastPracticeDate === today) return profile;
-  if (profile.lastPracticeDate) {
-    const prev = new Date(profile.lastPracticeDate + 'T00:00:00');
-    const now = new Date(today + 'T00:00:00');
-    const diffDays = Math.round((now - prev) / 86400000);
-    profile.streak = diffDays === 1 ? (profile.streak || 0) + 1 : 1;
-  } else {
-    profile.streak = 1;
-  }
-  profile.lastPracticeDate = today;
   return profile;
 }
 function mathitIsBirthdayToday(profile) {
@@ -887,7 +920,7 @@ function mathitGreetingBannerHTML(profile) {
       <h2 style="margin:0 0 4px 0; color:var(--ocean-dark);">${isBday ? tr(`🎂 Happy Birthday, ${esc(profile.name)}!`, `🎂 Veels geluk met jou verjaardag, ${esc(profile.name)}!`) : tr(`Welcome back, ${esc(profile.name)}!`, `Welkom terug, ${esc(profile.name)}!`)}</h2>
       ${streakLine ? `<p class="subtext" style="margin:4px 0 0 0;">${streakLine}</p>` : ''}
       <div style="margin-top:8px; display:flex; gap:12px; justify-content:center; align-items:center; flex-wrap:wrap;">
-        <button class="mathit-switch-link" style="color:var(--ocean-dark);" onclick="mathitSwitchProfile()">${tr(`Not ${esc(profile.name)}? Switch student`, `Nie ${esc(profile.name)} nie? Wissel leerder`)}</button>
+        <button class="mathit-switch-link" style="color:var(--ocean-dark);" onclick="mathitSwitchProfile()">${tr(`Not ${esc(profile.name)}? Sign out`, `Nie ${esc(profile.name)} nie? Teken uit`)}</button>
         <span style="display:inline-flex; gap:4px;">
           <button class="secondary small" style="${currentLang === 'en' ? 'opacity:1;' : 'opacity:0.5;'}" onclick="mathitSetLang('en')">EN</button>
           <button class="secondary small" style="${currentLang === 'af' ? 'opacity:1;' : 'opacity:0.5;'}" onclick="mathitSetLang('af')">AF</button>
@@ -905,7 +938,8 @@ function mathitRenderHeaderGreeting() {
   el.innerHTML = `
     <span class="mathit-greet-name">${tr(`Hi, ${esc(profile.name)}!`, `Hallo, ${esc(profile.name)}!`)}</span>
     ${streak > 0 ? `<span class="mathit-streak-badge">${tr(`🔥 ${streak} day streak`, `🔥 ${streak} ${streak === 1 ? 'dag' : 'dae'} se reeks`)}</span>` : ''}
-    <button class="mathit-switch-link" onclick="mathitSwitchProfile()">${tr('Switch student', 'Wissel leerder')}</button>
+    ${profile.isAdmin ? `<a class="mathit-switch-link" href="/admin.html">${tr('Admin', 'Admin')}</a>` : ''}
+    <button class="mathit-switch-link" onclick="mathitSwitchProfile()">${tr('Sign out', 'Teken uit')}</button>
     <span style="display:inline-flex; gap:4px;">
       <button class="secondary small" style="${currentLang === 'en' ? 'opacity:1;' : 'opacity:0.5;'}" onclick="mathitSetLang('en')">EN</button>
       <button class="secondary small" style="${currentLang === 'af' ? 'opacity:1;' : 'opacity:0.5;'}" onclick="mathitSetLang('af')">AF</button>
@@ -920,101 +954,96 @@ function mathitSetNewProfileLang(lang) {
   if (enBtn) enBtn.style.opacity = mathitNewProfileLang === 'en' ? '1' : '0.5';
   if (afBtn) afBtn.style.opacity = mathitNewProfileLang === 'af' ? '1' : '0.5';
 }
+/** Signed-out landing: hand off to Keycloak to sign in or register. */
 function mathitRenderWelcome() {
-  const profiles = mathitLoadProfiles();
-  let html = `<div class="card welcome-card">
-    <h2 class="activity-title" style="justify-content:center;">👋 Welcome to MathIT!</h2>`;
-  if (profiles.length) {
-    html += `<p class="subtext">Who's practising today?</p>
-      <div class="welcome-profile-list">${profiles.map(p => `<div class="mcq-opt" onclick="mathitChooseProfile('${esc(p.name)}')">${esc(p.name)}</div>`).join('')}</div>
-      <button class="secondary" style="margin-top:16px;" onclick="mathitShowNewProfileForm()">+ New Student</button>`;
-  } else {
-    html += `<p class="subtext">Let's get started! What's your name?</p>`;
-  }
-  html += `
-    <div id="mathit-newprofile-form" style="${profiles.length ? 'display:none;' : ''} margin-top:18px;">
-      <input type="text" id="mathit-name-in" placeholder="First name" style="width:220px; text-align:center; font-size:1.1rem;" autofocus />
-      <br/><br/>
-      <label style="font-size:0.85rem; color:var(--text-soft);">Birthday (optional, so we can say happy birthday!)</label><br/>
-      <input type="date" id="mathit-bday-in" style="margin-top:6px;" />
-      <br/><br/>
-      <label style="font-size:0.85rem; color:var(--text-soft);">Language / Taal</label><br/>
-      <div style="margin-top:6px; display:flex; gap:8px; justify-content:center;">
-        <button type="button" id="mathit-lang-en-btn" class="secondary small" style="opacity:1;" onclick="mathitSetNewProfileLang('en')">English</button>
-        <button type="button" id="mathit-lang-af-btn" class="secondary small" style="opacity:0.5;" onclick="mathitSetNewProfileLang('af')">Afrikaans</button>
-      </div>
-      <br/>
-      <button class="action" onclick="mathitCreateProfile()">Let's Start! 🎉</button>
+  app.innerHTML = `<div class="card welcome-card">
+    <h2 class="activity-title" style="justify-content:center;">👋 Welcome to MathIT!</h2>
+    <p class="subtext">Sign in to pick up your practice where you left off.</p>
+    <div style="margin-top:20px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+      <button class="action" onclick="MathITAuth.login()">Sign in</button>
+      <button class="secondary" onclick="MathITAuth.register()">Create an account</button>
     </div>
+    <p class="subtext" style="margin-top:18px; font-size:0.85rem;">
+      New accounts are checked by the practice before they are switched on.
+    </p>
     <div id="mathit-welcome-feedback" class="feedback"></div>
   </div>`;
-  app.innerHTML = html;
-  mathitNewProfileLang = 'en';
-  const nameInput = document.getElementById('mathit-name-in');
-  if (nameInput) nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') mathitCreateProfile(); });
 }
-function mathitShowNewProfileForm() {
-  const form = document.getElementById('mathit-newprofile-form');
-  if (form) form.style.display = 'block';
-  const nameInput = document.getElementById('mathit-name-in');
-  if (nameInput) nameInput.focus();
+
+/**
+ * Signed in, but the account has not been approved (or has been switched off).
+ * The server enforces this; this screen only explains it.
+ */
+function mathitRenderPending(profile, message) {
+  const waiting = profile.status === 'pending';
+  app.innerHTML = `<div class="card welcome-card">
+    <h2 class="activity-title" style="justify-content:center;">
+      ${waiting ? '⏳ Almost there!' : '🚫 Account switched off'}
+    </h2>
+    <p class="subtext">Hi ${esc(profile.name)} —</p>
+    <p class="subtext">${esc(message || (waiting
+      ? 'Your account is waiting for the practice to approve it. Please check back soon.'
+      : 'Your account has been switched off. Please speak to your tutor.'))}</p>
+    <div style="margin-top:20px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+      <button class="action" onclick="mathitInit()">Check again</button>
+      <button class="secondary" onclick="MathITAuth.logout()">Sign out</button>
+    </div>
+  </div>`;
 }
-function mathitCreateProfile() {
-  const nameInput = document.getElementById('mathit-name-in');
-  const fb = document.getElementById('mathit-welcome-feedback');
-  const name = nameInput.value.trim();
-  if (!name) { fb.className = 'feedback bad'; fb.textContent = 'Please type a name to get started.'; return; }
-  const profiles = mathitLoadProfiles();
-  if (profiles.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-    fb.className = 'feedback bad';
-    fb.textContent = 'That name is already used on this device. Choose it from the list above, or type a different name.';
-    return;
-  }
-  const bdayVal = document.getElementById('mathit-bday-in').value || null;
-  profiles.push({ name, birthday: bdayVal, streak: 0, lastPracticeDate: null, language: mathitNewProfileLang || 'en' });
-  mathitSaveProfiles(profiles);
-  mathitChooseProfile(name);
-}
-function mathitChooseProfile(name) {
-  mathitSetActiveName(name);
-  const profiles = mathitLoadProfiles();
-  const idx = profiles.findIndex(p => p.name === name);
-  if (idx === -1) { mathitRenderWelcome(); return; }
-  mathitUpdateStreak(profiles[idx]);
-  mathitSaveProfiles(profiles);
-  currentLang = profiles[idx].language === 'af' ? 'af' : 'en';
+
+// Registration is Keycloak's job now; both entry points lead to its form.
+function mathitShowNewProfileForm() { MathITAuth.register(); }
+function mathitCreateProfile() { MathITAuth.register(); }
+
+/** Enters the app for the signed-in student. */
+function mathitChooseProfile() {
+  const profile = mathitGetActiveProfile();
+  if (!profile) { mathitRenderWelcome(); return; }
+  currentLang = profile.language === 'af' ? 'af' : 'en';
   mathitRenderHeaderGreeting();
   currentLevel = '4';
   renderLevelTabs();
   renderHome();
   window.scrollTo(0, 0);
 }
+
+/** "Switch student" means a full sign-out, so no session leaks to the next child. */
 function mathitSwitchProfile() {
-  mathitSetActiveName(null);
-  currentLang = 'en';
-  mathitRenderHeaderGreeting();
-  mathitRenderWelcome();
-  window.scrollTo(0, 0);
+  MathITAuth.logout();
 }
-function mathitInit() {
+
+async function mathitInit() {
   renderLevelTabs();
-  const profile = mathitGetActiveProfile();
-  if (profile) {
-    // The active profile persists across reloads (a tutor's device typically
-    // stays signed in as the same child), so the streak has to be brought up
-    // to date here too, not only at the moment a profile is first chosen.
-    mathitUpdateStreak(profile);
-    const profiles = mathitLoadProfiles();
-    const idx = profiles.findIndex(p => p.name === profile.name);
-    if (idx !== -1) { profiles[idx] = profile; mathitSaveProfiles(profiles); }
-    currentLang = profile.language === 'af' ? 'af' : 'en';
+  currentLang = 'en';
+
+  let api = null;
+  try {
+    api = await MathITAuth.init();
+  } catch (err) {
     mathitRenderHeaderGreeting();
-    renderHome();
-  } else {
-    currentLang = 'en';
+    app.innerHTML = `<div class="card welcome-card">
+      <h2 class="activity-title" style="justify-content:center;">Cannot reach MathIT</h2>
+      <p class="subtext">${esc(err.message)}</p>
+      <button class="action" style="margin-top:16px;" onclick="location.reload()">Try again</button>
+    </div>`;
+    return;
+  }
+
+  if (!api) {                       // signed out
     mathitRenderHeaderGreeting();
     mathitRenderWelcome();
+    return;
   }
+
+  mathitServerProfile = mathitAdaptProfile(api);
+
+  if (mathitServerProfile.status !== 'active') {
+    mathitRenderHeaderGreeting();
+    mathitRenderPending(mathitServerProfile);
+    return;
+  }
+
+  mathitChooseProfile();
 }
 
 function backBtn() {
@@ -1028,7 +1057,40 @@ function levelNote(a) {
   const badgeAf = key && ACTIVITIES_AF[key] ? ACTIVITIES_AF[key].badgeAf : null;
   return `<div class="levelnote">${showAf && badgeAf ? badgeAf : a.badge}</div>`;
 }
+// Every activity keeps its own {correct, attempted} state object and calls
+// scoreHTML() right after marking an answer. That makes scoreHTML the one
+// place all ~40 activities pass through, so progress is reported from here
+// rather than by editing each activity's check function.
+const mathitReportedScores = new WeakMap();
+
+function mathitReportProgress(state) {
+  if (!state || typeof state.attempted !== 'number') return;
+
+  const prev = mathitReportedScores.get(state) || { attempted: 0, correct: 0 };
+  const dAttempted = state.attempted - prev.attempted;
+  const dCorrect = state.correct - prev.correct;
+  mathitReportedScores.set(state, { attempted: state.attempted, correct: state.correct });
+
+  // Nothing new (first render, or the activity reset its counters).
+  if (dAttempted <= 0) return;
+  if (!window.MathITAuth || !MathITAuth.isSignedIn()) return;
+
+  MathITAuth.recordPractice({
+    topic: (typeof currentActivityKey === 'string' && currentActivityKey) || 'unknown',
+    level: String(typeof currentLevel === 'undefined' ? '' : currentLevel),
+    correct: dCorrect > 0,
+  }).then(res => {
+    // Keep the header streak badge in step with the server's count.
+    if (res && typeof res.streak === 'number' && mathitServerProfile
+        && mathitServerProfile.streak !== res.streak) {
+      mathitServerProfile.streak = res.streak;
+      mathitRenderHeaderGreeting();
+    }
+  }).catch(err => console.warn('could not record practice:', err.message));
+}
+
 function scoreHTML(state) {
+  mathitReportProgress(state);
   const profile = mathitGetActiveProfile();
   const showAf = currentLang === 'af' && currentLevel !== '7' && currentLevel !== '8';
   const label = profile ? (showAf ? `${esc(profile.name)} se telling` : `${esc(profile.name)}'s score`) : (showAf ? 'Telling' : 'Score');

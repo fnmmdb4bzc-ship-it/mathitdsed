@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MathIT — Admin</title>
+<style>
+  :root {
+    --ink: #12455f; --muted: #6b8ea3; --line: #d9e6ee;
+    --bg: #f2f8fb; --card: #fff; --pink: #f2748c; --teal: #17a2b8;
+    --green: #2e9e6b; --amber: #c98a1b; --red: #d0453f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { background: linear-gradient(120deg, #0f5f86, #17a2b8); color: #fff; padding: 18px 24px;
+           display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 20px; font-weight: 700; }
+  header .who { margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: 14px; }
+  main { max-width: 1120px; margin: 24px auto; padding: 0 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+          padding: 18px; margin-bottom: 20px; }
+  h2 { margin: 0 0 14px; font-size: 16px; }
+  button { font: inherit; border-radius: 8px; border: 1px solid var(--line);
+           background: #fff; color: var(--ink); padding: 7px 13px; cursor: pointer; }
+  button:hover:not(:disabled) { border-color: var(--teal); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.primary { background: var(--pink); border-color: var(--pink); color: #fff; font-weight: 600; }
+  button.ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.5); }
+  button.danger { color: var(--red); border-color: #eebfbd; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .pill.active { background: #e2f5ec; color: var(--green); }
+  .pill.pending { background: #fdf2dd; color: var(--amber); }
+  .pill.disabled { background: #f1f1f1; color: #777; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+         background: #cbd8e0; margin-right: 6px; vertical-align: middle; }
+  .dot.on { background: var(--green); box-shadow: 0 0 0 3px rgba(46,158,107,.18); }
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+          padding: 10px 16px; min-width: 92px; }
+  .stat b { display: block; font-size: 22px; }
+  .stat span { font-size: 12px; color: var(--muted); }
+  form.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; align-items: end; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  input, select { width: 100%; font: inherit; padding: 7px 9px;
+                  border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); }
+  .msg { padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; display: none; }
+  .msg.err { display: block; background: #fdecea; color: var(--red); }
+  .msg.ok  { display: block; background: #e2f5ec; color: var(--green); }
+  .gate { max-width: 460px; margin: 80px auto; text-align: center; }
+  .muted { color: var(--muted); }
+  .actions { display: flex; gap: 6px; justify-content: flex-end; }
+  @media (max-width: 720px) { .hide-sm { display: none; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🦩 MathIT — Admin</h1>
+  <div class="who">
+    <span id="whoami"></span>
+    <button class="ghost" id="refreshBtn">Refresh</button>
+    <button class="ghost" id="logoutBtn">Sign out</button>
+  </div>
+</header>
+
+<main>
+  <div id="gate" class="gate">
+    <h2>Practice administration</h2>
+    <p class="muted">Sign in with an administrator account to manage students.</p>
+    <button class="primary" id="loginBtn">Sign in</button>
+  </div>
+
+  <div id="app" hidden>
+    <div id="msg" class="msg"></div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="card">
+      <h2>Add a student</h2>
+      <p class="muted" style="margin-top:-8px">
+        Created directly in Keycloak and approved immediately — no waiting.
+        The student is asked to change this password at first sign-in.
+      </p>
+      <form class="grid" id="addForm">
+        <div><label for="f-username">Username *</label><input id="f-username" required autocomplete="off"></div>
+        <div><label for="f-name">Display name</label><input id="f-name" autocomplete="off"></div>
+        <div><label for="f-email">Email</label><input id="f-email" type="email" autocomplete="off"></div>
+        <div><label for="f-password">Temp password *</label><input id="f-password" required autocomplete="new-password"></div>
+        <div><label for="f-birthday">Birthday</label><input id="f-birthday" type="date"></div>
+        <div>
+          <label for="f-language">Language</label>
+          <select id="f-language"><option value="en">English</option><option value="af">Afrikaans</option></select>
+        </div>
+        <div><button class="primary" type="submit" id="addBtn">Add student</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Students</h2>
+      <div id="sessionWarn" class="muted" style="display:none;margin-bottom:10px">
+        ⚠️ Keycloak sessions unavailable — the online column may be inaccurate.
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Student</th><th>Status</th><th class="hide-sm">Language</th>
+            <th class="hide-sm">Streak</th><th class="hide-sm">Score</th>
+            <th class="hide-sm">Last seen</th><th style="text-align:right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="rows"><tr><td colspan="7" class="muted">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script src="/mathit-auth.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function flash(text, kind = 'ok') {
+  const el = $('msg');
+  el.textContent = text;
+  el.className = 'msg ' + (kind === 'err' ? 'err' : 'ok');
+  if (kind !== 'err') setTimeout(() => { el.className = 'msg'; }, 4000);
+}
+
+function ago(iso) {
+  if (!iso) return '—';
+  const secs = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (secs < 60) return 'just now';
+  if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
+  if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
+  return Math.floor(secs / 86400) + 'd ago';
+}
+
+function renderStats(c) {
+  $('stats').innerHTML = [
+    ['Online now', c.online], ['Awaiting approval', c.pending],
+    ['Active', c.active], ['Disabled', c.disabled], ['Total', c.total],
+  ].map(([label, n]) => `<div class="stat"><b>${n}</b><span>${esc(label)}</span></div>`).join('');
+}
+
+function renderRows(students) {
+  if (!students.length) {
+    $('rows').innerHTML = '<tr><td colspan="7" class="muted">No students yet.</td></tr>';
+    return;
+  }
+  $('rows').innerHTML = students.map(s => {
+    const pct = s.attempted ? Math.round((s.correct / s.attempted) * 100) + '%' : '—';
+    const approve = s.status !== 'active'
+      ? `<button data-act="approve" data-id="${s.id}">Approve</button>` : '';
+    const disable = s.status === 'active'
+      ? `<button data-act="disable" data-id="${s.id}">Disable</button>` : '';
+    return `<tr>
+      <td><span class="dot ${s.online ? 'on' : ''}" title="${s.online ? 'online now' : 'offline'}"></span>
+          <b>${esc(s.name)}</b><br><span class="muted">${esc(s.username)}</span></td>
+      <td><span class="pill ${s.status}">${s.status}</span></td>
+      <td class="hide-sm">${esc(s.language)}</td>
+      <td class="hide-sm">${s.streak || 0}</td>
+      <td class="hide-sm">${s.correct}/${s.attempted} <span class="muted">${pct}</span></td>
+      <td class="hide-sm">${s.online ? '<b>online</b>' : esc(ago(s.lastSeenAt))}</td>
+      <td><div class="actions">${approve}${disable}
+          <button class="danger" data-act="delete" data-id="${s.id}" data-name="${esc(s.name)}">Delete</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function load() {
+  try {
+    const data = await MathITAuth.api('/admin/students');
+    renderStats(data.counts);
+    renderRows(data.students);
+    $('sessionWarn').style.display = data.sessionsAvailable ? 'none' : 'block';
+  } catch (err) {
+    flash('Could not load students: ' + err.message, 'err');
+  }
+}
+
+$('rows').addEventListener('click', async e => {
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const { act, id, name } = btn.dataset;
+
+  if (act === 'delete' && !confirm(
+    `Delete ${name}?\n\nThis removes their login and all practice history. This cannot be undone.`)) return;
+
+  btn.disabled = true;
+  try {
+    if (act === 'delete') await MathITAuth.api(`/admin/students/${id}`, { method: 'DELETE' });
+    else await MathITAuth.api(`/admin/students/${id}/${act}`, { method: 'POST' });
+    flash(`Student ${act === 'delete' ? 'deleted' : act + 'd'}.`);
+    await load();
+  } catch (err) {
+    flash(`Could not ${act}: ` + err.message, 'err');
+    btn.disabled = false;
+  }
+});
+
+$('addForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('addBtn').disabled = true;
+  try {
+    await MathITAuth.api('/admin/students', {
+      method: 'POST',
+      body: {
+        username: $('f-username').value.trim(),
+        name: $('f-name').value.trim() || undefined,
+        email: $('f-email').value.trim() || undefined,
+        password: $('f-password').value,
+        birthday: $('f-birthday').value || null,
+        language: $('f-language').value,
+      },
+    });
+    flash('Student added.');
+    $('addForm').reset();
+    await load();
+  } catch (err) {
+    flash('Could not add student: ' + err.message, 'err');
+  } finally {
+    $('addBtn').disabled = false;
+  }
+});
+
+$('loginBtn').addEventListener('click', () => MathITAuth.login());
+$('logoutBtn').addEventListener('click', () => MathITAuth.logout());
+$('refreshBtn').addEventListener('click', load);
+
+(async () => {
+  try {
+    const me = await MathITAuth.init();
+    if (!me) return;                       // stay on the sign-in gate
+
+    if (!MathITAuth.isAdmin()) {
+      $('gate').innerHTML =
+        '<h2>Not an administrator</h2>' +
+        '<p class="muted">This account does not have the admin role.</p>' +
+        '<p><a href="/">Go to the practice app</a></p>';
+      return;
+    }
+
+    $('gate').hidden = true;
+    $('app').hidden = false;
+    $('whoami').textContent = 'Signed in as ' + me.username;
+    await load();
+    setInterval(load, 30000);              // keep the online column honest
+  } catch (err) {
+    flash(err.message, 'err');
+  }
+})();
+</script>
+</body>
+</html>

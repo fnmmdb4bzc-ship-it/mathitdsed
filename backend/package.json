@@ -1,0 +1,19 @@
+{
+  "name": "mathit-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MathIT backend: student registration, approval, and practice progress.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "jose": "^5.9.6",
+    "pg": "^8.13.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

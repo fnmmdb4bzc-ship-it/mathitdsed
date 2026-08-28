@@ -1,0 +1,126 @@
+{
+  "realm": "mathit",
+  "enabled": true,
+  "displayName": "MathIT",
+  "sslRequired": "none",
+
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "verifyEmail": false,
+  "editUsernameAllowed": false,
+
+  "accessTokenLifespan": 1800,
+  "ssoSessionIdleTimeout": 3600,
+  "ssoSessionMaxLifespan": 36000,
+
+  "requiredActions": [
+    { "alias": "CONFIGURE_TOTP", "name": "Configure OTP", "providerId": "CONFIGURE_TOTP", "enabled": true, "defaultAction": false, "priority": 10, "config": {} },
+    { "alias": "TERMS_AND_CONDITIONS", "name": "Terms and Conditions", "providerId": "TERMS_AND_CONDITIONS", "enabled": false, "defaultAction": false, "priority": 20, "config": {} },
+    { "alias": "UPDATE_PASSWORD", "name": "Update Password", "providerId": "UPDATE_PASSWORD", "enabled": true, "defaultAction": false, "priority": 30, "config": {} },
+    { "alias": "UPDATE_PROFILE", "name": "Update Profile", "providerId": "UPDATE_PROFILE", "enabled": true, "defaultAction": false, "priority": 40, "config": {} },
+    { "alias": "VERIFY_EMAIL", "name": "Verify Email", "providerId": "VERIFY_EMAIL", "enabled": true, "defaultAction": false, "priority": 50, "config": {} },
+    { "alias": "delete_account", "name": "Delete Account", "providerId": "delete_account", "enabled": false, "defaultAction": false, "priority": 60, "config": {} },
+    { "alias": "webauthn-register", "name": "Webauthn Register", "providerId": "webauthn-register", "enabled": true, "defaultAction": false, "priority": 70, "config": {} },
+    { "alias": "webauthn-register-passwordless", "name": "Webauthn Register Passwordless", "providerId": "webauthn-register-passwordless", "enabled": true, "defaultAction": false, "priority": 80, "config": {} },
+    { "alias": "VERIFY_PROFILE", "name": "Verify Profile", "providerId": "VERIFY_PROFILE", "enabled": false, "defaultAction": false, "priority": 90, "config": {} },
+    { "alias": "delete_credential", "name": "Delete Credential", "providerId": "delete_credential", "enabled": true, "defaultAction": false, "priority": 100, "config": {} },
+    { "alias": "update_user_locale", "name": "Update User Locale", "providerId": "update_user_locale", "enabled": true, "defaultAction": false, "priority": 1000, "config": {} }
+  ],
+
+  "roles": {
+    "realm": [
+      {
+        "name": "student",
+        "description": "A learner. Can read and write only their own profile and progress."
+      },
+      {
+        "name": "admin",
+        "description": "Practice administrator. Can approve, add, disable and delete students."
+      }
+    ]
+  },
+
+  "defaultRole": {
+    "name": "default-roles-mathit",
+    "composite": true,
+    "clientRole": false,
+    "composites": {
+      "realm": ["offline_access", "uma_authorization", "student"],
+      "client": {
+        "account": ["manage-account", "view-profile"]
+      }
+    }
+  },
+
+  "clients": [
+    {
+      "clientId": "mathit-web",
+      "name": "MathIT web app",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "rootUrl": "http://localhost:9090",
+      "baseUrl": "/",
+      "redirectUris": [
+        "http://localhost:9090/*"
+      ],
+      "webOrigins": [
+        "http://localhost:9090"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:9090/*"
+      }
+    },
+    {
+      "clientId": "mathit-api",
+      "name": "MathIT backend service",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "mathit-api-dev-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false
+    }
+  ],
+
+  "users": [
+    {
+      "username": "service-account-mathit-api",
+      "enabled": true,
+      "serviceAccountClientId": "mathit-api",
+      "clientRoles": {
+        "realm-management": [
+          "view-users",
+          "query-users",
+          "manage-users",
+          "view-realm",
+          "query-clients",
+          "view-clients"
+        ]
+      }
+    },
+    {
+      "username": "tutor",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Practice",
+      "lastName": "Admin",
+      "email": "tutor@mathit.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "tutor",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["admin", "default-roles-mathit"]
+    }
+  ]
+}

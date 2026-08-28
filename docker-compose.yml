@@ -1,0 +1,100 @@
+# MathIT full stack: Postgres + Keycloak + API + static web.
+#
+#   docker compose up -d --build
+#   web       http://localhost:9090
+#   admin UI  http://localhost:9090/admin.html
+#   keycloak  http://localhost:8081  (admin / admin)
+#
+# Dev credentials only. See .env.example before deploying anywhere real.
+
+name: mathit
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mathit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mathit_dev_pw}
+      POSTGRES_DB: ${POSTGRES_DB:-mathit}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      # Creates the separate keycloak database alongside the app database.
+      - ./backend/migrations/000_databases.sql:/docker-entrypoint-initdb.d/000_databases.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mathit} -d ${POSTGRES_DB:-mathit}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://db:5432/keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER:-mathit}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-mathit_dev_pw}
+      # Tokens must be issued with the URL the *browser* uses, so that the
+      # issuer in the JWT matches what the frontend and API expect.
+      KC_HOSTNAME: http://localhost:8081
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./keycloak/realm-mathit.json:/opt/keycloak/data/import/realm-mathit.json:ro
+    ports:
+      - "8081:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # The 26.x image is distroless: no curl, no bash. Java can still open a socket.
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e 'GET /health/ready HTTP/1.1\\nHost: localhost\\nConnection: close\\n\\n' >&3 && cat <&3 | grep -q '\"status\": \"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 40
+      start_period: 30s
+
+  api:
+    build: ./backend
+    environment:
+      PORT: "3000"
+      DATABASE_URL: postgres://${POSTGRES_USER:-mathit}:${POSTGRES_PASSWORD:-mathit_dev_pw}@db:5432/${POSTGRES_DB:-mathit}
+      # Public issuer (what the token says) vs internal base (how we reach
+      # Keycloak from inside the compose network). These differ on purpose.
+      KEYCLOAK_ISSUER: http://localhost:8081/realms/mathit
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+      KEYCLOAK_REALM: mathit
+      KEYCLOAK_API_CLIENT_ID: mathit-api
+      KEYCLOAK_API_CLIENT_SECRET: ${KEYCLOAK_API_CLIENT_SECRET:-mathit-api-dev-secret}
+      CORS_ORIGIN: http://localhost:9090
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+  web:
+    image: nginx:alpine
+    volumes:
+      # Directory mounts, not single-file mounts. Editing MathIT.html replaces
+      # its inode, and a single-file bind mount would keep serving the old one
+      # until the container was recreated. nginx.conf serves only an explicit
+      # allow-list of paths out of /srv/app, so the rest of the repo is not
+      # exposed by mounting the root here.
+      - .:/srv/app:ro
+      - ./web:/srv/web:ro
+      - ./web/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "9090:80"
+    depends_on:
+      - api
+
+volumes:
+  db_data:
