@@ -9,7 +9,13 @@
  *
  * The compose-era KEYCLOAK_INTERNAL_URL is gone. There is no private network
  * from a function, so there is one address: KEYCLOAK_URL.
+ *
+ * Kept alongside the Clerk adapter because it is what makes the port testable:
+ * point OIDC_ISSUER and KEYCLOAK_URL at the existing docker-compose Keycloak
+ * and the whole Netlify stack runs locally under `netlify dev`, before any
+ * Clerk account exists.
  */
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 const BASE          = (process.env.KEYCLOAK_URL || '').replace(/\/$/, '');
 const REALM         = process.env.KEYCLOAK_REALM || 'mathit';
 const CLIENT_ID     = process.env.KEYCLOAK_API_CLIENT_ID || 'mathit-api';
@@ -89,3 +95,40 @@ export const setUserEnabled = (id, enabled) =>
   call(`/users/${id}`, { method: 'PUT', body: JSON.stringify({ enabled }) });
 
 export const logoutUser = id => call(`/users/${id}/logout`, { method: 'POST' }).catch(() => null);
+
+/**
+ * Keycloak issues JWTs, so verification is local against the realm's JWKS and
+ * costs no network call after the first. This is the half of the adapter
+ * interface that differs most from Clerk, where the token is an opaque handle
+ * and every verification is a round trip.
+ */
+const ISSUER = process.env.OIDC_ISSUER;
+let jwks = null;
+
+export async function verifyToken(token) {
+  jwks ??= createRemoteJWKSet(new URL(`${ISSUER.replace(/\/$/, '')}/protocol/openid-connect/certs`));
+  let claims;
+  try {
+    ({ payload: claims } = await jwtVerify(token, jwks, { issuer: ISSUER }));
+  } catch (err) {
+    throw Object.assign(new Error('invalid token'), { status: 401, detail: err.message });
+  }
+  return {
+    sub: claims.sub,
+    username: claims.preferred_username || claims.sub,
+    email: claims.email || null,
+    name: claims.name || claims.given_name || claims.preferred_username || 'Student',
+    roles: claims.realm_access?.roles || [],
+  };
+}
+
+/**
+ * Present for interface parity with Clerk. Keycloak would normally handle this
+ * itself through the UPDATE_PASSWORD required action, but the app now owns the
+ * must-change-password rule for both providers, so both need the write path.
+ */
+export const setPassword = (id, password) =>
+  call(`/users/${id}/reset-password`, {
+    method: 'PUT',
+    body: JSON.stringify({ type: 'password', value: password, temporary: false }),
+  });

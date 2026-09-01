@@ -1,26 +1,27 @@
 /**
- * Token verification and student resolution.
+ * Student resolution and authorisation.
  *
- * Provider-agnostic on purpose. backend/src/auth.js hardcoded Keycloak's
- * /realms/{realm}/protocol/openid-connect/certs path; here the JWKS URL comes
- * out of the issuer's own OIDC discovery document, so pointing OIDC_ISSUER at
- * Keycloak, Clerk or anything else that speaks OIDC is a config change rather
- * than a code change.
- *
- * The compose-era split between "public issuer" and "internal URL" is gone.
- * There is no private network here: the browser and the function reach the
- * same issuer at the same address.
+ * Token *verification* is not here. It moved into netlify/lib/identity/,
+ * because it turned out to be provider-shaped in a way the original design
+ * assumed it was not: Keycloak issues JWTs that are verified locally against a
+ * JWKS, while Clerk's OIDC access tokens are opaque handles (`oat_...`) that
+ * have to be introspected over the network. Those are different enough that
+ * pretending they share an implementation would have meant a branch in the
+ * middle of this file. The adapter exposes verifyToken() and everything below
+ * works from its result.
  */
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { verifyToken } from './identity/index.mjs';
 import { query } from './db.mjs';
 
 const ISSUER = process.env.OIDC_ISSUER;
 if (!ISSUER) throw new Error('OIDC_ISSUER is not set');
 
 /**
- * Discovery, memoised per warm function instance. Costs one extra fetch on a
- * cold start and nothing afterwards. Worth it: it is what lets the frontend
- * stop knowing any provider-specific URL shapes (see /api/config).
+ * OIDC discovery, memoised per warm function instance.
+ *
+ * Used only to tell the frontend where to send the browser (see /api/config).
+ * Both Keycloak and Clerk publish /.well-known/openid-configuration, so this
+ * stays provider-neutral even though verification no longer is.
  */
 let discoveryPromise = null;
 export function discover() {
@@ -32,25 +33,6 @@ export function discover() {
     .catch(err => { discoveryPromise = null; throw err; });  // don't cache failures
   return discoveryPromise;
 }
-
-let jwks = null;
-async function keys() {
-  if (!jwks) jwks = createRemoteJWKSet(new URL((await discover()).jwks_uri));
-  return jwks;
-}
-
-/**
- * Roles, across providers.
- *
- * Keycloak puts them in realm_access.roles. Clerk and friends use a custom
- * claim, conventionally namespaced. Checking a few known shapes keeps this
- * file the only place that has to change when the provider does.
- */
-const rolesOf = c =>
-  c?.realm_access?.roles
-  ?? c?.[process.env.OIDC_ROLES_CLAIM || 'roles']
-  ?? c?.metadata?.roles
-  ?? [];
 
 export class HttpError extends Error {
   constructor(status, message, extra = {}) {
@@ -65,21 +47,7 @@ export async function authenticate(req) {
   const header = req.headers.get('authorization') || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) throw new HttpError(401, 'missing bearer token');
-
-  let claims;
-  try {
-    ({ payload: claims } = await jwtVerify(token, await keys(), { issuer: ISSUER }));
-  } catch (err) {
-    throw new HttpError(401, 'invalid token', { detail: err.message });
-  }
-
-  return {
-    sub: claims.sub,
-    username: claims.preferred_username || claims.username || claims.sub,
-    email: claims.email || null,
-    name: claims.name || claims.given_name || claims.preferred_username || 'Student',
-    roles: rolesOf(claims),
-  };
+  return verifyToken(token);
 }
 
 export function requireRole(auth, role) {
@@ -90,10 +58,9 @@ export function requireRole(auth, role) {
  * Resolves the token to a students row, creating it on first sight.
  *
  * Unchanged from backend/src/auth.js, including the column name: keycloak_id
- * still holds the identity provider's subject claim whoever issues it. Renaming
- * it to provider_id would be tidier and is a one-line migration, but it is a
- * cosmetic change and this draft keeps the schema untouched so the diff stays
- * about the architecture.
+ * holds the identity provider's subject whoever issues it. Renaming it to
+ * provider_id would be tidier and is a one-line migration, but it is cosmetic
+ * and this keeps the schema diff to the one column that had to change.
  */
 export async function loadStudent(auth) {
   const isAdmin = auth.roles.includes('admin');
@@ -113,8 +80,24 @@ export async function loadStudent(auth) {
   return rows[0];
 }
 
-/** Blocks students who exist but have not been approved (or were disabled). */
+/**
+ * Blocks students who cannot practise yet: not approved, disabled, or still
+ * holding the temporary password an admin set for them.
+ *
+ * The password gate lives here rather than in each route so it cannot be
+ * forgotten on a new one. POST /api/me/password deliberately does not call
+ * this - it is the one thing a student in that state is allowed to do.
+ */
 export function requireActive(student) {
+  if (student.must_change_password) {
+    throw new HttpError(403, 'password change required', {
+      body: {
+        error: 'password change required',
+        mustChangePassword: true,
+        message: 'Please choose your own password before you start practising.',
+      },
+    });
+  }
   if (student.status !== 'active') {
     throw new HttpError(403, 'account not active', {
       body: {

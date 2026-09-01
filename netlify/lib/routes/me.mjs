@@ -1,5 +1,6 @@
 import { query } from '../db.mjs';
 import { requireActive, HttpError } from '../auth.mjs';
+import * as identity from '../identity/index.mjs';
 
 const publicView = s => ({
   id: s.id,
@@ -10,6 +11,9 @@ const publicView = s => ({
   language: s.language,
   status: s.status,
   streak: s.streak,
+  // The frontend shows a "choose your own password" screen on this, before it
+  // renders any activities. See mathit-auth.js.
+  mustChangePassword: Boolean(s.must_change_password),
   lastPracticeDate: s.last_practice_date
     ? new Date(s.last_practice_date).toISOString().slice(0, 10)
     : null,
@@ -124,4 +128,41 @@ export async function postPractice({ student, body }) {
     streak: r.streak,
     topic: { topic, level, correct: r.correct, attempted: r.attempted },
   };
+}
+
+/**
+ * Replaces the temporary password an admin set, and lifts the gate.
+ *
+ * This route exists because Clerk has no forced-password-change flag; the rule
+ * is ours, so the write has to be ours too. Deliberately not behind
+ * requireActive - a student in this state is blocked from everything else, and
+ * this is the way out of it.
+ *
+ * The provider is updated before our flag is cleared: if Clerk rejects the
+ * password, the student stays gated rather than being let through with the
+ * temporary one still live.
+ */
+export async function postPassword({ student, body }) {
+  const { password } = body ?? {};
+
+  if (typeof password !== 'string' || password.length < 8) {
+    throw new HttpError(400, 'password must be at least 8 characters');
+  }
+  if (password.length > 200) {
+    throw new HttpError(400, 'password is too long');
+  }
+  if (student.status === 'disabled') {
+    throw new HttpError(403, 'account not active');
+  }
+
+  await identity.setPassword(student.keycloak_id, password);
+
+  const { rows } = await query(
+    `UPDATE students
+        SET must_change_password = false, updated_at = now()
+      WHERE id = $1
+  RETURNING *`,
+    [student.id],
+  );
+  return publicView(rows[0]);
 }

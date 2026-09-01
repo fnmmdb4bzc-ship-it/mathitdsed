@@ -28,6 +28,7 @@ const row = s => ({
     : null,
   lastSeenAt: s.last_seen_at,
   createdAt: s.created_at,
+  mustChangePassword: Boolean(s.must_change_password),
   online: Boolean(s.online),
   attempted: Number(s.attempted || 0),
   correct: Number(s.correct || 0),
@@ -77,8 +78,12 @@ export async function createStudent({ body }) {
 
   try {
     const { rows } = await query(
-      `INSERT INTO students (keycloak_id, username, email, display_name, birthday, language, status)
-            VALUES ($1, $2, $3, $4, $5::date, $6, 'active')
+      // must_change_password: the tutor picked this password, so the student
+      // has to replace it before practising. Self-registered students choose
+      // their own at sign-up and are never flagged.
+      `INSERT INTO students (keycloak_id, username, email, display_name, birthday, language,
+                             status, must_change_password)
+            VALUES ($1, $2, $3, $4, $5::date, $6, 'active', true)
          RETURNING *`,
       [providerId, username, email || null, name || username, birthday || null, language],
     );

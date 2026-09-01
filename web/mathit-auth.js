@@ -193,6 +193,79 @@
     return body;
   }
 
+
+  /**
+   * First-sign-in password change.
+   *
+   * The identity provider has no forced-password-change flow (Keycloak's
+   * UPDATE_PASSWORD required action has no Clerk equivalent), so the rule is
+   * enforced by our own API: while students.must_change_password is set, every
+   * practice route returns 403 and only POST /api/me/password is allowed.
+   *
+   * The screen lives here rather than in MathIT.html on purpose. This file is
+   * already the boundary that owns sign-in UX, and putting it here keeps the
+   * 756KB app file out of the diff entirely.
+   */
+  function requirePasswordChange() {
+    return new Promise(resolve => {
+      const host = document.createElement('div');
+      host.setAttribute('style', [
+        'position:fixed', 'inset:0', 'z-index:9999',
+        'display:flex', 'align-items:center', 'justify-content:center',
+        'background:rgba(20,20,30,.75)',
+        'font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif',
+      ].join(';'));
+
+      host.innerHTML = [
+        '<form style="background:#fff;border-radius:14px;padding:28px 30px;',
+        'max-width:380px;width:calc(100% - 32px);box-shadow:0 12px 40px rgba(0,0,0,.3)">',
+        '<h2 style="margin:0 0 6px;font-size:1.25rem">Choose your own password</h2>',
+        '<p style="margin:0 0 18px;color:#555;font-size:.9rem;line-height:1.45">',
+        'Your teacher set a temporary password for you. Pick a new one that only',
+        ' you know, then you can start practising.</p>',
+        '<input type="password" name="pw" autocomplete="new-password" required',
+        ' placeholder="New password" style="width:100%;box-sizing:border-box;',
+        'padding:10px 12px;margin-bottom:10px;border:1px solid #ccc;border-radius:8px;font-size:1rem">',
+        '<input type="password" name="pw2" autocomplete="new-password" required',
+        ' placeholder="Type it again" style="width:100%;box-sizing:border-box;',
+        'padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:1rem">',
+        '<p data-err style="min-height:1.2em;margin:8px 0 0;color:#c0392b;font-size:.85rem"></p>',
+        '<button type="submit" style="width:100%;margin-top:10px;padding:11px;border:0;',
+        'border-radius:8px;background:#e5698c;color:#fff;font-size:1rem;cursor:pointer">Save password</button>',
+        '</form>',
+      ].join('');
+
+      const form = host.querySelector('form');
+      const err  = host.querySelector('[data-err]');
+      const btn  = host.querySelector('button');
+
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const pw = form.pw.value, pw2 = form.pw2.value;
+
+        // Checked here for a fast, friendly message; the API enforces the same
+        // minimum, so this is convenience and not the actual guarantee.
+        if (pw.length < 8)  { err.textContent = 'Please use at least 8 characters.'; return; }
+        if (pw !== pw2)     { err.textContent = 'The two passwords do not match.';   return; }
+
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+        try {
+          profile = await api('/me/password', { method: 'POST', body: { password: pw } });
+          host.remove();
+          resolve(profile);
+        } catch (e2) {
+          err.textContent = e2.body?.error || e2.message || 'Could not save that password.';
+          btn.disabled = false;
+          btn.textContent = 'Save password';
+        }
+      });
+
+      document.body.appendChild(host);
+      form.pw.focus();
+    });
+  }
+
   /**
    * Call once on page load. Completes a redirect if we just came back from
    * the provider, then resolves to the student profile or null if not signed in.
@@ -224,6 +297,9 @@
 
     try {
       profile = await api('/me');
+      // Blocks here until a new password is set. Resolves to the fresh profile,
+      // so the app renders as normal afterwards and never sees the gated state.
+      if (profile.mustChangePassword) profile = await requirePasswordChange();
       return profile;
     } catch (err) {
       if (err.status === 401) { clearSession(); return null; }
@@ -239,6 +315,7 @@
     isAdmin: () => Boolean(profile?.roles?.includes('admin')),
     updateProfile: async patch => (profile = await api('/me', { method: 'PUT', body: patch })),
     recordPractice: payload => api('/me/practice', { method: 'POST', body: payload }),
+    changePassword: password => api('/me/password', { method: 'POST', body: { password } }),
     progress: () => api('/me/progress'),
   };
 })(window);

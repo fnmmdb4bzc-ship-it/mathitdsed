@@ -1,22 +1,35 @@
 /**
- * The identity provider's management API, behind four functions.
+ * The identity provider, behind one small interface.
  *
- * This is the only genuinely provider-shaped code in the port. Everything else
- * - token verification, the schema, every route - is generic. Isolating it
- * here means choosing a provider is a decision about one directory.
+ * This is the only genuinely provider-shaped code in the app. Everything else -
+ * the schema, every route, the frontend - is generic, so changing provider is a
+ * change to this directory plus environment variables.
  *
- * Note what is *not* here: onlineUserIds(). Reading live sessions was a
- * Keycloak-specific capability with no portable equivalent, and the app already
- * stamps students.last_seen_at on every authenticated request, so "online" is
- * now derived from that (see routes/admin.mjs). That deletes the view-clients
- * service-account trap documented in the README along with it.
+ * Two capabilities here are not interchangeable across providers, and both
+ * were discovered by reading Clerk's API rather than assumed:
+ *
+ *   verifyToken  Keycloak issues JWTs, verified locally against a JWKS with no
+ *                network call. Clerk's OIDC access tokens are opaque handles,
+ *                so they must be introspected. Same signature, very different
+ *                cost and failure modes.
+ *
+ *   setPassword  Clerk has no equivalent of Keycloak's temporary-password
+ *                requiredAction, so the "must change on first sign-in" rule is
+ *                enforced by this app instead (students.must_change_password),
+ *                and the actual change is written through this function.
+ *
+ * Not here: reading live sessions to decide who is online. That was a
+ * Keycloak-specific capability; "online" now means last_seen_at within a few
+ * minutes, which every provider supports because we compute it ourselves.
  */
-const PROVIDER = process.env.IDENTITY_PROVIDER || 'keycloak';
+const PROVIDER = process.env.IDENTITY_PROVIDER || 'clerk';
 
-const impl = PROVIDER === 'clerk'
-  ? await import('./clerk.mjs')
-  : await import('./keycloak.mjs');
+const impl = PROVIDER === 'keycloak'
+  ? await import('./keycloak.mjs')
+  : await import('./clerk.mjs');
 
+/** verifyToken(bearer) -> { sub, username, email, name, roles }. Throws HttpError(401). */
+export const verifyToken    = impl.verifyToken;
 /** createUser({username, email, firstName, password}) -> provider user id */
 export const createUser     = impl.createUser;
 /** Removes the login entirely. */
@@ -25,3 +38,5 @@ export const deleteUser     = impl.deleteUser;
 export const setUserEnabled = impl.setUserEnabled;
 /** Ends every live session for a user. Best-effort: never throws. */
 export const logoutUser     = impl.logoutUser;
+/** Writes a new password and signs the user out everywhere else. */
+export const setPassword    = impl.setPassword;

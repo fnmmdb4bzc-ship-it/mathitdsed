@@ -159,9 +159,10 @@ function renderRows(students) {
     const disable = s.status === 'active'
       ? `<button data-act="disable" data-id="${s.id}">Disable</button>` : '';
     return `<tr>
-      <td><span class="dot ${s.online ? 'on' : ''}" title="${s.online ? 'online now' : 'offline'}"></span>
+      <td><span class="dot ${s.online ? 'on' : ''}" title="${s.online ? 'active in the last 5 minutes' : 'not active recently'}"></span>
           <b>${esc(s.name)}</b><br><span class="muted">${esc(s.username)}</span></td>
-      <td><span class="pill ${s.status}">${s.status}</span></td>
+      <td><span class="pill ${s.status}">${s.status}</span>${s.mustChangePassword
+            ? ' <span class="muted" title="Still on the temporary password you set">temp pw</span>' : ''}</td>
       <td class="hide-sm">${esc(s.language)}</td>
       <td class="hide-sm">${s.streak || 0}</td>
       <td class="hide-sm">${s.correct}/${s.attempted} <span class="muted">${pct}</span></td>

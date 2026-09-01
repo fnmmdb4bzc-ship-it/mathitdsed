@@ -83,43 +83,67 @@ Not included: the Word-document deliverables (`Grade6_Maths_Intervention_Plan.do
 `build_manipulatives.js`). Those produce separate print deliverables, not this web app,
 so they were left out of this repository.
 
-## Running it on Netlify (draft)
+## Running it on Netlify
 
-An alternative to the compose stack, on the `netlify-draft` branch: the same app
-as a static site plus **one** function, with Netlify DB (Neon) for storage.
-Keycloak cannot run on Netlify - it is a stateful JVM server - so identity moves
-to a hosted OIDC provider, and `netlify/lib/identity/` is the one directory that
-knows which.
+The deployed architecture: a static site plus **one** function, with Netlify DB
+(Neon) for storage and Clerk for identity. Keycloak cannot run on Netlify - it
+is a stateful JVM server - so identity moved to a hosted OIDC provider, and
+`netlify/lib/identity/` is the one directory that knows which.
 
-| Piece | Then | Now |
+| Piece | Compose stack | Netlify |
 |---|---|---|
 | static files | nginx allow-list | `scripts/build-site.mjs` stages `dist/` |
 | API | Express, 4 files | one function, hand-rolled router |
 | Postgres | compose service | Netlify DB (Neon), HTTP driver |
 | migrations | at API start-up | `npm run migrate`, run deliberately |
-| identity | Keycloak | any OIDC issuer (endpoints via discovery) |
+| identity | Keycloak | Clerk over OIDC + PKCE |
 | "online now" | live Keycloak sessions | `last_seen_at` within 5 minutes |
 | CORS | needed on :3000 | gone - `/api/*` is same-origin |
 
 ```bash
 npm install
-cp .env.example .env      # then edit
+cp .env.example .env      # then fill in the Clerk values
 npm run migrate
 npm run dev               # netlify dev
 ```
 
-Three changes worth knowing about, because they are behaviour and not just
-plumbing:
+### Clerk setup
 
-- **`POST /api/me/practice` is one statement now.** The Neon HTTP driver has no
-  interactive transactions, so the `BEGIN`/`COMMIT` around three statements
-  became a single data-modifying CTE. Same atomicity, no connection checkout.
+1. Enable **username** as an identifier, and make email optional. The practice
+   has children with no email address of their own; `POST /users` has no
+   required fields, so username + password alone is a valid account.
+2. Create an **OAuth application** (this is what makes Clerk an OIDC provider).
+   Mark it **public** with **PKCE required** - the browser holds no secret.
+   Its client id goes in `OIDC_CLIENT_ID`, its redirect URI is the site root.
+3. Copy the **secret key** into `CLERK_SECRET_KEY`. It is used for token
+   introspection and every admin operation.
+4. Give admins `{"role": "admin"}` in **public metadata**. That is where
+   `netlify/lib/identity/clerk.mjs` reads roles from.
+
+### Four things that changed behaviour
+
+These are not plumbing - they are visible differences from the compose stack:
+
+- **Tokens are introspected, not verified locally.** Clerk's OIDC access tokens
+  are opaque handles (`oat_...`), not JWTs, so there is no key to check them
+  against. Every request would be a round trip to Clerk, so results are cached
+  for 60 seconds per warm instance. The cost is revocation lag: a student
+  disabled mid-session can keep working for up to a minute.
+- **The temporary-password flow is ours now.** Clerk has no equivalent of
+  Keycloak's `requiredActions: ['UPDATE_PASSWORD']`, so admin-created students
+  get `students.must_change_password`, every practice route refuses them while
+  it is set, and `POST /api/me/password` is the only way out. The screen for it
+  is in `mathit-auth.js`, not `MathIT.html`.
 - **"Online" changed meaning.** It was "has a live Keycloak SSO session"; it is
   now "made an authenticated request in the last 5 minutes". This also removes
   the `view-clients` service-account trap described above.
-- **`Cache-Control` is no longer `no-store`.** `MathIT.html` is 756KB and was
-  being re-downloaded in full on every load; `must-revalidate` still checks
-  freshness but lets Netlify answer 304.
+- **`POST /api/me/practice` is one statement.** The Neon HTTP driver has no
+  interactive transactions, so the `BEGIN`/`COMMIT` around three statements
+  became a single data-modifying CTE. Same atomicity, no connection checkout.
+
+`IDENTITY_PROVIDER=keycloak` still works and runs the whole Netlify stack
+against the docker-compose Keycloak, which is how to exercise it without a
+Clerk account.
 
 ## Running it locally
 
