@@ -28,13 +28,22 @@ app.get('/api/health', async (_req, res) => {
   }
 });
 
-// Tells the frontend where Keycloak lives, so the OIDC settings live in one
-// place (compose env) instead of being hardcoded into the HTML.
+// Tells the frontend where to send the browser for sign-in.
+//
+// Hands over finished endpoint URLs rather than an issuer, so mathit-auth.js
+// contains no provider-specific path construction. That keeps the one shared
+// copy of that file working against both this stack and the Netlify function,
+// which resolves the same fields through OIDC discovery.
 app.get('/api/config', (_req, res) => {
+  const oidc = `${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect`;
   res.json({
-    issuer: process.env.KEYCLOAK_ISSUER,
-    realm: process.env.KEYCLOAK_REALM || 'mathit',
     clientId: 'mathit-web',
+    endpoints: {
+      authorization: `${oidc}/auth`,
+      token:         `${oidc}/token`,
+      endSession:    `${oidc}/logout`,
+      register:      `${oidc}/registrations`,
+    },
   });
 });
 
