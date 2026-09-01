@@ -1,0 +1,48 @@
+# MathIT on Netlify.
+#
+# Static site + one function. Nothing here is stateful, so there is no
+# equivalent of docker-compose's four services - the database is Netlify DB
+# (Neon) and identity is whichever OIDC provider OIDC_ISSUER points at.
+
+[build]
+  # Stages the three public files into dist/. That directory *is* the
+  # allow-list that web/nginx.conf used to enforce by hand: nothing else in
+  # the repo is ever published, so backend/, keycloak/ and build/ cannot leak.
+  command  = "node scripts/build-site.mjs"
+  publish  = "dist"
+
+[functions]
+  directory   = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Same-origin /api, exactly as nginx did it, so the frontend keeps calling
+# /api/... and no CORS preflight ever happens.
+[[redirects]]
+  from   = "/api/*"
+  to     = "/.netlify/functions/api/:splat"
+  status = 200
+
+# 756KB of HTML. nginx used `no-store`, which re-downloaded the whole app on
+# every single load. must-revalidate still checks freshness on every request
+# but lets Netlify answer with a 304 and no body when nothing changed.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/admin.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/mathit-auth.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options        = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy        = "same-origin"

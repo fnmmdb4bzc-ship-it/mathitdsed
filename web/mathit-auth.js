@@ -1,9 +1,14 @@
 /**
  * MathIT auth + API client.
  *
- * OIDC Authorization Code flow with PKCE, spoken directly to Keycloak. Written
- * by hand rather than pulling in keycloak-js so the app keeps its "no external
- * runtime dependencies" property.
+ * OIDC Authorization Code flow with PKCE, written by hand rather than pulling
+ * in a provider SDK so the app keeps its "no external runtime dependencies"
+ * property.
+ *
+ * There is no provider-specific URL construction here any more: /api/config
+ * resolves the authorization, token and logout endpoints through OIDC
+ * discovery and hands them over ready to use. Changing identity provider is a
+ * change to the function's environment, not to this file.
  *
  * Tokens live in sessionStorage, not localStorage. That is deliberate: session
  * storage is scoped per tab, so two students on one device do not share a
@@ -24,7 +29,7 @@
     target: 'mathit_post_login_target',
   };
 
-  let config = null;      // { issuer, realm, clientId }
+  let config = null;      // { clientId, endpoints: {authorization, token, endSession, register} }
   let profile = null;     // row from /api/me
 
   const ss = {
@@ -48,7 +53,6 @@
     return b64url(digest);
   }
 
-  const endpoint = path => `${config.issuer}/protocol/openid-connect/${path}`;
   const redirectUri = () => window.location.origin + window.location.pathname;
 
   async function loadConfig() {
@@ -59,7 +63,7 @@
     return config;
   }
 
-  /** Sends the browser to Keycloak. `register: true` opens the sign-up form. */
+  /** Sends the browser to the identity provider. `register: true` opens sign-up. */
   async function login({ register = false } = {}) {
     await loadConfig();
     const verifier = randomString(64);
@@ -77,12 +81,15 @@
       code_challenge: await challengeFor(verifier),
       code_challenge_method: 'S256',
     });
-    window.location.assign(endpoint(register ? 'registrations' : 'auth') + '?' + params);
+    const target = register
+      ? (config.endpoints.register || config.endpoints.authorization)
+      : config.endpoints.authorization;
+    window.location.assign(target + '?' + params);
   }
 
   async function exchange(code) {
     const verifier = ss.get(STORE.verifier);
-    const res = await fetch(endpoint('token'), {
+    const res = await fetch(config.endpoints.token, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -111,7 +118,7 @@
     const rt = ss.get(STORE.refresh);
     if (!rt) return false;
     try {
-      const res = await fetch(endpoint('token'), {
+      const res = await fetch(config.endpoints.token, {
         method: 'POST',
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -156,8 +163,13 @@
     if (idToken) params.set('id_token_hint', idToken);
     else params.set('client_id', config.clientId);
 
+    const endSession = config.endpoints.endSession;
     clearSession();
-    window.location.assign(endpoint('logout') + '?' + params);
+    // No end_session_endpoint (some providers omit it): clearing our own tokens
+    // is all we can do, so land the student back on a signed-out page.
+    window.location.assign(endSession
+      ? endSession + '?' + params
+      : window.location.origin + window.location.pathname);
   }
 
   /** Authenticated fetch against our own API. Throws {status, body} on failure. */
@@ -183,7 +195,7 @@
 
   /**
    * Call once on page load. Completes a redirect if we just came back from
-   * Keycloak, then resolves to the student profile or null if not signed in.
+   * the provider, then resolves to the student profile or null if not signed in.
    */
   async function init() {
     await loadConfig();

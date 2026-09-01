@@ -3,3 +3,6 @@ node_modules/
 *.log
 docker-offline/rootfs/
 docker-offline/MathIT.html
+dist/
+.env
+.netlify/

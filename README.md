@@ -83,6 +83,44 @@ Not included: the Word-document deliverables (`Grade6_Maths_Intervention_Plan.do
 `build_manipulatives.js`). Those produce separate print deliverables, not this web app,
 so they were left out of this repository.
 
+## Running it on Netlify (draft)
+
+An alternative to the compose stack, on the `netlify-draft` branch: the same app
+as a static site plus **one** function, with Netlify DB (Neon) for storage.
+Keycloak cannot run on Netlify - it is a stateful JVM server - so identity moves
+to a hosted OIDC provider, and `netlify/lib/identity/` is the one directory that
+knows which.
+
+| Piece | Then | Now |
+|---|---|---|
+| static files | nginx allow-list | `scripts/build-site.mjs` stages `dist/` |
+| API | Express, 4 files | one function, hand-rolled router |
+| Postgres | compose service | Netlify DB (Neon), HTTP driver |
+| migrations | at API start-up | `npm run migrate`, run deliberately |
+| identity | Keycloak | any OIDC issuer (endpoints via discovery) |
+| "online now" | live Keycloak sessions | `last_seen_at` within 5 minutes |
+| CORS | needed on :3000 | gone - `/api/*` is same-origin |
+
+```bash
+npm install
+cp .env.example .env      # then edit
+npm run migrate
+npm run dev               # netlify dev
+```
+
+Three changes worth knowing about, because they are behaviour and not just
+plumbing:
+
+- **`POST /api/me/practice` is one statement now.** The Neon HTTP driver has no
+  interactive transactions, so the `BEGIN`/`COMMIT` around three statements
+  became a single data-modifying CTE. Same atomicity, no connection checkout.
+- **"Online" changed meaning.** It was "has a live Keycloak SSO session"; it is
+  now "made an authenticated request in the last 5 minutes". This also removes
+  the `view-clients` service-account trap described above.
+- **`Cache-Control` is no longer `no-store`.** `MathIT.html` is 756KB and was
+  being re-downloaded in full on every load; `must-revalidate` still checks
+  freshness but lets Netlify answer 304.
+
 ## Running it locally
 
 The full stack, with sign-in and the admin console:
