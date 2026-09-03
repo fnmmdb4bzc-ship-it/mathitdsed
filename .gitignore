@@ -6,3 +6,5 @@ docker-offline/MathIT.html
 dist/
 .env
 .netlify/
+.agents/
+skills-lock.json

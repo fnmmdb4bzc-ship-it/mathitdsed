@@ -55,7 +55,12 @@ async function call(path, { method = 'GET', body } = {}) {
 
   if (!res.ok) {
     const text = await res.text();
-    throw new IdentityError(res.status, `clerk ${method} ${path} -> ${res.status} ${text}`);
+    const err = new IdentityError(res.status, `clerk ${method} ${path} -> ${res.status} ${text}`);
+    // Clerk returns { errors: [{ code, message, long_message }] }. Keeping it
+    // parsed lets callers distinguish "username taken" from "password rejected"
+    // instead of guessing from the status alone.
+    try { err.clerk = JSON.parse(text).errors || []; } catch { err.clerk = []; }
+    throw err;
   }
   return res.status === 204 ? null : res.json().catch(() => null);
 }
@@ -152,12 +157,16 @@ export async function createUser({ username, email, firstName, lastName, passwor
     });
     return user.id;
   } catch (err) {
-    // Clerk reports a taken username or email as 422, where Keycloak used 409.
-    // The route above only knows about 409, so translate rather than leak this.
-    if (err.status === 422) {
+    if (err.status !== 422) throw err;
+
+    // 422 covers both "that username is taken" and "that password was
+    // rejected". Mapping every 422 to 409 told the tutor the wrong thing, so
+    // split on Clerk's own error code.
+    const codes = (err.clerk || []).map(e => e.code || '');
+    if (codes.some(c => c.includes('identifier_exists'))) {
       throw Object.assign(new Error('username or email already exists'), { status: 409 });
     }
-    throw err;
+    throw Object.assign(new Error(passwordMessage(err)), { status: 400 });
   }
 }
 
@@ -187,13 +196,39 @@ export async function logoutUser(id) {
 }
 
 /**
+ * Turns a Clerk password rejection into something a child can act on.
+ *
+ * The instance enforces the haveibeenpwned breach list, so an obvious choice
+ * like "password123" is refused. Clerk's long_message is written for end users
+ * and is better than anything generic, but the breach case gets its own wording
+ * because "found in a data breach" means nothing to a nine-year-old.
+ */
+function passwordMessage(err) {
+  const first = (err.clerk || [])[0] || {};
+  if ((first.code || '').includes('pwned')) {
+    return 'That password is too easy to guess - lots of people use it. Please pick another.';
+  }
+  return first.long_message || first.message || 'That password was not accepted.';
+}
+
+/**
  * Sets a new password and drops every other session, so a student changing
  * their temporary password on a shared device does not leave one open.
+ *
+ * Password checks are deliberately NOT skipped here. They are skipped when an
+ * admin sets a temporary password, because the tutor is choosing it in front of
+ * the child and it is replaced on first sign-in; the password the student keeps
+ * is the one that should have to pass the instance policy.
  */
 export async function setPassword(id, password) {
-  await call(`/users/${id}`, {
-    method: 'PATCH',
-    body: { password, sign_out_of_other_sessions: true },
-  });
+  try {
+    await call(`/users/${id}`, {
+      method: 'PATCH',
+      body: { password, sign_out_of_other_sessions: true },
+    });
+  } catch (err) {
+    if (err.status === 422) throw Object.assign(new Error(passwordMessage(err)), { status: 400 });
+    throw err;
+  }
   cache.clear();
 }
