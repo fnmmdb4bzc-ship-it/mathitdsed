@@ -122,6 +122,11 @@
                + 'background:#e5698c;color:#fff;font-size:1rem;cursor:pointer';
   const LINK = 'background:none;border:0;padding:0;margin-top:12px;color:#7a5;'
              + 'font-size:.85rem;cursor:pointer;text-decoration:underline';
+  const PROVIDER = 'width:100%;padding:11px;margin-bottom:10px;border:1px solid #ccc;'
+                 + 'border-radius:8px;background:#fff;color:#222;font-size:1rem;cursor:pointer';
+  const DIVIDER = 'display:flex;align-items:center;text-align:center;color:#999;'
+                + 'font-size:.8rem;margin:4px 0 14px';
+  const DIVIDER_TEXT = 'flex:1;border-bottom:1px solid #e3e3e3;line-height:0;padding:0 8px';
 
   const escapeHtml = s => String(s).replace(/[&<>"]/g,
     c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -132,7 +137,8 @@
    * student dismissed it - which the forced password change forbids by passing
    * dismissible: false, because there is nothing else it can let them do.
    */
-  function modal({ title, intro, fields, submit, links = [], dismissible = true, onSubmit }) {
+  function modal({ title, intro, fields, submit, links = [], buttons = [],
+                  dismissible = true, onSubmit }) {
     return new Promise(resolve => {
       const host = document.createElement('div');
       host.setAttribute('style', [
@@ -147,6 +153,12 @@
         + '<h2 style="margin:0 0 6px;font-size:1.25rem">' + escapeHtml(title) + '</h2>'
         + (intro ? '<p style="margin:0 0 18px;color:#555;font-size:.9rem;line-height:1.45">'
                    + escapeHtml(intro) + '</p>' : '<div style="height:12px"></div>')
+        + buttons.map((b, i) =>
+            '<button type="button" data-btn="' + i + '" style="' + PROVIDER + '">'
+            + escapeHtml(b.label) + '</button>').join('')
+        + (buttons.length && fields.length
+            ? '<div style="' + DIVIDER + '"><span style="' + DIVIDER_TEXT + '">or</span></div>'
+            : '')
         + fields.map(f =>
             '<input name="' + f.name + '" type="' + (f.type || 'text') + '"'
             + ' placeholder="' + escapeHtml(f.placeholder) + '"'
@@ -170,6 +182,11 @@
       links.forEach((l, i) => {
         host.querySelector('[data-link="' + i + '"]')
             .addEventListener('click', () => { close(null); l.onClick(); });
+      });
+
+      buttons.forEach((b, i) => {
+        host.querySelector('[data-btn="' + i + '"]')
+            .addEventListener('click', () => { close(null); b.onClick(); });
       });
 
       if (dismissible) {
@@ -200,6 +217,31 @@
     });
   }
 
+  const PROVIDER_LABELS = {
+    google: 'Continue with Google',
+    github: 'Continue with GitHub',
+    gitlab: 'Continue with GitLab',
+    bitbucket: 'Continue with Bitbucket',
+    facebook: 'Continue with Facebook',
+  };
+
+  /**
+   * Hands the browser to GoTrue, which hands it to the provider.
+   *
+   * Nothing is stored before leaving: the provider sends the tokens back in the
+   * URL fragment and completeOAuth() picks them up on the way in, so there is no
+   * state to carry across the round trip the way PKCE needs.
+   */
+  function oauthLogin(provider) {
+    window.location.assign(config.oauthUrl + '?provider=' + encodeURIComponent(provider));
+  }
+
+  /** The buttons for whichever providers the Identity tab has switched on. */
+  const providerButtons = () => (config.providers || []).map(name => ({
+    label: PROVIDER_LABELS[name] || ('Continue with ' + name),
+    onClick: () => oauthLogin(name),
+  }));
+
   /**
    * A local check before the round trip. The API enforces the same minimum, so
    * this is a faster, friendlier message and not the actual guarantee.
@@ -221,6 +263,7 @@
         { name: 'password', type: 'password', placeholder: 'Password', autocomplete: 'current-password' },
       ],
       submit: 'Sign in',
+      buttons: providerButtons(),
       links,
       onSubmit: async v => {
         await post('/api/auth/login', { identifier: v.identifier.trim(), password: v.password });
@@ -244,6 +287,9 @@
         { name: 'password2', type: 'password', placeholder: 'Type it again', autocomplete: 'new-password' },
       ],
       submit: 'Create account',
+      // Signing up with Google is the same redirect as signing in with it -
+      // GoTrue makes the account on first return - so the button does double duty.
+      buttons: providerButtons(),
       links: [{ label: 'I already have an account', onClick: () => signInForm() }],
       onSubmit: async v => {
         checkPassword(v.password, v.password2);
@@ -487,14 +533,55 @@
   }
 
   /**
-   * Netlify Identity's confirmation and reset mails land back on the site with
-   * the token in the URL fragment. Nothing else will spend it, so this does,
-   * before anything else runs.
+   * Completes an external-provider sign-in.
+   *
+   * Google hands its tokens to the browser, in the fragment, so there is no
+   * server round trip to hook into - which is why this writes the session
+   * cookies here rather than posting to /api/auth/login the way the password
+   * form does. These are the same two cookies @netlify/identity writes, with the
+   * same attributes, and they are deliberately not httpOnly precisely so that a
+   * browser flow can establish a session.
+   *
+   * Setting a cookie is not the same as being trusted: the function re-checks it
+   * against Identity on every request, so a hand-written nf_jwt authenticates
+   * nobody. This only saves the round trip for a token Identity just issued.
+   */
+  function completeOAuth(hash) {
+    const accessToken = hash.get('access_token');
+    const refreshToken = hash.get('refresh_token');
+    // `secure` would make the cookie vanish under `netlify dev`, which is http.
+    const secure = window.location.protocol === 'https:' ? '; secure' : '';
+
+    document.cookie = 'nf_jwt=' + encodeURIComponent(accessToken)
+                    + '; path=/; samesite=lax' + secure;
+    if (refreshToken) {
+      document.cookie = 'nf_refresh=' + encodeURIComponent(refreshToken)
+                      + '; path=/; samesite=lax' + secure;
+    }
+  }
+
+  /**
+   * Netlify Identity's confirmation mails, reset mails and OAuth redirects all
+   * land back on the site with their token in the URL fragment. Nothing else
+   * will spend it, so this does, before anything else runs.
    */
   async function handleIdentityHash() {
     const hash = new URLSearchParams(String(window.location.hash || '').replace(/^#/, ''));
     const confirmation = hash.get('confirmation_token');
     const recovery = hash.get('recovery_token');
+    const accessToken = hash.get('access_token');
+    const error = hash.get('error') || hash.get('error_description');
+
+    if (error) {
+      history.replaceState({}, '', here());
+      await notice('That sign-in did not work', error);
+      return;
+    }
+    if (accessToken) {
+      completeOAuth(hash);
+      history.replaceState({}, '', here());
+      return;
+    }
     if (!confirmation && !recovery) return;
 
     // Cleared first: the token is single-use, and leaving it in the address bar

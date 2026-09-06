@@ -27,6 +27,14 @@
  *    tab. A disabled student can still sign in; they land on "your account has
  *    been disabled" and can do nothing else.
  *
+ * 3b. Google (and the other external providers) hand their tokens to the
+ *    *browser*, in the URL fragment, so there is no server round trip to hook
+ *    into and nothing for this file to do. The bridge is in mathit-auth.js,
+ *    which writes the same nf_jwt/nf_refresh cookies the library writes - they
+ *    are deliberately not httpOnly for exactly this reason. Nothing is trusted
+ *    on the strength of that cookie: getUser() below re-checks it against
+ *    Identity on every request, so a forged one authenticates nobody.
+ *
  * 4. There is no revoke-all-sessions either, so logoutUser() is a no-op. The
  *    ceiling on how long a disabled student keeps a working session is the
  *    access token's lifetime, after which the refresh fails against a user the
@@ -45,6 +53,9 @@ import { HttpError } from '../http.mjs';
  * accidentally reach a real inbox.
  */
 const EMAIL_DOMAIN = process.env.IDENTITY_EMAIL_DOMAIN || 'students.mathit.invalid';
+
+/** Identity's public, same-origin mount point. Fixed by Netlify, not by us. */
+const IDENTITY_PATH = '/.netlify/identity';
 
 /** Tells the router that requests carry cookies, so mutations need an origin check. */
 export const usesCookies = true;
@@ -145,7 +156,7 @@ export function verifyOrigin(req) {
  * what the sign-up form should say.
  */
 export async function config() {
-  let settings = { disableSignup: false, autoconfirm: false };
+  let settings = { disableSignup: false, autoconfirm: false, providers: {} };
   try {
     settings = await getSettings();
   } catch {
@@ -158,6 +169,16 @@ export async function config() {
     // the form has to insist on a real address it can be delivered to.
     requiresRealEmail: !settings.autoconfirm,
     emailDomain: EMAIL_DOMAIN,
+    // Whichever external providers are switched on in the Identity tab, minus
+    // 'email', which is the password form and not a button. Read from the
+    // project rather than listed here, so turning Google off in the UI removes
+    // the button without a deploy.
+    providers: Object.entries(settings.providers || {})
+      .filter(([name, on]) => on && name !== 'email')
+      .map(([name]) => name),
+    // GoTrue's own redirect endpoint, same-origin. The frontend appends
+    // ?provider=..., which is the whole of the OAuth flow it has to know about.
+    oauthUrl: IDENTITY_PATH + '/authorize',
   };
 }
 
