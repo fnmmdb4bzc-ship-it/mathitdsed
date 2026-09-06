@@ -85,15 +85,32 @@ function match(method, path) {
   return null;
 }
 
+/**
+ * Reachability *and* schema, because they fail separately.
+ *
+ * A fresh Netlify Database answers SELECT 1 the moment it is provisioned, which
+ * made the old check report a healthy API while every real route was about to
+ * fail on a missing table. Asking for the students table distinguishes "the
+ * database is down" from "the migrations have not run".
+ */
 async function health() {
+  let ready;
   try {
-    await query('SELECT 1');
+    const { rows } = await query("SELECT to_regclass('public.students') IS NOT NULL AS ready");
+    ready = Boolean(rows[0]?.ready);
   } catch (err) {
     // 503, not 500: the function is fine, its dependency is not. Matches the
     // old /api/health so any uptime check pointed at it keeps working.
     throw new HttpError(503, err.message, { body: { ok: false, error: err.message } });
   }
-  return { ok: true };
+
+  if (!ready) {
+    throw new HttpError(503, 'schema not applied', {
+      body: { ok: false, database: 'reachable', schema: 'missing',
+              error: 'the database is up but the migrations have not been applied' },
+    });
+  }
+  return { ok: true, database: 'reachable', schema: 'applied' };
 }
 
 /**
