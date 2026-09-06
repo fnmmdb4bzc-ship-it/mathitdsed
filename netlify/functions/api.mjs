@@ -2,13 +2,20 @@
  * The whole MathIT API, in one function.
  *
  * One function rather than one-per-route on purpose: a single cold start, a
- * single warm instance holding the cached JWKS and discovery document, and one
- * place where the auth pipeline is applied. Express is gone - the routing here
- * is twelve routes and a path matcher, which is less code than the adapter
- * that would have been needed to run Express on a Request/Response runtime.
+ * single warm instance holding the cached settings and discovery document, and
+ * one place where the auth pipeline is applied. Express is gone - the routing
+ * here is eighteen routes and a path matcher, which is less code than the
+ * adapter that would have been needed to run Express on a Request/Response
+ * runtime.
+ *
+ * The /auth/* routes exist only for password providers (Netlify Identity).
+ * With a redirect provider the browser signs in at the provider and these
+ * answer 400, which is the honest thing for them to say - see
+ * netlify/lib/identity/index.mjs.
  */
-import { authenticate, loadStudent, requireRole, discover, HttpError } from '../lib/auth.mjs';
+import { authenticate, loadStudent, requireRole, HttpError } from '../lib/auth.mjs';
 import { query } from '../lib/db.mjs';
+import * as identity from '../lib/identity/index.mjs';
 import * as me from '../lib/routes/me.mjs';
 import * as admin from '../lib/routes/admin.mjs';
 
@@ -34,12 +41,19 @@ function routePath(url) {
 }
 
 // [method, pattern, handler, guard]
-//   guard 'public'  - no token needed
-//   guard 'student' - token required, students row loaded
-//   guard 'admin'   - token required, 'admin' role required
+//   guard 'public'  - no session needed
+//   guard 'student' - session required, students row loaded
+//   guard 'admin'   - session required, 'admin' role required
 const ROUTES = [
   ['GET',    '/health',                      health,                 'public'],
   ['GET',    '/config',                      config,                 'public'],
+
+  ['POST',   '/auth/login',                  authLogin,              'public'],
+  ['POST',   '/auth/signup',                 authSignup,             'public'],
+  ['POST',   '/auth/logout',                 authLogout,             'public'],
+  ['POST',   '/auth/confirm',                authConfirm,            'public'],
+  ['POST',   '/auth/recover',                authRecover,            'public'],
+  ['POST',   '/auth/reset',                  authReset,              'public'],
 
   ['GET',    '/me',                          me.getMe,               'student'],
   ['PUT',    '/me',                          me.putMe,               'student'],
@@ -83,30 +97,57 @@ async function health() {
 }
 
 /**
- * Tells the frontend where to send the browser for sign-in.
+ * Tells the frontend how sign-in works here.
  *
- * This used to hand over an issuer and let the client build Keycloak URL paths
- * itself. Now the function resolves them through OIDC discovery and passes the
- * finished endpoints, so mathit-auth.js contains no provider-specific URL
- * shapes at all - which is most of what makes swapping providers a config
- * change rather than a rewrite.
+ * The payload is the adapter's, not this file's, because the two provider
+ * families need to say different things: a redirect provider hands over
+ * authorization and token endpoints, Netlify Identity hands over a mode and
+ * whether self-registration is open. mathit-auth.js switches on `mode`.
  */
-async function config() {
-  const d = await discover();
-  return {
-    clientId: process.env.OIDC_CLIENT_ID,
-    endpoints: {
-      authorization: d.authorization_endpoint,
-      token:         d.token_endpoint,
-      endSession:    d.end_session_endpoint || null,
-      // Not part of the discovery spec. Keycloak exposes registration as a
-      // sibling of the auth endpoint; other providers need it given explicitly.
-      register:      process.env.OIDC_SIGNUP_URL
-                     || (d.authorization_endpoint?.endsWith('/auth')
-                          ? d.authorization_endpoint.replace(/\/auth$/, '/registrations')
-                          : null),
-    },
-  };
+function config() {
+  return identity.config();
+}
+
+/** Signs in against a password provider and sets the session cookie. */
+async function authLogin({ body }) {
+  const { identifier, password } = body ?? {};
+  if (!identifier || !password) throw new HttpError(400, 'username and password are required');
+  return { ...(await identity.signIn({ identifier, password })), signedIn: true };
+}
+
+async function authSignup({ body }) {
+  const { identifier, password, name } = body ?? {};
+  if (!identifier || !password) throw new HttpError(400, 'email and password are required');
+  if (String(password).length < 8) throw new HttpError(400, 'password must be at least 8 characters');
+  return identity.signUp({ identifier, password, name });
+}
+
+async function authLogout() {
+  await identity.signOut();
+  return { signedIn: false };
+}
+
+/** Spends the token from a confirmation email. Sent here by mathit-auth.js. */
+async function authConfirm({ body }) {
+  const { token } = body ?? {};
+  if (!token) throw new HttpError(400, 'confirmation token is required');
+  return identity.confirmSignup({ token });
+}
+
+/** Asks for a reset mail. Answers the same way whether or not the account exists. */
+async function authRecover({ body }) {
+  const { identifier } = body ?? {};
+  if (!identifier) throw new HttpError(400, 'username or email is required');
+  return identity.startRecovery({ identifier });
+}
+
+async function authReset({ body }) {
+  const { token, password } = body ?? {};
+  if (!token) throw new HttpError(400, 'reset token is required');
+  if (String(password || '').length < 8) {
+    throw new HttpError(400, 'password must be at least 8 characters');
+  }
+  return identity.finishRecovery({ token, password });
 }
 
 export default async function handler(req) {
@@ -114,6 +155,16 @@ export default async function handler(req) {
   if (!route) return json({ error: `no route for ${req.method} ${routePath(req.url)}` }, 404);
 
   try {
+    /**
+     * CSRF, and only for cookie sessions.
+     *
+     * A bearer token has to be attached deliberately by our own script, so a
+     * cross-site form post carries no credentials. A cookie is attached by the
+     * browser whether we like it or not, so every state-changing route needs
+     * the origin checked. GET routes are exempt because they change nothing.
+     */
+    if (identity.usesCookies && req.method !== 'GET') identity.verifyOrigin(req);
+
     const ctx = { req, params: route.params };
 
     if (route.guard !== 'public') {

@@ -1,20 +1,26 @@
 /**
- * Applies backend/migrations/*.sql against DATABASE_URL, once each, in order.
+ * Applies netlify/database/migrations/*.sql against a Postgres URL, once each,
+ * in order.
  *
- * This used to run at API start-up (backend/src/db.js). Functions have no
- * start-up, so it moved here: `npm run migrate`, run deliberately, from a
- * laptop or a deploy step. Uses plain `pg` rather than the Neon HTTP driver
- * because migration files contain multiple statements per file, which the
- * HTTP driver will not accept in one round trip.
+ * On Netlify this is no longer the normal path: Netlify Database applies the
+ * files in that directory itself, immediately before a deploy is published, and
+ * a failure blocks the deploy. This script is for the other cases - the
+ * docker-compose Postgres, a scratch database, or checking what a migration
+ * does before pushing it.
  *
- * 000_databases.sql is skipped: it existed only to create Keycloak's separate
- * database inside the compose Postgres, and there is no Keycloak here.
+ * Uses plain `pg` rather than a serverless driver because migration files
+ * contain multiple statements per file, which an HTTP driver will not accept in
+ * one round trip.
+ *
+ * backend/migrations/000_databases.sql is deliberately not here: it existed
+ * only to create Keycloak's separate database inside the compose Postgres, and
+ * running it against Netlify Database would be nonsense.
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import pg from 'pg';
 
-const MIGRATIONS = 'backend/migrations';
+const MIGRATIONS = 'netlify/database/migrations';
 
 const url = process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL;
 if (!url) {
@@ -32,9 +38,7 @@ await client.query(`
   )
 `);
 
-const files = (await readdir(MIGRATIONS))
-  .filter(f => f.endsWith('.sql') && !f.startsWith('000_'))
-  .sort();
+const files = (await readdir(MIGRATIONS)).filter(f => f.endsWith('.sql')).sort();
 
 let applied = 0;
 for (const file of files) {

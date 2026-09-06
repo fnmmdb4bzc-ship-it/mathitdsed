@@ -1,25 +1,42 @@
 /**
- * Database access for the functions.
+ * Database access, on Netlify Database.
  *
- * Neon's HTTP driver, not pg.Pool. A pool is actively wrong here: every cold
- * function instance would open its own connections and nothing would ever
- * close them, so a handful of concurrent students could exhaust the database.
- * The HTTP driver holds no connection between calls at all.
+ * getDatabase() is the supported way to reach it: deployed, it hands back
+ * Neon's HTTP client, which holds no connection between calls - the property
+ * that made a pg.Pool the wrong choice here, since every cold function instance
+ * would open its own connections and never close them. Run under `netlify dev`
+ * the same call returns a pg.Pool against the local Postgres instead. Both
+ * shapes are handled below, so the routes are indifferent to which is live.
  *
- * `fullResults: true` makes the driver return { rows, rowCount, ... } instead
- * of a bare array, which is exactly pg's result shape - so query() is a drop-in
- * for the old one and every SQL statement in routes/ is unchanged from
- * backend/. Calling `sql(text, params)` directly (rather than as a tagged
- * template) is the driver's documented form for $1-style parameters.
+ * DATABASE_URL still wins when it is set, which is how this runs against the
+ * docker-compose Postgres.
+ *
+ * The connection is resolved on first query rather than at import. Resolving it
+ * at import means an unconfigured project answers 500 on *every* route
+ * including /health, which hides the actual problem; this way /health reports
+ * it.
  */
-import { neon } from '@neondatabase/serverless';
+import { getDatabase } from '@netlify/database';
 
-// Netlify DB injects NETLIFY_DATABASE_URL. DATABASE_URL is accepted too so the
-// same code runs against the compose Postgres via `netlify dev`.
-const url = process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL;
-if (!url) throw new Error('NETLIFY_DATABASE_URL / DATABASE_URL is not set');
+let conn = null;
 
-const sql = neon(url, { fullResults: true });
+function connection() {
+  if (conn) return conn;
+  const override = process.env.DATABASE_URL;
+  conn = getDatabase(override ? { connectionString: override } : undefined);
+  return conn;
+}
 
-/** query(text, params) -> { rows, rowCount }, matching the old pg signature. */
-export const query = (text, params = []) => sql(text, params);
+/**
+ * query(text, params) -> { rows, rowCount }.
+ *
+ * Both drivers are asked for pg's result shape, so every SQL statement in
+ * routes/ is unchanged from the Express version. `.query(text, params, opts)`
+ * is the Neon HTTP driver's documented form for $1-style parameters.
+ */
+export async function query(text, params = []) {
+  const db = connection();
+  return db.driver === 'serverless'
+    ? db.httpClient.query(text, params, { fullResults: true })
+    : db.pool.query(text, params);
+}

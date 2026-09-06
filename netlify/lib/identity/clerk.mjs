@@ -232,3 +232,9 @@ export async function setPassword(id, password) {
   }
   cache.clear();
 }
+
+/**
+ * Clerk is a redirect provider: the browser signs in on Clerk's own pages and
+ * comes back with a token, so /api/config only has to say where to send it.
+ */
+export { redirectConfig as config } from '../oidc.mjs';

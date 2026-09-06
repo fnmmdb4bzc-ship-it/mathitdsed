@@ -5,12 +5,14 @@
   "type": "module",
   "description": "MathIT: static practice app plus one Netlify function for the API.",
   "scripts": {
-    "build":   "node scripts/build-site.mjs",
+    "build": "node scripts/build-site.mjs",
     "migrate": "node scripts/migrate.mjs",
-    "dev":     "netlify dev"
+    "dev": "netlify dev"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
+    "@netlify/database": "^2.0.1",
+    "@netlify/identity": "^2.0.0",
     "jose": "^5.9.6"
   },
   "devDependencies": {

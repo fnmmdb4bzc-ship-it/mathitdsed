@@ -23,9 +23,11 @@ through Grade 6 and the Manipulatives tab. Levels 7–8 are English-only.
   assume running `assemble.js` reproduces today's `MathIT.html`.
 - **`practice_app.html`**, **`practice_app_grade4.html`** — earlier standalone
   prototypes, superseded by `MathIT.html`. Kept for history.
-- **`backend/`** — the MathIT API (Node + Express + Postgres): student records,
-  approval state, and practice progress. Migrations in `backend/migrations/`
-  run automatically at start-up.
+- **`netlify/`** — the deployed backend: one function (`functions/api.mjs`), the
+  identity adapters and routes it is built from (`lib/`), and the database schema
+  (`database/migrations/`, applied by Netlify at deploy).
+- **`backend/`** — the older Express version of the same API, still used by the
+  docker-compose stack. It applies the same migration files at start-up.
 - **`keycloak/realm-mathit.json`** — the Keycloak realm, imported on first
   start: roles, clients, self-registration settings, and a `tutor` admin user.
 - **`web/`** — `admin.html` (the practice admin console), `mathit-auth.js`
@@ -36,14 +38,16 @@ through Grade 6 and the Manipulatives tab. Levels 7–8 are English-only.
 ## Accounts and data
 
 Since students now sign in individually, the app is no longer a single static
-file — it is a small stack:
+file. The rules below are the same whichever way it is running; the pieces that
+implement them differ, and the deployed set is described under
+[Running it on Netlify](#running-it-on-netlify).
 
-| Piece | Owns |
-|---|---|
-| Keycloak | identity: credentials, sessions, roles, self-registration |
-| Postgres | student records, approval state, streaks, per-topic scores |
-| API | authorisation, progress recording, admin operations |
-| nginx | serves the app and proxies `/api` same-origin |
+| Owns | Deployed (Netlify) | Local (docker-compose) |
+|---|---|---|
+| identity: credentials, sessions, roles, self-registration | Netlify Identity | Keycloak |
+| student records, approval state, streaks, per-topic scores | Netlify Database | Postgres |
+| authorisation, progress recording, admin operations | one function | Express API |
+| serving the app with `/api` same-origin | Netlify | nginx |
 
 **Students self-register but stay inert until approved.** Registration happens
 on Keycloak's own form. The first time a new account presents a token, the API
@@ -57,8 +61,8 @@ in `sessionStorage` (per tab), and "Sign out" performs a full RP-initiated
 Keycloak logout, so a shared device does not leak one child's session into the
 next child's.
 
-**Two deliberate Keycloak settings** (realm JSON carries no comments, so they
-are recorded here):
+**Two deliberate Keycloak settings**, for the compose stack only (realm JSON
+carries no comments, so they are recorded here):
 
 - `VERIFY_PROFILE` is **disabled**. Keycloak's declarative user profile treats
   email as required, so a student an admin creates without one gets trapped on
@@ -74,9 +78,10 @@ are recorded here):
 
 **Admin.** Sign in as an admin and the header shows an *Admin* link, or go
 straight to `/admin.html`. From there you can approve pending students, add
-students directly (created in Keycloak with a temporary password), disable or
-delete them, and see who is online right now — the online flag reads live
-Keycloak sessions, so it means "signed in this moment", not merely "enabled".
+students directly (created at the identity provider with a temporary password),
+disable or delete them, and see who is online. On Netlify "online" means
+"made a request in the last five minutes"; on the compose stack it reads live
+Keycloak sessions and means "signed in this moment".
 
 Not included: the Word-document deliverables (`Grade6_Maths_Intervention_Plan.docx`,
 `Practice_App_Manipulatives_Pack.docx`) and their generator scripts (`build.js`,
@@ -85,65 +90,88 @@ so they were left out of this repository.
 
 ## Running it on Netlify
 
-The deployed architecture: a static site plus **one** function, with Netlify DB
-(Neon) for storage and Clerk for identity. Keycloak cannot run on Netlify - it
-is a stateful JVM server - so identity moved to a hosted OIDC provider, and
-`netlify/lib/identity/` is the one directory that knows which.
+A static site plus **one** function, with **Netlify Database** for storage and
+**Netlify Identity** for sign-in. Both are reached through the Netlify runtime,
+so the deployment has no secrets to configure — no API keys, no connection
+string, nothing in the environment variables tab.
 
 | Piece | Compose stack | Netlify |
 |---|---|---|
 | static files | nginx allow-list | `scripts/build-site.mjs` stages `dist/` |
 | API | Express, 4 files | one function, hand-rolled router |
-| Postgres | compose service | Netlify DB (Neon), HTTP driver |
-| migrations | at API start-up | `npm run migrate`, run deliberately |
-| identity | Keycloak | Clerk over OIDC + PKCE |
+| Postgres | compose service | Netlify Database |
+| migrations | at API start-up | applied by Netlify before each deploy publishes |
+| identity | Keycloak | Netlify Identity (GoTrue) |
+| session | bearer token in `sessionStorage` | `nf_jwt` cookie set by the function |
 | "online now" | live Keycloak sessions | `last_seen_at` within 5 minutes |
-| CORS | needed on :3000 | gone - `/api/*` is same-origin |
+| CORS | needed on :3000 | gone — `/api/*` is same-origin |
+
+### Setting it up
+
+1. **Enable Identity.** Project configuration → Identity → Enable. Under
+   Registration, choose *Open* if students should be able to sign themselves up,
+   or *Invite only* if every account is made by the tutor. The sign-up form in
+   the app hides itself when registration is closed.
+2. **Create the database.** `netlify database init`, or Data & Storage →
+   Database in the UI. The schema in `netlify/database/migrations/` is applied
+   automatically before the first deploy publishes; a failing migration fails the
+   deploy rather than leaving a half-built database behind.
+3. **Deploy.** `netlify deploy --prod`, or push the branch.
+4. **Make yourself an admin.** Sign up through the app, then in Identity → your
+   user, set the role `admin`. The API reads roles from `app_metadata.roles`,
+   which is what the Identity tab writes.
 
 ```bash
 npm install
-cp .env.example .env      # then fill in the Clerk values
-npm run migrate
-npm run dev               # netlify dev
+npm run dev        # netlify dev - serves the site, the function and a local Postgres
 ```
 
-### Clerk setup
+### Five things that changed behaviour
 
-1. Enable **username** as an identifier, and make email optional. The practice
-   has children with no email address of their own; `POST /users` has no
-   required fields, so username + password alone is a valid account.
-2. Create an **OAuth application** (this is what makes Clerk an OIDC provider).
-   Mark it **public** with **PKCE required** - the browser holds no secret.
-   Its client id goes in `OIDC_CLIENT_ID`, its redirect URI is the site root.
-3. Copy the **secret key** into `CLERK_SECRET_KEY`. It is used for token
-   introspection and every admin operation.
-4. Give admins `{"role": "admin"}` in **public metadata**. That is where
-   `netlify/lib/identity/clerk.mjs` reads roles from.
+These are not plumbing — they are visible differences from the Clerk and
+Keycloak versions, and each one is a limit of GoTrue rather than a choice.
 
-### Four things that changed behaviour
+- **There are no usernames.** GoTrue identifies users by email address and has
+  no username field. The practice has children with no email of their own, so a
+  tutor-created student gets a synthetic address under
+  `IDENTITY_EMAIL_DOMAIN` (default `students.mathit.invalid`, a domain that can
+  never resolve) and signs in with just the local part — "anna" works as before.
+  The real username is kept in `user_metadata` and is what the app displays.
+  Self-registration is the exception: it needs a real address, because a
+  confirmation mail has to arrive somewhere.
+- **Disabling a student is enforced by this app, not by Identity.** GoTrue's
+  admin API can create, read, update and delete a user and nothing else — there
+  is no ban, the way Clerk has one. So "Disable" sets `students.status` and
+  `requireActive()` refuses every route. A disabled student can still sign in;
+  they land on "your account has been disabled" and can do nothing else. The
+  same gap means there is no revoke-all-sessions, so a student disabled
+  mid-session keeps a working token until it expires.
+- **Sign-in is a form in the app, not a page at the provider.** Identity has no
+  hosted sign-in page to redirect to, so `mathit-auth.js` collects the password
+  and posts it to `/api/auth/login`, and the function calls Identity and sets the
+  session cookie. The password never goes anywhere except to Netlify.
+- **Sessions are cookies, so CSRF is now a real concern.** A bearer token had to
+  be attached deliberately by our own script; a cookie is attached by the browser
+  whether we like it or not. Every non-GET route therefore has its `Origin`
+  checked before anything else happens.
+- **Email confirmation and password reset are ours to route.** Clerk hosted those
+  pages. Identity mails a link back to the site with the token in the URL
+  fragment, and nothing else will spend it, so `mathit-auth.js` reads the
+  fragment and posts it to `/api/auth/confirm` or shows the reset form.
 
-These are not plumbing - they are visible differences from the compose stack:
+The temporary-password flow is unchanged from the Clerk version and for the same
+reason: no provider here has Keycloak's `UPDATE_PASSWORD` required action, so
+tutor-created students carry `students.must_change_password`, every practice
+route refuses them while it is set, and `POST /api/me/password` is the only way
+out.
 
-- **Tokens are introspected, not verified locally.** Clerk's OIDC access tokens
-  are opaque handles (`oat_...`), not JWTs, so there is no key to check them
-  against. Every request would be a round trip to Clerk, so results are cached
-  for 60 seconds per warm instance. The cost is revocation lag: a student
-  disabled mid-session can keep working for up to a minute.
-- **The temporary-password flow is ours now.** Clerk has no equivalent of
-  Keycloak's `requiredActions: ['UPDATE_PASSWORD']`, so admin-created students
-  get `students.must_change_password`, every practice route refuses them while
-  it is set, and `POST /api/me/password` is the only way out. The screen for it
-  is in `mathit-auth.js`, not `MathIT.html`.
-- **"Online" changed meaning.** It was "has a live Keycloak SSO session"; it is
-  now "made an authenticated request in the last 5 minutes". This also removes
-  the `view-clients` service-account trap described above.
-- **`POST /api/me/practice` is one statement.** The Neon HTTP driver has no
-  interactive transactions, so the `BEGIN`/`COMMIT` around three statements
-  became a single data-modifying CTE. Same atomicity, no connection checkout.
+### Other providers
 
-`IDENTITY_PROVIDER=keycloak` still works and runs the whole Netlify stack
-against the docker-compose Keycloak, which is how to exercise it without a
-Clerk account.
+`IDENTITY_PROVIDER=clerk` and `IDENTITY_PROVIDER=keycloak` still work.
+`netlify/lib/identity/` is the only directory that knows the difference, and
+`/api/config` tells the frontend which of the two sign-in shapes to render —
+a form for Netlify Identity, a redirect for the OIDC providers. See
+`.env.example` for what each one needs.
 
 ## Running it locally
 
@@ -173,10 +201,10 @@ Netlify, opening it from disk) shows a **"Cannot reach MathIT"** screen instead
 of the activities. `serve.py` serves the file but not `web/` or the API, so it
 no longer gets you a working app on its own.
 
-That matters for the Netlify deployment, which publishes `MathIT.html` alone —
-it will need the API and Keycloak reachable, or to be pinned to the last
-pre-accounts commit (`614cfa1`). Use `docker compose up` for a working local
-instance.
+On Netlify that is fine — the function is deployed alongside it and answers
+`/api/config` on the same origin. It only bites when the file is served on its
+own: use `docker compose up`, or `netlify dev`, or pin to the last pre-accounts
+commit (`614cfa1`) if all you want is the sign-in-free app.
 
 ### In a container
 

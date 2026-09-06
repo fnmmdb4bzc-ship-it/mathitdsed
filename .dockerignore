@@ -1,0 +1,7 @@
+# The API image is built from the repo root now (it needs
+# netlify/database/migrations), so keep the context small.
+.git
+node_modules
+backend/node_modules
+dist
+docker-offline/rootfs

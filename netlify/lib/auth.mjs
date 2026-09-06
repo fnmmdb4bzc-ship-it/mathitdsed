@@ -1,66 +1,34 @@
 /**
  * Student resolution and authorisation.
  *
- * Token *verification* is not here. It moved into netlify/lib/identity/,
- * because it turned out to be provider-shaped in a way the original design
- * assumed it was not: Keycloak issues JWTs that are verified locally against a
- * JWKS, while Clerk's OIDC access tokens are opaque handles (`oat_...`) that
- * have to be introspected over the network. Those are different enough that
- * pretending they share an implementation would have meant a branch in the
- * middle of this file. The adapter exposes verifyToken() and everything below
- * works from its result.
+ * Authentication itself is not here. It is provider-shaped in a way the
+ * original design assumed it was not - Keycloak issues JWTs verified locally
+ * against a JWKS, Clerk issues opaque handles that must be introspected, and
+ * Netlify Identity issues neither because its session is a cookie the runtime
+ * reads for us. The adapter in netlify/lib/identity/ exposes authenticate(req)
+ * and everything below works from its result.
  */
-import { verifyToken } from './identity/index.mjs';
+import { authenticate as identityAuthenticate } from './identity/index.mjs';
+import { HttpError } from './http.mjs';
 import { query } from './db.mjs';
 
-const ISSUER = process.env.OIDC_ISSUER;
-if (!ISSUER) throw new Error('OIDC_ISSUER is not set');
+// Re-exported because every route imports it from here.
+export { HttpError };
 
-/**
- * OIDC discovery, memoised per warm function instance.
- *
- * Used only to tell the frontend where to send the browser (see /api/config).
- * Both Keycloak and Clerk publish /.well-known/openid-configuration, so this
- * stays provider-neutral even though verification no longer is.
- */
-let discoveryPromise = null;
-export function discover() {
-  discoveryPromise ??= fetch(`${ISSUER.replace(/\/$/, '')}/.well-known/openid-configuration`)
-    .then(res => {
-      if (!res.ok) throw new Error(`OIDC discovery failed: ${res.status}`);
-      return res.json();
-    })
-    .catch(err => { discoveryPromise = null; throw err; });  // don't cache failures
-  return discoveryPromise;
-}
-
-export class HttpError extends Error {
-  constructor(status, message, extra = {}) {
-    super(message);
-    this.status = status;
-    Object.assign(this, extra);
-  }
-}
-
-/** Verifies the bearer token and returns the caller's identity. */
-export async function authenticate(req) {
-  const header = req.headers.get('authorization') || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-  if (!token) throw new HttpError(401, 'missing bearer token');
-  return verifyToken(token);
-}
+/** Resolves the caller's identity, however this provider proves it. */
+export const authenticate = req => identityAuthenticate(req);
 
 export function requireRole(auth, role) {
   if (!auth.roles.includes(role)) throw new HttpError(403, `requires the '${role}' role`);
 }
 
 /**
- * Resolves the token to a students row, creating it on first sight.
+ * Resolves the caller to a students row, creating it on first sight.
  *
- * Unchanged from backend/src/auth.js, including the column name: keycloak_id
- * holds the identity provider's subject whoever issues it. Renaming it to
- * provider_id would be tidier and is a one-line migration, but it is cosmetic
- * and this keeps the schema diff to the one column that had to change.
+ * The column is still called keycloak_id: it holds the identity provider's
+ * subject whoever issues it. Renaming it to provider_id would be tidier and is
+ * a one-line migration, but it is cosmetic and this keeps the schema diff to
+ * the one column that had to change.
  */
 export async function loadStudent(auth) {
   const isAdmin = auth.roles.includes('admin');
@@ -84,9 +52,13 @@ export async function loadStudent(auth) {
  * Blocks students who cannot practise yet: not approved, disabled, or still
  * holding the temporary password an admin set for them.
  *
- * The password gate lives here rather than in each route so it cannot be
- * forgotten on a new one. POST /api/me/password deliberately does not call
- * this - it is the one thing a student in that state is allowed to do.
+ * This carries more weight on Netlify Identity than it did on Clerk. Clerk can
+ * ban a user, so a disabled student could not sign in at all; GoTrue has no
+ * ban, so a disabled student still gets a valid session and this check is the
+ * only thing standing between them and the app. It lives here rather than in
+ * each route so it cannot be forgotten on a new one. POST /api/me/password
+ * deliberately does not call it - it is the one thing a student holding a
+ * temporary password is allowed to do.
  */
 export function requireActive(student) {
   if (student.must_change_password) {

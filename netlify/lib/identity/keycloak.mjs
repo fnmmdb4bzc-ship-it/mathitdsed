@@ -132,3 +132,6 @@ export const setPassword = (id, password) =>
     method: 'PUT',
     body: JSON.stringify({ type: 'password', value: password, temporary: false }),
   });
+
+/** Keycloak is a redirect provider - see the note on the Clerk one. */
+export { redirectConfig as config } from '../oidc.mjs';
