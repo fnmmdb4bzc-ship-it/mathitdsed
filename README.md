@@ -2,16 +2,25 @@
 
 A CAPS-aligned maths practice web app for Foundation Phase through Grade 6 (plus UK
 National Curriculum Key Stage 3, Years 7–8), built for Debby Smit Educational Therapy.
-Live at: https://mathitdset.netlify.app/
 
 Fully bilingual (English / Afrikaans, chosen per student profile) for Foundation Phase
 through Grade 6 and the Manipulatives tab. Levels 7–8 are English-only.
 
+Two deployments, running different things:
+
+- **https://mathitdset.netlify.app/** — the original, sign-in-free app: `MathIT.html`
+  served on its own, no accounts and no API. It is on a separate Netlify account.
+- **https://mathit-identity.netlify.app/** — this branch: the same app plus student
+  accounts, backed by Netlify Identity and Netlify Database. See
+  [Running it on Netlify](#running-it-on-netlify).
+
 ## What's in this repo
 
-- **`MathIT.html`** — the deployed app. A single self-contained HTML/CSS/JS file (no
-  build step, no external runtime dependencies beyond a Google Font stylesheet link).
-  This is the file Netlify serves as `index.html`.
+- **`MathIT.html`** — the app itself. A single hand-edited HTML/CSS/JS file with no
+  build step, served by Netlify as `index.html`. Self-contained as a *file*, but no
+  longer standalone as an *app*: it loads `/mathit-auth.js` and calls `/api/config`
+  during start-up (see
+  [`MathIT.html` is no longer standalone](#mathithtml-is-no-longer-standalone)).
 - **`assets/`** — source images and the handwriting font used by the app. Their content
   is embedded into `MathIT.html` as base64 `data:` URIs, so this folder is a reference
   copy of the originals, not something the page loads at runtime.
@@ -31,9 +40,16 @@ through Grade 6 and the Manipulatives tab. Levels 7–8 are English-only.
 - **`keycloak/realm-mathit.json`** — the Keycloak realm, imported on first
   start: roles, clients, self-registration settings, and a `tutor` admin user.
 - **`web/`** — `admin.html` (the practice admin console), `mathit-auth.js`
-  (OIDC/PKCE sign-in and API client), and the nginx config.
+  (sign-in and API client, handling both the password and the redirect flows),
+  and the nginx config.
+- **`scripts/`** — `build-site.mjs` stages the three published files into `dist/`
+  (an explicit allow-list, so nothing else in the repo can be served), and
+  `migrate.mjs` (`npm run migrate`) applies the same migrations by hand against a
+  `DATABASE_URL` — for the compose Postgres or a scratch database, since Netlify
+  applies them itself on deploy.
 - **`serve.py`** — static dev server that serves `MathIT.html` at `/`. Only
-  useful for the standalone, sign-in-free version of the app.
+  useful for the standalone, sign-in-free version of the app — it serves no API,
+  so the accounts build shows "Cannot reach MathIT" under it.
 
 ## Accounts and data
 
@@ -49,17 +65,22 @@ implement them differ, and the deployed set is described under
 | authorisation, progress recording, admin operations | one function | Express API |
 | serving the app with `/api` same-origin | Netlify | nginx |
 
-**Students self-register but stay inert until approved.** Registration happens
-on Keycloak's own form. The first time a new account presents a token, the API
-creates a `pending` student row, and every practice endpoint refuses to serve
-it until an admin approves. The student sees an "Almost there!" screen.
+**Students self-register but stay inert until approved.** However the account is
+made — Google, the app's own sign-up form, or a tutor creating one — the first
+time it reaches the API a `pending` student row is created, and every practice
+endpoint refuses to serve it until an admin approves. The student sees an
+"Almost there!" screen. Approval is the gate for all three routes in.
 
-**Isolation.** Every `/api/me` route derives the student from the access
-token's `sub` claim, never from an id in the request, so one student cannot
-read or write another's data by editing a request. In the browser, tokens live
-in `sessionStorage` (per tab), and "Sign out" performs a full RP-initiated
-Keycloak logout, so a shared device does not leak one child's session into the
-next child's.
+**Isolation.** Every `/api/me` route derives the student from the session's
+subject, never from an id in the request, so one student cannot read or write
+another's data by editing a request. That half is identical on every provider.
+
+The browser half is not, and it is weaker on Netlify Identity. The Keycloak and
+Clerk flows keep a bearer token in `sessionStorage`, which is scoped per tab, so
+two children on one device cannot see each other's session. Identity's session is
+a cookie — it has to be, the server sets it — and a cookie is shared across tabs
+and outlives the tab. **On a shared device, signing out matters here in a way it
+did not before.** A signed-in tab left open is a signed-in browser.
 
 **Two deliberate Keycloak settings**, for the compose stack only (realm JSON
 carries no comments, so they are recorded here):
@@ -93,7 +114,8 @@ so they were left out of this repository.
 A static site plus **one** function, with **Netlify Database** for storage and
 **Netlify Identity** for sign-in. Both are reached through the Netlify runtime,
 so the deployment has no secrets to configure — no API keys, no connection
-string, nothing in the environment variables tab.
+string, nothing in the environment variables tab. Both also provision
+themselves: having the packages installed and deploying is the whole setup.
 
 | Piece | Compose stack | Netlify |
 |---|---|---|
@@ -102,34 +124,83 @@ string, nothing in the environment variables tab.
 | Postgres | compose service | Netlify Database |
 | migrations | at API start-up | applied by Netlify before each deploy publishes |
 | identity | Keycloak | Netlify Identity (GoTrue) |
-| session | bearer token in `sessionStorage` | `nf_jwt` cookie set by the function |
+| session | bearer token in `sessionStorage` | `nf_jwt` cookie, per browser not per tab |
+| sign-in options | Keycloak's form | Google, the app's own form, or a tutor-made account |
 | "online now" | live Keycloak sessions | `last_seen_at` within 5 minutes |
 | CORS | needed on :3000 | gone — `/api/*` is same-origin |
 
 ### Setting it up
 
-1. **Enable Identity.** Project configuration → Identity → Enable. Under
-   Registration, choose *Open* if students should be able to sign themselves up,
-   or *Invite only* if every account is made by the tutor. The sign-up form in
-   the app hides itself when registration is closed.
-2. **Create the database.** `netlify database init`, or Data & Storage →
-   Database in the UI. The schema in `netlify/database/migrations/` is applied
-   automatically before the first deploy publishes; a failing migration fails the
-   deploy rather than leaving a half-built database behind.
-3. **Deploy.** `netlify deploy --prod`, or push the branch.
-4. **Make yourself an admin.** Sign up through the app, then in Identity → your
-   user, set the role `admin`. The API reads roles from `app_metadata.roles`,
-   which is what the Identity tab writes.
-
 ```bash
 npm install
-npm run dev        # netlify dev - serves the site, the function and a local Postgres
+netlify sites:create --name <your-site>    # or link an existing one
+netlify deploy --prod --build
 ```
 
-### Five things that changed behaviour
+That is the whole of it. Because `@netlify/database` and `@netlify/identity` are
+dependencies, the first deploy **provisions both** — no `netlify database init`,
+and no Identity instance to create by hand. The migrations in
+`netlify/database/migrations/` are applied before the deploy publishes, and a
+failing migration fails the deploy rather than leaving a half-built database
+behind.
+
+Confirm it landed:
+
+```bash
+curl https://<your-site>.netlify.app/api/health
+# {"ok":true,"database":"reachable","schema":"applied"}
+```
+
+`/api/health` reports the connection and the schema separately on purpose. A
+freshly provisioned database answers `SELECT 1` the moment it exists, so a check
+that only did that would call the API healthy while every real route was about to
+fail on a missing table.
+
+Two things are still yours to set in the UI, both under Identity:
+
+- **Registration and providers.** Open vs invite-only, and which external
+  providers are on. The app reads this live — `/api/config` reports it from
+  Identity's own settings, so switching Google on or off changes the sign-in
+  dialog **without a redeploy**.
+- **Your admin role.** Sign in once (Google is the quickest way), then set that
+  user's role to `admin` in Identity → Users. The API reads roles from
+  `app_metadata.roles`, which is what the Identity tab writes.
+
+### Deploying changes
+
+The site is deployed from a laptop, not from git:
+
+```bash
+netlify deploy --prod --build
+```
+
+`--build` matters: it runs `scripts/build-site.mjs` to stage `dist/` and bundles
+the function. Without it you deploy whatever `dist/` last contained.
+
+### Signing in
+
+Three ways in, and they are not interchangeable — which one a student uses
+depends on whether they have an email address of their own.
+
+| | How | Lands as |
+|---|---|---|
+| **Google** | "Continue with Google" on the sign-in dialog | pending student, real email, name from Google |
+| **Email + password** | the app's own sign-up form | pending student, after confirming by email |
+| **Tutor-created** | admin console → Add student | active student holding a temporary password |
+
+The buttons are not hardcoded: `/api/config` reports whichever external providers
+Identity has switched on, and `mathit-auth.js` renders one button each. The
+sign-up form hides itself when registration is set to invite-only.
+
+Tutor-created students are the reason for the synthetic-address machinery below —
+they are the children with no email — and they are the only ones who meet the
+forced password change.
+
+### Six things that changed behaviour
 
 These are not plumbing — they are visible differences from the Clerk and
-Keycloak versions, and each one is a limit of GoTrue rather than a choice.
+Keycloak versions, and each one follows from how Netlify Identity works rather
+than from a preference.
 
 - **There are no usernames.** GoTrue identifies users by email address and has
   no username field. The practice has children with no email of their own, so a
@@ -150,6 +221,14 @@ Keycloak versions, and each one is a limit of GoTrue rather than a choice.
   hosted sign-in page to redirect to, so `mathit-auth.js` collects the password
   and posts it to `/api/auth/login`, and the function calls Identity and sets the
   session cookie. The password never goes anywhere except to Netlify.
+- **Google could not reuse that path.** External providers hand their tokens to
+  the *browser*, in the URL fragment, so there is no server round trip to hook
+  into. The callback writes the `nf_jwt` and `nf_refresh` cookies itself, with the
+  same attributes `@netlify/identity` uses — those cookies are deliberately not
+  `httpOnly` for exactly this reason. Setting the cookie is not the same as being
+  trusted: server-side `getUser()` re-checks the token against Identity on every
+  request and falls back to the runtime's own verified claims, so a hand-written
+  cookie authenticates nobody.
 - **Sessions are cookies, so CSRF is now a real concern.** A bearer token had to
   be attached deliberately by our own script; a cookie is attached by the browser
   whether we like it or not. Every non-GET route therefore has its `Origin`
@@ -165,6 +244,13 @@ tutor-created students carry `students.must_change_password`, every practice
 route refuses them while it is set, and `POST /api/me/password` is the only way
 out.
 
+### One trap worth knowing
+
+`netlify database status` and `netlify database connect` report on the **local
+dev** database, not production. They will tell you there are zero applied
+migrations and that the schema is empty while production is fully migrated. Use
+the deployed `/api/health` to ask about production.
+
 ### Other providers
 
 `IDENTITY_PROVIDER=clerk` and `IDENTITY_PROVIDER=keycloak` still work.
@@ -175,7 +261,29 @@ a form for Netlify Identity, a redirect for the OIDC providers. See
 
 ## Running it locally
 
-The full stack, with sign-in and the admin console:
+### `netlify dev` — the deployed stack
+
+```bash
+npm install
+npm run dev                          # netlify dev
+netlify database migrations apply    # once, in another terminal
+```
+
+`netlify dev` serves the site and the function together on one origin, starts a
+local Postgres, and exposes the Identity endpoint so sign-in works. This is the
+one to use for anything touching Netlify Identity or Netlify Database, because it
+is the same code path as production.
+
+The migrations are **not** applied to the local database automatically the way
+they are on deploy — `netlify database migrations apply` does it, and needs
+`netlify dev` already running.
+
+Session cookies are set without the `secure` flag here, since `netlify dev` is
+plain http and a `secure` cookie would silently never arrive.
+
+### docker-compose — the Keycloak stack
+
+The older stack, still useful for exercising the Keycloak adapter:
 
 ```bash
 docker compose up -d --build
