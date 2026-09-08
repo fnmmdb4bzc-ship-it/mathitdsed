@@ -1,4 +1,4 @@
-# MathIT
+# MathIT is a test 
 
 A CAPS-aligned maths practice web app for Foundation Phase through Grade 6 (plus UK
 National Curriculum Key Stage 3, Years 7–8), built for Debby Smit Educational Therapy.
