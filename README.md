@@ -342,3 +342,4 @@ it but that one static file server and `MathIT.html`. Verified working end to en
 (built, ran, and loaded correctly in a headless browser with zero console errors)
 in the environment this was first set up in, where `registry-1.docker.io` and
 `ghcr.io` both returned `403 Forbidden`.
+ 
