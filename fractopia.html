@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FRACTOPIA: The Fraction Town Adventure!</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fractopia-font.css">
+<style>
+:root {
+  --orange:#FF6B35; --orange-d:#C94E1E;
+  --teal:#4ECDC4;   --teal-d:#2C9E98;
+  --gold:#FFD700;
+  --purple:#8B5CF6;
+  --green:#22C55E;  --green-d:#166534;
+  --blue:#3B82F6;   --blue-d:#1D4ED8;
+  --pink:#EC4899;
+  --red:#EF4444;
+  --dark:#1E293B;   --mid:#334155; --muted:#94A3B8;
+  --page-bg:#F8FAFC;
+  --r-sm:8px; --r-md:14px; --r-lg:20px; --r-xl:26px; --r-pill:999px;
+  --sh-sm:0 2px 8px rgba(0,0,0,.09);
+  --sh-md:0 6px 20px rgba(0,0,0,.13);
+  --sh-lg:0 14px 40px rgba(0,0,0,.18);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width:100%; height:100%; font-family:'Nunito',sans-serif; overflow:hidden; }
+
+/* ── All screens ── */
+.screen {
+  position: fixed; inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Shared buttons ── */
+.btn {
+  border: none; border-radius: var(--r-pill); cursor: pointer;
+  font-family:'TeachersPet',cursive; letter-spacing: .5px;
+  transition: transform .15s, box-shadow .15s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn:active { transform: translateY(3px) !important; }
+.btn-orange { background: linear-gradient(135deg,#FF6B35,#ff8c42); color:#fff; box-shadow: 0 6px 0 #C94E1E, var(--sh-md); }
+.btn-orange:hover { transform: translateY(-3px); box-shadow: 0 9px 0 #C94E1E, var(--sh-lg); }
+.btn-teal { background: linear-gradient(135deg,#4ECDC4,#38b2ac); color:#fff; box-shadow: 0 6px 0 #2C9E98, var(--sh-md); }
+.btn-teal:hover { transform: translateY(-3px); box-shadow: 0 9px 0 #2C9E98, var(--sh-lg); }
+.btn-blue { background: linear-gradient(135deg,#3B82F6,#2563EB); color:#fff; box-shadow: 0 5px 0 #1D4ED8; }
+.btn-blue:hover { transform: translateY(-2px); }
+.btn-green { background: linear-gradient(135deg,#22C55E,#16A34A); color:#fff; box-shadow: 0 5px 0 #166534; }
+.btn-green:hover { transform: translateY(-2px); }
+.btn-back {
+  background: rgba(255,255,255,.9); border: 2px solid rgba(255,255,255,.95);
+  border-radius: 20px; padding: 6px 14px; font-size:14px; font-weight:700;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  gap:5px; transition: all .2s; flex-shrink:0; box-shadow: var(--sh-sm);
+  color: #4B5563; font-family:'TeachersPet',cursive; white-space:nowrap;
+}
+.btn-back:hover { background:#fff; transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.15); }
+
+/* ════════ LANDING ════════ */
+#p-land {
+  background: linear-gradient(180deg,#0d0d2b 0%,#1a1a4e 35%,#2d1b69 65%,#4a1942 100%);
+  justify-content: center; overflow: hidden;
+}
+.star-layer { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.star {
+  position:absolute; border-radius:50%; background:#fff;
+  animation: twinkle var(--td,2s) var(--tl,0s) ease-in-out infinite alternate;
+}
+@keyframes twinkle { from{opacity:.15;transform:scale(.6);} to{opacity:1;transform:scale(1.4);} }
+.moon {
+  position:absolute; top:5%; right:8%; width:76px; height:76px; border-radius:50%;
+  background: radial-gradient(circle at 35% 35%,#FFFDE7,#FFD54F);
+  box-shadow: 0 0 50px rgba(255,213,79,.45), 0 0 100px rgba(255,213,79,.2);
+}
+.ff {
+  position:absolute; font-family:'TeachersPet',cursive; color:rgba(255,255,255,.07);
+  pointer-events:none; user-select:none;
+  animation: floatUp var(--ft,10s) var(--fd,0s) linear infinite;
+}
+@keyframes floatUp {
+  0%   { transform:translateY(105vh) rotate(0deg); opacity:0; }
+  8%   { opacity:1; }
+  92%  { opacity:.4; }
+  100% { transform:translateY(-8vh) rotate(360deg); opacity:0; }
+}
+.skyline { position:absolute; bottom:0; width:100%; pointer-events:none; }
+.land-body {
+  position:relative; z-index:10;
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  padding:16px 20px; text-align:center;
+}
+.land-badge {
+  background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.2);
+  color:rgba(255,255,255,.8); padding:5px 20px; border-radius:50px;
+  font-size:11px; font-weight:800; letter-spacing:3px; text-transform:uppercase;
+}
+.land-eyebrow { color:rgba(255,255,255,.5); font-size:14px; font-weight:700; letter-spacing:2px; text-transform:uppercase; }
+.land-title {
+  font-family:'TeachersPet',cursive;
+  font-size: clamp(58px,11vw,104px);
+  color:var(--gold); letter-spacing:6px; line-height:1;
+  text-shadow: 0 0 60px rgba(255,215,0,.35), 6px 6px 0 rgba(0,0,0,.4);
+  animation: glow 3s ease-in-out infinite alternate;
+}
+@keyframes glow {
+  from { text-shadow: 0 0 30px rgba(255,215,0,.25), 6px 6px 0 rgba(0,0,0,.4); }
+  to   { text-shadow: 0 0 80px rgba(255,215,0,.65), 0 0 140px rgba(255,215,0,.25), 6px 6px 0 rgba(0,0,0,.4); }
+}
+.land-sub { font-size:clamp(15px,2.5vw,21px); color:rgba(255,255,255,.85); font-weight:700; }
+.land-tags { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+.land-tag {
+  background:rgba(255,255,255,.08); color:rgba(255,255,255,.65);
+  font-size:11px; font-weight:800; padding:4px 12px; border-radius:50px;
+  border:1px solid rgba(255,255,255,.12);
+}
+.btn-start {
+  font-size:clamp(17px,3vw,24px); padding:15px 50px; margin-top:14px;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.04) translateY(-3px);} }
+.btn-start:hover { animation:none; }
+
+/* ════════ SETUP PAGE ════════ */
+#p-setup {
+  background: linear-gradient(180deg,#87CEEB 0%,#B0E8F0 55%,#A8E6A0 100%);
+  overflow-y: auto;
+}
+.setup-hdr { width:100%; padding:14px 20px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.setup-title { font-family:'TeachersPet',cursive; font-size:clamp(20px,4vw,28px); color:var(--mid); }
+.setup-body { width:100%; max-width:880px; padding:0 18px 28px; display:flex; flex-direction:column; gap:20px; align-self:center; }
+.sec-hd { font-size:14px; font-weight:900; color:var(--mid); text-transform:uppercase; letter-spacing:1.5px; }
+.chars-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.char-card {
+  background:#fff; border-radius:var(--r-xl); padding:18px 12px;
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  cursor:pointer; border:3px solid transparent; box-shadow:var(--sh-sm); transition:all .2s;
+}
+.char-card:hover { transform:translateY(-5px); box-shadow:var(--sh-md); }
+.char-card.on { border-color:var(--orange); background:#FFF5F0; transform:translateY(-3px); box-shadow:var(--sh-md); }
+.char-ava { font-size:62px; line-height:1; }
+.char-nm { font-size:15px; font-weight:900; color:var(--dark); }
+.char-role { font-size:12px; color:var(--muted); text-align:center; line-height:1.4; }
+.name-wrap { position:relative; }
+.name-ico { position:absolute; left:16px; top:50%; transform:translateY(-50%); font-size:22px; pointer-events:none; }
+.name-inp {
+  width:100%; padding:14px 18px 14px 50px; border:3px solid #E2E8F0; border-radius:var(--r-pill);
+  font-family:'Nunito',sans-serif; font-size:18px; font-weight:700; outline:none; color:var(--dark); transition:border-color .2s;
+}
+.name-inp:focus { border-color:var(--orange); }
+.btn-go { font-size:22px; padding:15px 0; width:100%; }
+
+/* ════════ TOWN MAP ════════ */
+#p-town { background: linear-gradient(180deg,#4DD0E1 0%,#80DEEA 30%,#A5D6A7 65%,#81C784 100%); }
+.town-hdr {
+  width:100%; padding:12px 18px;
+  display:flex; align-items:center; justify-content:space-between;
+  background:rgba(255,255,255,.22); backdrop-filter:blur(14px);
+  border-bottom:1.5px solid rgba(255,255,255,.3); flex-shrink:0;
+}
+.player-pill { display:flex; align-items:center; gap:10px; }
+.pil-ava { font-size:34px; }
+.pil-nm { font-weight:900; color:#fff; font-size:17px; text-shadow:0 2px 5px rgba(0,0,0,.2); }
+.pil-gr { font-size:12px; color:rgba(255,255,255,.8); }
+.town-ttl { font-family:'TeachersPet',cursive; font-size:22px; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,.2); letter-spacing:1px; }
+.stars-pill { display:flex; align-items:center; gap:6px; background:rgba(0,0,0,.16); padding:8px 16px; border-radius:50px; }
+.stars-n { font-family:'TeachersPet',cursive; font-size:20px; color:var(--gold); text-shadow:0 2px 4px rgba(0,0,0,.25); }
+.map-wrap { flex:1; width:100%; overflow-y:auto; padding:14px 14px 20px; }
+.map-sub { text-align:center; font-size:12px; font-weight:900; color:rgba(20,40,60,.55); letter-spacing:1.5px; text-transform:uppercase; padding:4px 0 10px; }
+.road { width:100%; max-width:980px; margin:0 auto 14px; height:10px; border-radius:5px; background:repeating-linear-gradient(90deg,#78909C 0,#78909C 28px,#90A4AE 28px,#90A4AE 56px); opacity:.35; }
+.lvl-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; max-width:980px; margin:0 auto; }
+.lvl-card {
+  background:#fff; border-radius:var(--r-xl); padding:18px 12px;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  border:3px solid transparent; box-shadow:var(--sh-md), 0 6px 0 rgba(0,0,0,.07);
+  transition:all .2s; position:relative;
+}
+.lvl-card.open { cursor:pointer; }
+.lvl-card.open:hover { transform:translateY(-7px); box-shadow:var(--sh-lg), 0 13px 0 rgba(0,0,0,.07); }
+.lvl-card.locked { opacity:.55; cursor:not-allowed; filter:grayscale(55%); }
+.lvl-card.done { border-color:var(--green); }
+.lvl-ico { font-size:50px; line-height:1; }
+.lvl-nm { font-family:'TeachersPet',cursive; font-size:14px; color:var(--dark); text-align:center; line-height:1.3; }
+.lvl-tp { font-size:11px; color:var(--muted); text-align:center; }
+.lvl-stars { font-size:15px; letter-spacing:2px; min-height:18px; }
+.lock-ico { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:32px; border-radius:var(--r-xl); }
+
+/* ════════ LEVEL SHELL ════════ */
+.scr-lv { background:var(--page-bg); overflow-y:auto; }
+.lv-hdr {
+  width:100%; padding:13px 18px; display:flex; align-items:center; gap:12px;
+  background:#fff; box-shadow:0 2px 12px rgba(0,0,0,.07); flex-shrink:0;
+}
+.lv-ico { font-size:36px; }
+.lv-info h2 { font-family:'TeachersPet',cursive; font-size:19px; color:var(--dark); }
+.lv-info p  { font-size:12px; color:var(--muted); }
+.lv-prog-wrap { margin-left:auto; display:flex; align-items:center; gap:10px; }
+.prog-bar { width:100px; height:8px; background:#E2E8F0; border-radius:50px; overflow:hidden; }
+.prog-fill { height:100%; background:linear-gradient(90deg,var(--teal),var(--green)); border-radius:50px; transition:width .5s ease; }
+.prog-lbl { font-size:12px; font-weight:800; color:var(--muted); }
+.lv-body { flex:1; width:100%; max-width:780px; padding:18px 16px 26px; display:flex; flex-direction:column; align-items:center; gap:16px; margin:0 auto; }
+
+/* ── Question card ── */
+.q-card { background:#fff; border-radius:var(--r-xl); padding:24px 22px; width:100%; box-shadow:var(--sh-md); display:flex; flex-direction:column; align-items:center; gap:16px; }
+.q-tag { background:var(--gold); color:var(--dark); font-weight:900; font-size:11px; padding:3px 14px; border-radius:50px; align-self:flex-start; }
+.q-txt { font-size:17px; font-weight:700; color:var(--dark); text-align:center; line-height:1.65; }
+
+/* ── Answer grid ── */
+.ans-grid { display:grid; grid-template-columns:1fr 1fr; gap:11px; width:100%; }
+.ans-btn {
+  background:#F8FAFC; border:3px solid #E2E8F0; border-radius:var(--r-md);
+  padding:14px; font-family:'Nunito',sans-serif; font-size:16px; font-weight:700;
+  color:var(--dark); cursor:pointer; transition:all .2s; text-align:center; line-height:1.4;
+}
+.ans-btn:hover:not(:disabled) { border-color:var(--teal); background:#F0FFFE; transform:scale(1.02); }
+.ans-btn.correct { border-color:var(--green) !important; background:#DCFCE7 !important; color:#065F46 !important; }
+.ans-btn.wrong   { border-color:var(--red)   !important; background:#FEF2F2 !important; color:#991B1B !important; }
+
+/* ── Feedback + Next ── */
+.feedback { padding:11px 24px; border-radius:50px; font-size:14px; font-weight:800; display:none; animation:fbIn .25s ease; }
+@keyframes fbIn { from{transform:scale(.85);opacity:0;} to{transform:scale(1);opacity:1;} }
+.fb-ok { display:block; background:#DCFCE7; color:#065F46; }
+.fb-no { display:block; background:#FEF2F2; color:#991B1B; }
+.btn-nxt { font-size:19px; padding:13px 42px; display:none; }
+.btn-nxt.show { display:inline-flex; }
+
+/* ── Fraction widget ── */
+.frac { display:inline-flex; flex-direction:column; align-items:center; font-family:'TeachersPet',cursive; vertical-align:middle; line-height:1; }
+.frac .fn { color:var(--orange); }
+.frac .fl { background:var(--dark); border-radius:2px; margin:3px 0; display:block; }
+.frac .fd { color:var(--blue); }
+.frac-sm .fn,.frac-sm .fd { font-size:22px; } .frac-sm .fl { width:30px; height:3px; }
+.frac-md .fn,.frac-md .fd { font-size:36px; } .frac-md .fl { width:44px; height:4px; }
+.frac-lg .fn,.frac-lg .fd { font-size:54px; } .frac-lg .fl { width:62px; height:5px; }
+
+/* ── Level-specific backgrounds ── */
+#p-lv1 { background:linear-gradient(160deg,#FFFDE7,#FFF8E1); }
+#p-lv2 { background:linear-gradient(160deg,#EEF2FF,#E0E7FF); }
+#p-lv3 { background:linear-gradient(160deg,#F0FFF4,#DCFCE7); }
+#p-lv4 { background:linear-gradient(160deg,#FFFBF0,#FFF3E0); }
+#p-lv5 { background:linear-gradient(160deg,#F5F3FF,#EDE9FE); }
+#p-lv6 { background:linear-gradient(160deg,#FFF0F8,#FCE7F3); }
+#p-lv7 { background:linear-gradient(160deg,#EFF6FF,#DBEAFE); }
+
+/* ── Vocab cards ── */
+.vocab-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; width:100%; }
+.voc { background:#fff; border-radius:var(--r-lg); padding:16px; box-shadow:var(--sh-sm); }
+.voc-top { border-top:5px solid var(--orange); }
+.voc-bot { border-top:5px solid var(--blue); }
+.voc h4 { font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px; }
+.voc-top h4 { color:var(--orange); } .voc-bot h4 { color:var(--blue); }
+.voc .big { font-family:'TeachersPet',cursive; font-size:46px; line-height:1; }
+.voc-top .big { color:var(--orange); } .voc-bot .big { color:var(--blue); }
+.voc p { font-size:12px; color:var(--muted); margin-top:5px; line-height:1.5; }
+
+/* ── Fraction bars (level 2) ── */
+.fbar-row { display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+.fbar-lbl { min-width:52px; text-align:center; }
+.fbar-track { flex:1; height:42px; background:#E2E8F0; border-radius:var(--r-sm); border:2px solid #CBD5E1; overflow:hidden; }
+.fbar-fill { height:100%; border-radius:6px; transition:width .7s ease; }
+.fbar-pct { font-size:12px; font-weight:800; color:var(--muted); min-width:38px; }
+.sym-row { display:flex; gap:12px; justify-content:center; }
+.sym-btn { width:60px; height:60px; border-radius:50%; border:3px solid #E2E8F0; background:#fff; font-size:28px; font-weight:900; cursor:pointer; transition:all .2s; box-shadow:var(--sh-sm); }
+.sym-btn:hover { border-color:var(--orange); transform:scale(1.12); }
+.sym-btn.correct { border-color:var(--green); background:#DCFCE7; }
+.sym-btn.wrong   { border-color:var(--red);   background:#FEF2F2; animation:shake .3s; }
+
+/* ── Array farm (level 3) ── */
+.arr-grid { display:grid; gap:8px; justify-content:center; }
+.arr-item {
+  border-radius:var(--r-sm); font-size:clamp(28px,5vw,36px);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; border:3px solid transparent; transition:all .2s;
+  user-select:none; background:#F8FAFC;
+  width:clamp(52px,8vw,64px); height:clamp(52px,8vw,64px);
+}
+.arr-item:hover { transform:scale(1.1); }
+.arr-item.hl { background:var(--gold); border-color:var(--orange); transform:scale(1.05); }
+
+/* ── Word problem (level 4) ── */
+.prob-card {
+  background:linear-gradient(135deg,#FFFDE7,#FFFBF5); border:3px solid var(--gold);
+  border-radius:var(--r-xl); padding:20px; width:100%; position:relative; box-shadow:var(--sh-md);
+}
+.prob-tag { position:absolute; top:-13px; left:18px; background:var(--gold); color:var(--dark); font-size:10px; font-weight:900; padding:3px 12px; border-radius:50px; letter-spacing:1px; text-transform:uppercase; }
+.prob-txt { font-size:16px; line-height:1.85; color:var(--dark); font-weight:600; }
+.prob-txt b { color:var(--orange); }
+.prob-vis { display:flex; gap:5px; flex-wrap:wrap; margin:10px 0; }
+
+/* ── Tile Tower (level 5) ── */
+.tile-ins { background:#fff; border-radius:var(--r-lg); padding:14px 18px; font-size:15px; font-weight:700; color:var(--dark); text-align:center; box-shadow:var(--sh-sm); width:100%; }
+.tile-ins small { display:block; color:var(--muted); font-size:12px; margin-top:3px; }
+.tiles-src { min-height:90px; background:rgba(139,92,246,.05); border:3px dashed #C4B5FD; border-radius:var(--r-lg); padding:14px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center; width:100%; }
+.slot-row { display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
+.sort-slot {
+  width:78px; height:78px; background:rgba(255,255,255,.7);
+  border:3px dashed #C4B5FD; border-radius:var(--r-lg);
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; color:#aaa; cursor:pointer; transition:all .2s;
+}
+.sort-slot:hover { border-color:var(--purple); }
+.sort-slot.filled { border-color:var(--purple); background:#fff; cursor:pointer; }
+.sort-slot.slot-ok  { border-color:var(--green); background:#DCFCE7; }
+.sort-slot.slot-err { border-color:var(--red);   background:#FEF2F2; animation:shake .3s; }
+.ftile {
+  background:#fff; border:3px solid var(--purple); border-radius:var(--r-lg);
+  padding:9px 13px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center;
+  font-family:'TeachersPet',cursive; color:var(--purple);
+  user-select:none; transition:all .2s; box-shadow:var(--sh-sm); min-width:62px;
+}
+.ftile:hover:not(.used) { transform:scale(1.07); box-shadow:var(--sh-md); }
+.ftile.sel  { border-color:var(--orange); color:var(--orange); transform:scale(1.1); }
+.ftile.used { opacity:.3; cursor:not-allowed; transform:none; }
+.ftile .tn  { font-size:22px; }
+.ftile .tl  { width:36px; height:3px; border-radius:2px; background:currentColor; margin:3px 0; }
+.ftile .td  { font-size:22px; }
+
+/* ── Matching game (level 6) ── */
+.match-cols { display:grid; grid-template-columns:1fr 1fr; gap:14px; width:100%; }
+.match-col-hd { font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); text-align:center; margin-bottom:8px; }
+.match-it {
+  background:#fff; border:3px solid #E2E8F0; border-radius:var(--r-lg);
+  padding:13px 16px; cursor:pointer; font-size:15px; font-weight:700;
+  transition:all .2s; text-align:center; box-shadow:var(--sh-sm);
+  display:flex; align-items:center; justify-content:center; min-height:56px;
+}
+.match-it:hover:not(.matched) { border-color:var(--pink); transform:scale(1.02); }
+.match-it.sel     { border-color:var(--pink);  background:#FFF0F8; }
+.match-it.matched { border-color:var(--green); background:#DCFCE7; color:#065F46; cursor:default; }
+.match-it.err     { border-color:var(--red);   background:#FEF2F2; animation:shake .35s; }
+
+/* ── Decimal Bridge (level 7) ── */
+.nl-card { background:#fff; border-radius:var(--r-xl); padding:22px 20px; width:100%; box-shadow:var(--sh-md); }
+.nl-ttl { font-size:12px; font-weight:900; color:var(--muted); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px; text-align:center; }
+.nl-wrap { position:relative; height:58px; }
+.nl-rail { position:absolute; top:50%; left:8%; width:84%; height:10px; background:#E2E8F0; border-radius:5px; transform:translateY(-50%); }
+.nl-dot  { position:absolute; top:50%; width:22px; height:22px; background:var(--blue); border-radius:50%; border:3px solid #fff; box-shadow:0 2px 8px rgba(59,130,246,.5); transform:translate(-50%,-50%); transition:left .6s cubic-bezier(.34,1.56,.64,1); }
+.nl-ticks { position:absolute; top:50%; left:8%; width:84%; display:flex; justify-content:space-between; transform:translateY(-50%); }
+.nl-ticks span { width:2px; height:22px; background:#CBD5E1; border-radius:1px; display:block; }
+.nl-nums { display:flex; justify-content:space-between; padding:0 8%; font-size:11px; font-weight:800; color:var(--muted); margin-top:40px; }
+.dec-area { display:flex; flex-direction:column; align-items:center; gap:10px; }
+.dec-hint { font-size:13px; color:var(--muted); font-weight:700; }
+.dec-inp { width:150px; padding:11px; border:3px solid #E2E8F0; border-radius:var(--r-lg); font-family:'TeachersPet',cursive; font-size:30px; text-align:center; color:var(--dark); outline:none; transition:border-color .2s; }
+.dec-inp:focus { border-color:var(--blue); }
+.ref-table { background:#fff; border-radius:var(--r-xl); padding:16px; width:100%; box-shadow:var(--sh-md); }
+.ref-ttl { font-size:12px; font-weight:900; color:var(--muted); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px; }
+.ref-row { display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid #F1F5F9; }
+.ref-row:last-child { border:none; }
+.ref-fr { min-width:52px; font-family:'TeachersPet',cursive; color:var(--orange); font-size:17px; }
+.ref-arr { color:var(--muted); font-size:16px; }
+.ref-dc { font-family:'TeachersPet',cursive; color:var(--blue); font-size:17px; min-width:44px; }
+.ref-bar { flex:1; height:10px; background:#F1F5F9; border-radius:5px; overflow:hidden; }
+.ref-fill { height:100%; background:linear-gradient(90deg,var(--teal),var(--blue)); border-radius:5px; }
+
+/* ── Complete overlay ── */
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,.72); display:none; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(6px); }
+.overlay.show { display:flex; }
+.oc { background:#fff; border-radius:28px; padding:36px 30px; max-width:390px; width:92%; text-align:center; animation:popIn .45s cubic-bezier(.34,1.56,.64,1); box-shadow:0 30px 80px rgba(0,0,0,.35); }
+@keyframes popIn { from{transform:scale(.3);opacity:0;} to{transform:scale(1);opacity:1;} }
+.oc-emo   { font-size:80px; display:block; margin-bottom:10px; }
+.oc-title { font-family:'TeachersPet',cursive; font-size:34px; color:var(--dark); margin-bottom:6px; }
+.oc-stars { font-size:52px; letter-spacing:10px; margin:14px 0; }
+.oc-msg   { font-size:15px; color:var(--muted); margin-bottom:4px; line-height:1.55; }
+.oc-score { font-family:'TeachersPet',cursive; font-size:22px; color:var(--teal); margin-bottom:20px; }
+.oc-btns  { display:flex; gap:12px; justify-content:center; }
+.btn-replay { background:#F1F5F9; color:var(--dark); font-family:'TeachersPet',cursive; font-size:16px; padding:11px 24px; border:none; border-radius:50px; cursor:pointer; transition:all .2s; }
+.btn-replay:hover { background:#E2E8F0; }
+.confetto { position:fixed; pointer-events:none; border-radius:50%; z-index:10000; animation:conffall linear forwards; }
+@keyframes conffall { 0%{transform:translateY(0) rotate(0deg);opacity:1;} 100%{transform:translateY(100vh) rotate(720deg);opacity:0;} }
+
+/* ── Utilities ── */
+@keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(0,0,0,.15); border-radius:3px; }
+@media(max-width:600px) {
+  .chars-grid,.lvl-grid { grid-template-columns:repeat(2,1fr); }
+  .ans-grid,.match-cols { grid-template-columns:1fr; }
+  .slot-row { gap:8px; } .sort-slot { width:65px; height:65px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LANDING ══════════════ -->
+<div id="p-land" class="screen" style="display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; background:linear-gradient(180deg,#0d0d2b 0%,#1a1a4e 35%,#2d1b69 65%,#4a1942 100%);">
+  <div class="star-layer" id="starLayer"></div>
+  <div class="moon"></div>
+  <div class="ff" style="left:4%;font-size:30px;--ft:11s;--fd:0s">½</div>
+  <div class="ff" style="left:12%;font-size:22px;--ft:9s;--fd:2.5s">¾</div>
+  <div class="ff" style="left:79%;font-size:34px;--ft:13s;--fd:1s">⅓</div>
+  <div class="ff" style="left:68%;font-size:24px;--ft:10s;--fd:3.5s">⅔</div>
+  <div class="ff" style="left:88%;font-size:20px;--ft:8s;--fd:5s">⅛</div>
+  <div class="ff" style="left:38%;font-size:28px;--ft:14s;--fd:.8s">¼</div>
+  <div class="ff" style="left:54%;font-size:18px;--ft:12s;--fd:6.5s">⅕</div>
+  <svg class="skyline" viewBox="0 0 1400 290" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="bg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a0e3a"/><stop offset="100%" stop-color="#0d0820"/></linearGradient></defs>
+    <rect x="0" y="130" width="75" height="160" fill="url(#bg1)"/>
+    <rect x="8" y="88" width="59" height="46" fill="url(#bg1)"/>
+    <polygon points="37,55 8,88 67,88" fill="url(#bg1)"/>
+    <rect x="85" y="55" width="115" height="235" fill="url(#bg1)"/>
+    <rect x="95" y="22" width="95" height="38" fill="url(#bg1)"/>
+    <rect x="210" y="85" width="68" height="205" fill="url(#bg1)"/>
+    <rect x="288" y="108" width="92" height="182" fill="url(#bg1)"/>
+    <rect x="298" y="70" width="72" height="42" fill="url(#bg1)"/>
+    <rect x="390" y="65" width="135" height="225" fill="url(#bg1)"/>
+    <rect x="410" y="28" width="95" height="42" fill="url(#bg1)"/>
+    <polygon points="457,5 410,28 505,28" fill="url(#bg1)"/>
+    <rect x="535" y="98" width="82" height="192" fill="url(#bg1)"/>
+    <rect x="627" y="48" width="105" height="242" fill="url(#bg1)"/>
+    <rect x="637" y="12" width="85" height="40" fill="url(#bg1)"/>
+    <rect x="742" y="92" width="78" height="198" fill="url(#bg1)"/>
+    <rect x="830" y="72" width="115" height="218" fill="url(#bg1)"/>
+    <rect x="840" y="36" width="95" height="42" fill="url(#bg1)"/>
+    <rect x="955" y="55" width="95" height="235" fill="url(#bg1)"/>
+    <polygon points="1002,18 955,55 1050,55" fill="url(#bg1)"/>
+    <rect x="1060" y="80" width="125" height="210" fill="url(#bg1)"/>
+    <rect x="1195" y="98" width="88" height="192" fill="url(#bg1)"/>
+    <rect x="1293" y="66" width="98" height="224" fill="url(#bg1)"/>
+    <rect x="1303" y="30" width="78" height="42" fill="url(#bg1)"/>
+    <rect x="92" y="68" width="13" height="15" rx="2" fill="rgba(255,230,80,.5)"/>
+    <rect x="115" y="68" width="13" height="15" rx="2" fill="rgba(255,230,80,.3)"/>
+    <rect x="138" y="68" width="13" height="15" rx="2" fill="rgba(255,230,80,.55)"/>
+    <rect x="396" y="78" width="15" height="17" rx="2" fill="rgba(255,230,80,.45)"/>
+    <rect x="422" y="78" width="15" height="17" rx="2" fill="rgba(255,230,80,.3)"/>
+    <rect x="448" y="78" width="15" height="17" rx="2" fill="rgba(255,230,80,.55)"/>
+    <rect x="632" y="55" width="16" height="18" rx="2" fill="rgba(255,230,80,.5)"/>
+    <rect x="660" y="55" width="16" height="18" rx="2" fill="rgba(255,230,80,.35)"/>
+    <rect x="688" y="55" width="16" height="18" rx="2" fill="rgba(255,230,80,.5)"/>
+    <rect x="960" y="75" width="14" height="16" rx="2" fill="rgba(255,230,80,.5)"/>
+    <rect x="985" y="75" width="14" height="16" rx="2" fill="rgba(255,230,80,.3)"/>
+    <rect x="1010" y="75" width="14" height="16" rx="2" fill="rgba(255,230,80,.55)"/>
+    <rect x="0" y="280" width="1400" height="10" fill="url(#bg1)"/>
+  </svg>
+  <div class="land-body">
+    <div class="land-eyebrow">Welcome to</div>
+    <div class="land-title">FRACTOPIA</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.5);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-top:-4px;">by Debby Smit</div>
+    <div class="land-sub">✨ The Fraction Town Adventure! ✨</div>
+    <p style="font-size:14px;color:rgba(255,255,255,.5);max-width:380px;line-height:1.65;text-align:center;">Explore a magical town where every building holds a new fraction challenge!</p>
+    <div class="land-tags">
+      <span class="land-tag">7 Levels</span><span class="land-tag">Fun Activities</span>
+      <span class="land-tag">Earn Stars</span>
+    </div>
+    <button class="btn btn-orange btn-start" id="btnStart">🚀 Begin Your Journey</button>
+  </div>
+</div>
+
+<!-- ══════════════ SETUP ══════════════ -->
+<div id="p-setup" class="screen" style="display:none; overflow-y:auto; background:linear-gradient(180deg,#87CEEB 0%,#B0E8F0 55%,#A8E6A0 100%);">
+  <div class="setup-hdr">
+    <button class="btn-back" id="btnBackSetup">←</button>
+    <div class="setup-title">🌟 Create Your Explorer!</div>
+  </div>
+  <div class="setup-body">
+    <div class="sec-hd">👤 Choose Your Character</div>
+    <div class="chars-grid">
+      <div class="char-card on" data-c="👧🏾" id="ch0"><div class="char-ava">👧🏾</div><div class="char-nm">Amara</div><div class="char-role">The Curious Explorer 🔍</div></div>
+      <div class="char-card"    data-c="👦🏾" id="ch1"><div class="char-ava">👦🏾</div><div class="char-nm">Sipho</div><div class="char-role">The Maths Wizard 🧙</div></div>
+      <div class="char-card"    data-c="👧🏽" id="ch2"><div class="char-ava">👧🏽</div><div class="char-nm">Zara</div><div class="char-role">The Problem Solver 💡</div></div>
+      <div class="char-card"    data-c="👦🏻" id="ch3"><div class="char-ava">👦🏻</div><div class="char-nm">Liam</div><div class="char-role">The Creative Thinker 🎨</div></div>
+    </div>
+
+    <div class="sec-hd">✏️ Your Name</div>
+    <div class="name-wrap">
+      <span class="name-ico">🌟</span>
+      <input class="name-inp" id="nameInp" type="text" placeholder="Type your name here…" maxlength="22" value="Explorer">
+    </div>
+    <button class="btn btn-teal btn-go" id="btnGo">🏙️ Enter Fractopia!</button>
+  </div>
+</div>
+
+<!-- ══════════════ TOWN MAP ══════════════ -->
+<div id="p-town" class="screen" style="display:none; background:linear-gradient(180deg,#4DD0E1 0%,#80DEEA 30%,#A5D6A7 65%,#81C784 100%);">
+  <div class="town-hdr">
+    <div class="player-pill">
+      <div class="pil-ava" id="mapAva">👧🏾</div>
+      <div><div class="pil-nm" id="mapName">Explorer</div><div class="pil-gr" id="mapGr">Fractopia Citizen</div></div>
+    </div>
+    <div class="town-ttl">🏙️ FRACTOPIA</div>
+    <div class="stars-pill">⭐ <span class="stars-n" id="totalStars">0</span></div>
+  </div>
+  <div class="map-wrap">
+    <div class="map-sub">Tap a building to start your adventure!</div>
+    <div class="road"></div>
+    <div class="lvl-grid" id="lvlGrid"></div>
+    <div class="road" style="margin-top:14px;"></div>
+  </div>
+</div>
+
+<!-- ══════════════ LEVEL SCREENS ══════════════ -->
+<div id="p-lv1" class="screen scr-lv" style="display:none;">
+  <div class="lv-hdr">
+    <div class="lv-ico">🍰</div>
+    <div class="lv-info"><h2>Mama Nomsa's Bakery</h2><p>Introducing Fractions · Level 1</p></div>
+    <div class="lv-prog-wrap"><div class="prog-bar"><div class="prog-fill" id="pb1" style="width:0%"></div></div><div class="prog-lbl" id="pl1">0/12</div></div>
+    <button class="btn-back" id="back1" style="margin-left:8px">🏠 Town Map</button>
+  </div>
+  <div class="lv-body" id="bd1"></div>
+</div>
+
+<div id="p-lv2" class="screen scr-lv" style="display:none;">
+  <div class="lv-hdr">
+    <div class="lv-ico">🏰</div>
+    <div class="lv-info"><h2>The Comparing Castle</h2><p>Comparing Fractions · Level 2</p></div>
+    <div class="lv-prog-wrap"><div class="prog-bar"><div class="prog-fill" id="pb2" style="width:0%"></div></div><div class="prog-lbl" id="pl2">0/9</div></div>
+    <button class="btn-back" id="back2" style="margin-left:8px">🏠 Town Map</button>
+  </div>
+  <div class="lv-body" id="bd2"></div>
+</div>
+
+<div id="p-lv3" class="screen scr-lv" style="display:none;">
+  <div class="lv-hdr">
+    <div class="lv-ico">🌻</div>
+    <div class="lv-info"><h2>Fraction Farm</h2><p>Fraction Arrays · Level 3</p></div>
+    <div class="lv-prog-wrap"><div class="prog-bar"><div class="prog-fill" id="pb3" style="width:0%"></div></div><div class="prog-lbl" id="pl3">0/9</div></div>
+    <button class="btn-back" id="back3" style="margin-left:8px">🏠 Town Map</button>
+  </div>
+  <div class="lv-body" id="bd3"></div>
+</div>
+
+<div id="p-lv4" class="screen scr-lv" style="display:none;">
+  <div class="lv-hdr">
+    <div class="lv-ico">☕</div>
+    <div class="lv-info"><h2>Ubuntu Café</h2><p>Word Problems · Level 4</p></div>
+    <div class="lv-prog-wrap"><div class="prog-bar"><div class="prog-fill" id="pb4" style="width:0%"></div></div><div class="prog-lbl" id="pl4">0/9</div></div>
+    <button class="btn-back" id="back4" style="margin-left:8px">🏠 Town Map</button>
+  </div>
+  <div class="lv-body" id="bd4"></div>
+</div>
+
+<div id="p-lv5" class="screen scr-lv" style="display:none;">
+  <div class="lv-hdr">
+    <div class="lv-ico">🗼</div>
+    <div class="lv-info"><h2>The Number Tower</h2><p>Movable Fraction Tiles · Level 5</p></div>
+    <div class="lv-prog-wrap"><div class="prog-bar"><div class="prog-fill" id="pb5" style="width:0%"></div></div><div class="prog-lbl" id="pl5">0/6</div></div>
+    <button class="btn-back" id="back5" style="margin-left:8px">🏠 Town Map</button>
+  </div>
+  <div class="lv-body" id="bd5"></div>
+</div>
+
+<div id="p-lv6" class="screen scr-lv" style="display:none;">
+  <div class="lv-hdr">
+    <div class="lv-ico">📚</div>
+    <div class="lv-info"><h2>Wisdom School</h2><p>Fraction Symbols &amp; Names · Level 6</p></div>
+    <div class="lv-prog-wrap"><div class="prog-bar"><div class="prog-fill" id="pb6" style="width:0%"></div></div><div class="prog-lbl" id="pl6">0/6</div></div>
+    <button class="btn-back" id="back6" style="margin-left:8px">🏠 Town Map</button>
+  </div>
+  <div class="lv-body" id="bd6"></div>
+</div>
+
+<div id="p-lv7" class="screen scr-lv" style="display:none;">
+  <div class="lv-hdr">
+    <div class="lv-ico">🌉</div>
+    <div class="lv-info"><h2>Decimal Bridge</h2><p>Fractions to Decimals · Level 7</p></div>
+    <div class="lv-prog-wrap"><div class="prog-bar"><div class="prog-fill" id="pb7" style="width:0%"></div></div><div class="prog-lbl" id="pl7">0/6</div></div>
+    <button class="btn-back" id="back7" style="margin-left:8px">🏠 Town Map</button>
+  </div>
+  <div class="lv-body" id="bd7"></div>
+</div>
+
+<!-- ══════════════ COMPLETE OVERLAY ══════════════ -->
+<div class="overlay" id="overlay">
+  <div class="oc">
+    <span class="oc-emo"  id="ocEmo">🎉</span>
+    <div class="oc-title" id="ocTitle">Level Complete!</div>
+    <div class="oc-stars" id="ocStars">⭐⭐⭐</div>
+    <div class="oc-msg"   id="ocMsg">Amazing work!</div>
+    <div class="oc-score" id="ocScore">10 / 10</div>
+    <div class="oc-btns">
+      <button class="btn-replay" id="btnReplay">🔄 Try Again</button>
+      <button class="btn btn-teal" id="btnTown" style="font-size:16px;padding:11px 24px;">🏙️ Town Map</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+var G = {
+  name: 'Explorer',
+  char: '👧🏾',
+  completed: [],
+  stars: { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0 },
+  curLv: 0,
+  score: 0,
+  total: 0,
+  lv1q: 0, lv2q: 0, lv3q: 0, lv4q: 0, lv5q: 0, lv7q: 0,
+  lv3sel: 0,
+  lv5selTile: null, lv5placed: [], lv5sorted: [],
+  lv6selSym: null, lv6selName: null, lv6matched: 0, lv6pairs: [],
+  lv7qs: []
+};
+
+var ALL_SCREENS = ['p-land','p-setup','p-town','p-lv1','p-lv2','p-lv3','p-lv4','p-lv5','p-lv6','p-lv7'];
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION - uses style.display directly
+═══════════════════════════════════════════════ */
+function go(id) {
+  for (var i = 0; i < ALL_SCREENS.length; i++) {
+    var el = document.getElementById(ALL_SCREENS[i]);
+    if (el) el.style.display = 'none';
+  }
+  var target = document.getElementById(id);
+  if (target) {
+    target.style.display = 'flex';
+    target.style.flexDirection = 'column';
+    target.style.alignItems = 'center';
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   STAR HELPERS
+═══════════════════════════════════════════════ */
+function starStr(n) {
+  if (n >= 3) return '⭐⭐⭐';
+  if (n >= 2) return '⭐⭐✩';
+  if (n >= 1) return '⭐✩✩';
+  return '✩✩✩';
+}
+function totalStarsCount() {
+  var t = 0;
+  for (var k in G.stars) t += G.stars[k];
+  return t;
+}
+
+/* ═══════════════════════════════════════════════
+   GENERATE STARS ON LANDING
+═══════════════════════════════════════════════ */
+function generateStars() {
+  var layer = document.getElementById('starLayer');
+  if (!layer) return;
+  for (var i = 0; i < 130; i++) {
+    var s = document.createElement('div');
+    var sz = Math.random() * 3 + 1;
+    s.className = 'star';
+    s.style.width  = sz + 'px';
+    s.style.height = sz + 'px';
+    s.style.top    = (Math.random() * 88) + '%';
+    s.style.left   = (Math.random() * 100) + '%';
+    s.style.setProperty('--td', (Math.random() * 2 + 1).toFixed(1) + 's');
+    s.style.setProperty('--tl', (Math.random() * 3).toFixed(1) + 's');
+    layer.appendChild(s);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   SETUP PAGE
+═══════════════════════════════════════════════ */
+function pickChar(el) {
+  document.querySelectorAll('.char-card').forEach(function(c) { c.classList.remove('on'); });
+  el.classList.add('on');
+  G.char = el.getAttribute('data-c');
+}
+
+function enterTown() {
+  G.name = document.getElementById('nameInp').value.trim() || 'Explorer';
+  document.getElementById('mapAva').textContent  = G.char;
+  document.getElementById('mapName').textContent = G.name;
+  document.getElementById('mapGr').textContent   = 'Fractopia Citizen';
+  buildMap();
+  go('p-town');
+}
+
+/* ═══════════════════════════════════════════════
+   TOWN MAP
+═══════════════════════════════════════════════ */
+var LEVELS = [
+  { id:1, ico:'🍰', nm:"Mama Nomsa's Bakery", tp:'Introducing Fractions'},
+  { id:2, ico:'🏰', nm:'The Comparing Castle',  tp:'Comparing Fractions'},
+  { id:3, ico:'🌻', nm:'Fraction Farm',          tp:'Fraction Arrays'},
+  { id:4, ico:'☕', nm:'Ubuntu Café',             tp:'Word Problems'},
+  { id:5, ico:'🗼', nm:'The Number Tower',        tp:'Movable Tiles'},
+  { id:6, ico:'📚', nm:'Wisdom School',           tp:'Fraction Names'},
+  { id:7, ico:'🌉', nm:'Decimal Bridge',          tp:'Fractions to Decimals'}
+];
+
+function buildMap() {
+  var grid = document.getElementById('lvlGrid');
+  grid.innerHTML = '';
+  document.getElementById('totalStars').textContent = totalStarsCount();
+
+  LEVELS.forEach(function(lv, idx) {
+    var locked = idx > 0 && G.completed.indexOf(idx) === -1;
+    var done   = G.completed.indexOf(lv.id) !== -1;
+    var s      = G.stars[lv.id] || 0;
+
+    var div = document.createElement('div');
+    div.className = 'lvl-card' + (locked ? ' locked' : ' open') + (done ? ' done' : '');
+    div.innerHTML =
+      (locked ? '<div class="lock-ico">🔒</div>' : '') +
+      '<div class="lvl-ico">' + lv.ico + '</div>' +
+      '<div class="lvl-nm">'  + lv.nm  + '</div>' +
+      '<div class="lvl-tp">'  + lv.tp  + '</div>' +
+      '<div class="lvl-stars">' + starStr(s) + '</div>';
+
+    if (!locked) {
+      (function(id) {
+        div.addEventListener('click', function() { launch(id); });
+      }(lv.id));
+    }
+    grid.appendChild(div);
+  });
+}
+
+function launch(id) {
+  G.curLv = id; G.score = 0;
+  var builders = { 1:buildLv1, 2:buildLv2, 3:buildLv3, 4:buildLv4, 5:buildLv5, 6:buildLv6, 7:buildLv7 };
+  builders[id]();
+  go('p-lv' + id);
+}
+
+function askBack() {
+  if (confirm('Return to the town map? Progress on this level will be lost.')) backTown();
+}
+function backTown() {
+  document.getElementById('overlay').classList.remove('show');
+  buildMap();
+  go('p-town');
+}
+function replayLv() {
+  document.getElementById('overlay').classList.remove('show');
+  launch(G.curLv);
+}
+
+/* ═══════════════════════════════════════════════
+   LEVEL COMPLETE
+═══════════════════════════════════════════════ */
+function showComplete(score, total) {
+  var pct = score / total;
+  var s   = pct >= .9 ? 3 : pct >= .6 ? 2 : 1;
+  if ((G.stars[G.curLv] || 0) < s) G.stars[G.curLv] = s;
+  if (G.completed.indexOf(G.curLv) === -1) G.completed.push(G.curLv);
+
+  var emojis = ['🏆','🎉','🌟','🥳','🎊','💫'];
+  var msgs   = [
+    G.name + ', you are a fraction superstar!',
+    'Incredible! Fractopia is cheering for you!',
+    'You nailed it, explorer!',
+    'The townspeople are so proud of you!',
+    'Another building conquered!'
+  ];
+  document.getElementById('ocEmo').textContent   = emojis[Math.floor(Math.random() * emojis.length)];
+  document.getElementById('ocTitle').textContent = s === 3 ? '🌟 Perfect Score! 🌟' : s === 2 ? 'Great Work!' : 'Level Complete!';
+  document.getElementById('ocStars').textContent = starStr(s);
+  document.getElementById('ocMsg').textContent   = msgs[Math.floor(Math.random() * msgs.length)];
+  document.getElementById('ocScore').textContent = score + ' out of ' + total + ' correct';
+  document.getElementById('overlay').classList.add('show');
+  confetti();
+}
+
+/* ═══════════════════════════════════════════════
+   CONFETTI
+═══════════════════════════════════════════════ */
+function confetti() {
+  var cols = ['#FF6B35','#FFD700','#4ECDC4','#EC4899','#8B5CF6','#22C55E','#3B82F6'];
+  for (var i = 0; i < 70; i++) {
+    var d  = document.createElement('div');
+    var sz = Math.random() * 10 + 5;
+    d.className = 'confetto';
+    d.style.width    = sz + 'px';
+    d.style.height   = sz + 'px';
+    d.style.background = cols[Math.floor(Math.random() * cols.length)];
+    d.style.left     = (Math.random() * 100) + 'vw';
+    d.style.top      = '-10px';
+    d.style.borderRadius = Math.random() > .5 ? '50%' : '3px';
+    d.style.animationDuration = (Math.random() * 2 + 1.5).toFixed(1) + 's';
+    d.style.animationDelay    = (Math.random() * .8).toFixed(2) + 's';
+    document.body.appendChild(d);
+    d.addEventListener('animationend', function() { if (this.parentNode) this.parentNode.removeChild(this); });
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════ */
+function frac(n, d, sz) {
+  sz = sz || 'frac-md';
+  return '<span class="frac ' + sz + '"><span class="fn">' + n + '</span><span class="fl"></span><span class="fd">' + d + '</span></span>';
+}
+
+function fracInline(str) {
+  var p = str.split('/');
+  if (p.length === 2) {
+    return '<span style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-family:\'Fredoka One\',cursive;">' +
+      '<span style="font-size:20px;color:#FF6B35;line-height:1.1;">' + p[0] + '</span>' +
+      '<span style="width:28px;height:3px;background:#1E293B;border-radius:2px;margin:2px 0;display:block;"></span>' +
+      '<span style="font-size:20px;color:#3B82F6;line-height:1.1;">' + p[1] + '</span>' +
+      '</span>';
+  }
+  return str;
+}
+
+function setProgress(lvId, q, total) {
+  document.getElementById('pb' + lvId).style.width = (q / total * 100) + '%';
+  document.getElementById('pl' + lvId).textContent = q + '/' + total;
+}
+
+
+/* ═══════════════════════════════════════════════
+   SVG DIAGRAM HELPERS
+═══════════════════════════════════════════════ */
+function svgPie(n, d) {
+  var cx = 55, cy = 55, r = 45;
+  var paths = '';
+  var step = 2 * Math.PI / d;
+  for (var i = 0; i < d; i++) {
+    var a1 = i * step - Math.PI / 2;
+    var a2 = (i + 1) * step - Math.PI / 2;
+    var x1 = (cx + r * Math.cos(a1)).toFixed(2);
+    var y1 = (cy + r * Math.sin(a1)).toFixed(2);
+    var x2 = (cx + r * Math.cos(a2)).toFixed(2);
+    var y2 = (cy + r * Math.sin(a2)).toFixed(2);
+    var large = (step > Math.PI) ? 1 : 0;
+    var fill = (i < n) ? '#FF6B35' : '#E2E8F0';
+    paths += '<path d="M'+cx+' '+cy+' L'+x1+' '+y1+' A'+r+' '+r+' 0 '+large+' 1 '+x2+' '+y2+' Z" fill="'+fill+'" stroke="white" stroke-width="3"/>';
+  }
+  return '<svg width="110" height="110" viewBox="0 0 110 110" style="display:block;margin:0 auto;">' + paths + '<circle cx="55" cy="55" r="45" fill="none" stroke="#94A3B8" stroke-width="2"/></svg>';
+}
+function svgBar(n, d) {
+  var W = 240, H = 54, sw = W / d;
+  var rects = '';
+  for (var i = 0; i < d; i++) {
+    var fill = (i < n) ? '#FF6B35' : '#E2E8F0';
+    var rx_val = i === 0 ? '8 0 0 8' : i === d-1 ? '0 8 8 0' : '0';
+    rects += '<rect x="'+(i*sw+1)+'" y="1" width="'+(sw-2)+'" height="'+(H-2)+'" fill="'+fill+'" rx="4"/>';
+  }
+  rects += '<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="none" stroke="#94A3B8" stroke-width="2" rx="8"/>';
+  return '<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" style="display:block;margin:0 auto;">' + rects + '</svg>';
+}
+function svgGrid(n, cols, rows) {
+  var cw = 44, ch = 44, gap = 4;
+  var W = cols * (cw + gap) - gap, H = rows * (ch + gap) - gap;
+  var rects = '', count = 0;
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      var fill = (count < n) ? '#FF6B35' : '#E2E8F0';
+      rects += '<rect x="'+(c*(cw+gap))+'" y="'+(r*(ch+gap))+'" width="'+cw+'" height="'+ch+'" fill="'+fill+'" rx="6" stroke="white" stroke-width="2"/>';
+      count++;
+    }
+  }
+  return '<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" style="display:block;margin:0 auto;">' + rects + '</svg>';
+}
+function diagHtml(q) {
+  if (!q.diag) return '';
+  var d = q.diag;
+  if (d.type === 'pie') return '<div style="padding:8px 0;">'+svgPie(d.n, d.d)+'</div>';
+  if (d.type === 'bar') return '<div style="padding:8px 0;">'+svgBar(d.n, d.d)+'</div>';
+  if (d.type === 'grid') return '<div style="padding:8px 0;">'+svgGrid(d.n, d.cols, d.rows)+'</div>';
+  return '';
+}
+
+/* ═══════════════════════════════════════════════
+   PROCEDURAL GENERATION HELPERS
+   Levels 1-5 build a fresh, randomised set of questions every time
+   they're played (instead of a fixed pool played in the same order
+   every time), so replaying a level for extra stars is never a
+   rerun of the exact same quiz.
+═══════════════════════════════════════════════ */
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = randInt(0, i);
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+var FP_DENOMS = [2, 3, 4, 5, 6, 8, 10];
+var FP_DIAG_DENOMS = [2, 3, 4, 5, 6, 8];
+var FP_GRID_LAYOUT = { 2:[2,1], 3:[3,1], 4:[2,2], 5:[5,1], 6:[3,2], 8:[4,2] };
+var FP_NUM_WORDS = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven'];
+var FP_DEN_WORDS = { 2:['half','halves'], 3:['third','thirds'], 4:['quarter','quarters'], 5:['fifth','fifths'], 6:['sixth','sixths'], 7:['seventh','sevenths'], 8:['eighth','eighths'], 9:['ninth','ninths'], 10:['tenth','tenths'], 12:['twelfth','twelfths'] };
+function fp_fracWords(n, d) {
+  var dw = FP_DEN_WORDS[d] || [d + 'th', d + 'ths'];
+  var word = n === 1 ? dw[0] : dw[1];
+  return FP_NUM_WORDS[n] + ' ' + word;
+}
+// Builds a 4-option MCQ around a correct n/d fraction, with plausible
+// wrong answers (flipped, off-by-one numerator, wrong denominator)
+// rather than pure noise, then shuffles and reports the new answer index.
+function fp_fracOptions(n, d) {
+  var correct = n + '/' + d;
+  var seen = {}; seen[correct] = true;
+  var opts = [correct];
+  var tries = 0;
+  while (opts.length < 4 && tries < 60) {
+    tries++;
+    var vn = n, vd = d, kind = randInt(0, 3);
+    if (kind === 0 && d !== n) { vn = d; vd = n; }
+    else if (kind === 1) { vn = n + (Math.random() < 0.5 ? -1 : 1); }
+    else if (kind === 2) { vd = pick(FP_DENOMS); }
+    else { vn = randInt(1, Math.max(1, d - 1)); }
+    if (vn >= 1 && vd >= 2 && vn < vd) {
+      var key = vn + '/' + vd;
+      if (!seen[key]) { seen[key] = true; opts.push(key); }
+    }
+  }
+  while (opts.length < 4) {
+    var rd = pick(FP_DENOMS), rn = randInt(1, rd - 1);
+    var k2 = rn + '/' + rd;
+    if (!seen[k2]) { seen[k2] = true; opts.push(k2); }
+  }
+  var shuffled = shuffle(opts);
+  return { opts: shuffled, ans: shuffled.indexOf(correct) };
+}
+// Generic MCQ for a numeric (count/money) answer: correct plus plausible
+// nearby wrong values (off-by-a-bit, doubled/halved), not random noise.
+function fp_amountOptions(correct) {
+  var seen = {}; seen[correct] = true;
+  var opts = [correct];
+  var deltas = shuffle([1, 2, 3, -1, -2, -3, Math.round(correct / 2) || 1, correct * 2 || 2]);
+  var idx = 0;
+  while (opts.length < 4 && idx < deltas.length) {
+    var v = correct + deltas[idx]; idx++;
+    if (v > 0 && !seen[v]) { seen[v] = true; opts.push(v); }
+  }
+  while (opts.length < 4) {
+    var v2 = correct + randInt(1, 6) * (Math.random() < 0.5 ? -1 : 1);
+    if (v2 > 0 && !seen[v2]) { seen[v2] = true; opts.push(v2); }
+  }
+  var shuffled = shuffle(opts);
+  return { opts: shuffled, ans: shuffled.indexOf(correct) };
+}
+
+/* ═══════════════════════════════════════════════
+   LEVEL 1: MAMA NOMSA'S BAKERY (procedurally generated)
+═══════════════════════════════════════════════ */
+var FP1_SCENES = [
+  { who:"Mama Nomsa", item:'cake', unit:'pieces', unitSing:'piece' },
+  { who:'Sipho', item:'pizza', unit:'slices', unitSing:'slice' },
+  { who:'Amara', item:'loaf of bread', unit:'pieces', unitSing:'piece' },
+  { who:'Thabo', item:'pie', unit:'slices', unitSing:'slice' },
+  { who:'Zara', item:'chocolate slab', unit:'blocks', unitSing:'block' },
+  { who:'Liam', item:'watermelon', unit:'pieces', unitSing:'piece' },
+  { who:'Buhle', item:'orange', unit:'segments', unitSing:'segment' },
+  { who:'Kagiso', item:'sandwich', unit:'pieces', unitSing:'piece' }
+];
+function fp1_wordQ() {
+  var scene = pick(FP1_SCENES);
+  var d = pick(FP_DENOMS), n = randInt(1, d - 1);
+  var opt = fp_fracOptions(n, d);
+  var ateUnit = n === 1 ? scene.unitSing : scene.unit;
+  return {
+    q: scene.who + ' cut a ' + scene.item + ' into <b>' + d + ' equal ' + scene.unit + '</b>. They ate <b>' + n + ' ' + ateUnit + '</b>. What fraction did they eat?',
+    frac: [n, d], opts: opt.opts, ans: opt.ans, showFrac: false,
+    e: n + ' out of ' + d + ' equal parts = ' + n + '/' + d + ' (' + fp_fracWords(n, d) + ')'
+  };
+}
+function fp1_vocabQ() {
+  var d = pick(FP_DENOMS), n = randInt(1, d - 1);
+  var askNum = Math.random() < 0.5;
+  var correct = askNum ? n : d;
+  var seen = {}; seen[correct] = true;
+  var opts = [correct];
+  while (opts.length < 4) {
+    var v = randInt(1, Math.max(d + 4, 12));
+    if (!seen[v]) { seen[v] = true; opts.push(v); }
+  }
+  var shuffled = shuffle(opts);
+  return {
+    q: 'In the fraction <b>' + n + '/' + d + '</b>, what is the <b>' + (askNum ? 'NUMERATOR' : 'DENOMINATOR') + '</b>?',
+    frac: [n, d], opts: shuffled.map(String), ans: shuffled.indexOf(correct), showFrac: true,
+    e: askNum
+      ? 'The NUMERATOR is the TOP number: how many parts we have. Answer: ' + n
+      : 'The DENOMINATOR is the BOTTOM number: total equal parts. Answer: ' + d
+  };
+}
+function fp1_diagramQ() {
+  var d = pick(FP_DIAG_DENOMS), n = randInt(1, d - 1);
+  var type = pick(['pie', 'bar', 'grid']);
+  var diag = type === 'grid'
+    ? { type:'grid', n:n, cols: FP_GRID_LAYOUT[d][0], rows: FP_GRID_LAYOUT[d][1] }
+    : { type:type, n:n, d:d };
+  var opt = fp_fracOptions(n, d);
+  return {
+    q: '🖼️ Look at the diagram. What fraction is shaded orange?',
+    diag: diag, opts: opt.opts, ans: opt.ans, showFrac: false,
+    e: n + ' out of ' + d + ' equal parts are orange = ' + n + '/' + d + ' (' + fp_fracWords(n, d) + ')'
+  };
+}
+function fp1_generate(count) {
+  var pool = [fp1_wordQ, fp1_vocabQ, fp1_diagramQ];
+  var qs = [];
+  for (var i = 0; i < count; i++) qs.push(pick(pool)());
+  return qs;
+}
+function buildLv1() {
+  G.lv1Q = fp1_generate(12);
+  G.lv1q = 0; G.score = 0; G.total = G.lv1Q.length;
+  renderLv1();
+}
+function renderLv1() {
+  setProgress(1, G.lv1q, G.lv1Q.length);
+  var q = G.lv1Q[G.lv1q];
+  var fracDisplay = q.showFrac ? frac(q.frac[0], q.frac[1], 'frac-lg') : (q.diag ? diagHtml(q) : '');
+  var vocabSection = q.showFrac
+    ? '<div class="vocab-row">' +
+      '<div class="voc voc-top"><h4>Numerator</h4><div class="big">' + q.frac[0] + '</div><p>Top number: how many parts we have</p></div>' +
+      '<div class="voc voc-bot"><h4>Denominator</h4><div class="big">' + q.frac[1] + '</div><p>Bottom number: total equal parts</p></div>' +
+      '</div>'
+    : '<div class="vocab-row">' +
+      '<div class="voc voc-top"><h4>Numerator</h4><div class="big">?</div><p>Top number: how many parts we have</p></div>' +
+      '<div class="voc voc-bot"><h4>Denominator</h4><div class="big">?</div><p>Bottom number: total equal parts</p></div>' +
+      '</div>';
+  var html = '<div class="q-card">' +
+    '<div class="q-tag">Question ' + (G.lv1q + 1) + ' of ' + G.lv1Q.length + '</div>' +
+    '<div class="q-txt">' + q.q + '</div>' +
+    fracDisplay +
+    '<div class="ans-grid" id="ag1">' +
+    q.opts.map(function(o, i) { return '<button class="ans-btn" data-i="' + i + '">' + fracInline(o) + '</button>'; }).join('') +
+    '</div>' +
+    '<div class="feedback" id="fb1"></div>' +
+    '<button class="btn btn-orange btn-nxt" id="nx1">Next Question →</button>' +
+    '</div>' +
+    vocabSection;
+  document.getElementById('bd1').innerHTML = html;
+  document.querySelectorAll('#ag1 .ans-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { ansLv1(parseInt(this.getAttribute('data-i'))); });
+  });
+  document.getElementById('nx1').addEventListener('click', nextLv1);
+}
+function ansLv1(i) {
+  var q = G.lv1Q[G.lv1q];
+  var btns = document.querySelectorAll('#ag1 .ans-btn');
+  btns.forEach(function(b) { b.disabled = true; });
+  var fb = document.getElementById('fb1');
+  if (i === q.ans) { btns[i].classList.add('correct'); fb.className = 'feedback fb-ok'; fb.textContent = '✅ Correct! ' + q.e; G.score++; }
+  else { btns[i].classList.add('wrong'); btns[q.ans].classList.add('correct'); fb.className = 'feedback fb-no'; fb.textContent = '❌ ' + q.e; }
+  document.getElementById('nx1').classList.add('show');
+}
+function nextLv1() {
+  G.lv1q++;
+  if (G.lv1q >= G.lv1Q.length) { setProgress(1, G.lv1Q.length, G.lv1Q.length); showComplete(G.score, G.lv1Q.length); }
+  else renderLv1();
+}
+
+/* ═══════════════════════════════════════════════
+   LEVEL 2: COMPARING CASTLE (procedurally generated)
+═══════════════════════════════════════════════ */
+function fp2_gen() {
+  var mode = randInt(0, 3);
+  var a, b, c, d, explanation;
+  if (mode === 0) { // same denominator
+    // d=2 only has numerator 1 available (randInt(1, d-1) with d=2 is always
+    // 1), so a and c would always both be 1 - every "same denominator"
+    // question would silently become 1/2 vs 1/2 with nothing to compare.
+    // Exclude 2 here so mode 0 always has at least two distinct numerators.
+    var fp2Dens = FP_DENOMS.filter(function(x) { return x > 2; });
+    d = pick(fp2Dens); b = d;
+    a = randInt(1, d - 1); c = randInt(1, d - 1);
+    var guard = 0;
+    while (c === a && guard < 20) { c = randInt(1, d - 1); guard++; }
+  } else if (mode === 1) { // same numerator, different denominator
+    a = randInt(1, 4);
+    var candDens = FP_DENOMS.filter(function(x) { return x > a; });
+    b = pick(candDens); c = a;
+    var candDens2 = candDens.filter(function(x) { return x !== b; });
+    d = candDens2.length ? pick(candDens2) : pick(candDens);
+  } else if (mode === 2) { // equivalent fractions
+    b = pick(FP_DENOMS); a = randInt(1, b - 1);
+    var maxMult = Math.max(2, Math.min(4, Math.floor(24 / b)));
+    var mult = randInt(2, maxMult);
+    c = a * mult; d = b * mult;
+  } else { // fully independent fractions
+    b = pick(FP_DENOMS); a = randInt(1, b - 1);
+    d = pick(FP_DENOMS); c = randInt(1, d - 1);
+    // a/b and c/d are picked completely independently here, so they
+    // occasionally land on the literal same fraction (e.g. 1/2 vs 1/2) -
+    // not wrong (the app correctly calls it "equivalent"), but a dull,
+    // no-op comparison. Re-pick the second fraction's denominator (and thus
+    // numerator) a few times if that happens, same guard-loop approach as
+    // the same-denominator case above.
+    var guard2 = 0;
+    while (a === c && b === d && guard2 < 20) {
+      d = pick(FP_DENOMS); c = randInt(1, d - 1);
+      guard2++;
+    }
+  }
+  var cross = a * d - c * b;
+  var symbol = cross > 0 ? '>' : (cross < 0 ? '<' : '=');
+  if (cross === 0) {
+    explanation = a + '/' + b + ' = ' + c + '/' + d + ', so they are equivalent fractions!';
+  } else if (b === d) {
+    explanation = 'Same denominator: ' + a + ' ' + symbol + ' ' + c + ' → ' + a + '/' + b + ' ' + symbol + ' ' + c + '/' + d;
+  } else if (a === c) {
+    explanation = 'Same numerator: bigger denominator = smaller fraction → ' + a + '/' + b + ' ' + symbol + ' ' + c + '/' + d;
+  } else {
+    explanation = a + '/' + b + ' = ' + (a / b).toFixed(2) + ' and ' + c + '/' + d + ' = ' + (c / d).toFixed(2) + ' → ' + a + '/' + b + ' is ' + (symbol === '>' ? 'greater than' : 'less than') + ' ' + c + '/' + d;
+  }
+  return { a:[a, b], b:[c, d], c:symbol, e:explanation };
+}
+function fp2_generate(count) {
+  var qs = [];
+  for (var i = 0; i < count; i++) qs.push(fp2_gen());
+  return qs;
+}
+function buildLv2() { G.lv2Q = fp2_generate(9); G.lv2q = 0; G.score = 0; G.total = G.lv2Q.length; renderLv2(); }
+function renderLv2() {
+  setProgress(2, G.lv2q, G.lv2Q.length);
+  var q = G.lv2Q[G.lv2q];
+  var cols = ['#FF6B35','#6366F1','#22C55E','#F59E0B','#EC4899'];
+  var col  = cols[G.lv2q % cols.length];
+  var pA = (q.a[0]/q.a[1]*100).toFixed(1), pB = (q.b[0]/q.b[1]*100).toFixed(1);
+  document.getElementById('bd2').innerHTML =
+    '<div class="q-card">' +
+    '<div class="q-tag">Question ' + (G.lv2q + 1) + ' of ' + G.lv2Q.length + '</div>' +
+    '<div class="q-txt">Which symbol goes between these fractions?</div>' +
+    '<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center;">' +
+    frac(q.a[0],q.a[1],'frac-lg') +
+    '<span style="font-family:\'Fredoka One\',cursive;font-size:40px;color:#94A3B8;">?</span>' +
+    frac(q.b[0],q.b[1],'frac-lg') +
+    '</div>' +
+    '<div style="width:100%">' +
+    '<div class="fbar-row"><div class="fbar-lbl">' + frac(q.a[0],q.a[1],'frac-sm') + '</div><div class="fbar-track"><div class="fbar-fill" style="width:' + pA + '%;background:' + col + ';"></div></div><div class="fbar-pct">' + pA + '%</div></div>' +
+    '<div class="fbar-row" style="margin-top:8px;"><div class="fbar-lbl">' + frac(q.b[0],q.b[1],'frac-sm') + '</div><div class="fbar-track"><div class="fbar-fill" style="width:' + pB + '%;background:' + col + '88;"></div></div><div class="fbar-pct">' + pB + '%</div></div>' +
+    '</div>' +
+    '<div class="sym-row" id="sr2">' +
+    '<button class="sym-btn" data-sym="&lt;">&lt;</button>' +
+    '<button class="sym-btn" data-sym="=">=</button>' +
+    '<button class="sym-btn" data-sym="&gt;">&gt;</button>' +
+    '</div>' +
+    '<div class="feedback" id="fb2"></div>' +
+    '<button class="btn btn-orange btn-nxt" id="nx2">Next →</button>' +
+    '</div>';
+  document.querySelectorAll('#sr2 .sym-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { ansLv2(this, this.getAttribute('data-sym')); });
+  });
+  document.getElementById('nx2').addEventListener('click', nextLv2);
+}
+function ansLv2(btn, sym) {
+  var q = G.lv2Q[G.lv2q];
+  var syms = { '&lt;':'<', '=':'=', '&gt;':'>' };
+  var symClean = syms[sym] || sym;
+  document.querySelectorAll('#sr2 .sym-btn').forEach(function(b) { b.disabled = true; });
+  var fb = document.getElementById('fb2');
+  if (symClean === q.c) { btn.classList.add('correct'); fb.className = 'feedback fb-ok'; fb.textContent = '✅ Correct! ' + q.e; G.score++; }
+  else { btn.classList.add('wrong'); fb.className = 'feedback fb-no'; fb.textContent = '❌ ' + q.e; }
+  document.getElementById('nx2').classList.add('show');
+}
+function nextLv2() {
+  G.lv2q++;
+  if (G.lv2q >= G.lv2Q.length) { setProgress(2, G.lv2Q.length, G.lv2Q.length); showComplete(G.score, G.lv2Q.length); }
+  else renderLv2();
+}
+
+/* ═══════════════════════════════════════════════
+   LEVEL 3: FRACTION FARM (procedurally generated arrays)
+═══════════════════════════════════════════════ */
+var FP3_ITEMS = [
+  { emo:'🐔', nm:'chickens' }, { emo:'🐑', nm:'sheep' }, { emo:'🐄', nm:'cows' },
+  { emo:'🌽', nm:'corncobs' }, { emo:'🍎', nm:'apples' }, { emo:'🌻', nm:'sunflowers' },
+  { emo:'🐰', nm:'bunnies' }, { emo:'🍋', nm:'lemons' }, { emo:'🐟', nm:'fish' },
+  { emo:'🐷', nm:'piglets' }, { emo:'🍒', nm:'cherries' }, { emo:'🐝', nm:'bees' }
+];
+function fp3_generate(count) {
+  var items = shuffle(FP3_ITEMS.slice());
+  var qs = [];
+  for (var i = 0; i < count; i++) {
+    var it = items[i % items.length];
+    var total = randInt(5, 12);
+    var need = randInt(1, total - 1);
+    qs.push({
+      emo: it.emo, total: total, need: need,
+      q: 'Click <b>' + need + ' out of ' + total + '</b> ' + it.nm + ' to show ' + need + '/' + total
+    });
+  }
+  return qs;
+}
+function buildLv3() { G.lv3Q = fp3_generate(9); G.lv3q = 0; G.score = 0; G.total = G.lv3Q.length; G.lv3sel = 0; renderLv3(); }
+function renderLv3() {
+  setProgress(3, G.lv3q, G.lv3Q.length);
+  var q = G.lv3Q[G.lv3q];
+  G.lv3sel = 0;
+  var cols = Math.min(q.total, 6);
+  var items = '';
+  for (var k = 0; k < q.total; k++) {
+    items += '<div class="arr-item" data-idx="' + k + '">' + q.emo + '</div>';
+  }
+  document.getElementById('bd3').innerHTML =
+    '<div class="q-card">' +
+    '<div class="q-tag">Question ' + (G.lv3q + 1) + ' of ' + G.lv3Q.length + '</div>' +
+    '<div class="q-txt">' + q.q + '</div>' +
+    frac(q.need, q.total, 'frac-lg') +
+    '<div class="arr-grid" style="grid-template-columns:repeat(' + cols + ',1fr)" id="ag3">' + items + '</div>' +
+    '<div style="font-size:14px;font-weight:700;color:#94A3B8;">Highlighted: <span id="ac3" style="color:#FF6B35;font-family:\'Fredoka One\',cursive;">0</span> / ' + q.total + '</div>' +
+    '<div class="feedback" id="fb3"></div>' +
+    '<button class="btn btn-green btn-nxt" id="chk3">✓ Check My Answer</button>' +
+    '<button class="btn btn-orange btn-nxt" id="nx3">Next →</button>' +
+    '</div>';
+  document.querySelectorAll('#ag3 .arr-item').forEach(function(item) {
+    item.addEventListener('click', function() { tapArr(this); });
+  });
+  document.getElementById('chk3').addEventListener('click', checkLv3);
+  document.getElementById('nx3').addEventListener('click', nextLv3);
+}
+function tapArr(el) {
+  var q = G.lv3Q[G.lv3q];
+  if (el.dataset.locked) return;
+  if (el.classList.contains('hl')) { el.classList.remove('hl'); G.lv3sel--; }
+  else {
+    if (G.lv3sel >= q.need) {
+      var fb = document.getElementById('fb3');
+      fb.className = 'feedback fb-no';
+      fb.textContent = 'You only need ' + q.need + '! Tap a highlighted item to remove it.';
+      setTimeout(function() { fb.className = 'feedback'; }, 1400);
+      return;
+    }
+    el.classList.add('hl'); G.lv3sel++;
+  }
+  document.getElementById('ac3').textContent = G.lv3sel;
+  document.getElementById('chk3').classList.toggle('show', G.lv3sel === G.lv3Q[G.lv3q].need);
+}
+function checkLv3() {
+  var q = G.lv3Q[G.lv3q];
+  document.querySelectorAll('#ag3 .arr-item').forEach(function(el) { el.onclick = null; el.dataset.locked = 1; });
+  document.getElementById('chk3').classList.remove('show');
+  var fb = document.getElementById('fb3');
+  if (G.lv3sel === q.need) { fb.className = 'feedback fb-ok'; fb.textContent = '✅ Perfect! ' + q.need + '/' + q.total + ' highlighted correctly!'; G.score++; }
+  else { fb.className = 'feedback fb-no'; fb.textContent = '❌ You highlighted ' + G.lv3sel + ' but needed ' + q.need + '.'; }
+  document.getElementById('nx3').classList.add('show');
+}
+function nextLv3() {
+  G.lv3q++;
+  if (G.lv3q >= G.lv3Q.length) { setProgress(3, G.lv3Q.length, G.lv3Q.length); showComplete(G.score, G.lv3Q.length); }
+  else renderLv3();
+}
+
+/* ═══════════════════════════════════════════════
+   LEVEL 4: UBUNTU CAFE (procedurally generated word problems)
+═══════════════════════════════════════════════ */
+var FP4_PEOPLE = [
+  { name:'Thabo', subj:'He', poss:'his', obj:'he' },
+  { name:'Nomsa', subj:'She', poss:'her', obj:'she' },
+  { name:'Sipho', subj:'He', poss:'his', obj:'he' },
+  { name:'Zara', subj:'She', poss:'her', obj:'she' },
+  { name:'Liam', subj:'He', poss:'his', obj:'he' },
+  { name:'Amara', subj:'She', poss:'her', obj:'she' },
+  { name:'Buhle', subj:'She', poss:'her', obj:'she' },
+  { name:'Kagiso', subj:'He', poss:'his', obj:'he' }
+];
+function fp4_moneySpend() {
+  var person = pick(FP4_PEOPLE);
+  var d = pick(FP_DENOMS), mult = randInt(2, 6), total = d * mult;
+  var n = randInt(1, d - 1), answer = (total / d) * n;
+  var mcq = fp_amountOptions(answer);
+  var verb = pick(['spends', 'saves']);
+  return {
+    p: person.name + ' has <b>R' + total + '</b>. ' + person.subj + ' ' + verb + ' <b>' + n + '/' + d + '</b> of ' + person.poss + ' money' + (verb === 'spends' ? ' on a cool drink' : '') + '. How much does ' + person.obj + ' ' + (verb === 'spends' ? 'spend' : 'save') + '?',
+    vis: 0, emo: '',
+    opts: mcq.opts.map(function(v) { return 'R' + v; }), ans: mcq.ans,
+    e: n + '/' + d + ' of R' + total + ' = R' + total + ' ÷ ' + d + ' × ' + n + ' = R' + answer
+  };
+}
+function fp4_itemsGivenAway() {
+  var person = pick(FP4_PEOPLE);
+  var item = pick(['scones', 'cupcakes', 'cookies', 'muffins', 'samoosas']);
+  var d = pick(FP_DENOMS), mult = randInt(2, 6), total = d * mult;
+  var n = randInt(1, d - 1), answer = (total / d) * n;
+  var mcq = fp_amountOptions(answer);
+  return {
+    p: person.name + ' baked <b>' + total + ' ' + item + '</b>. ' + person.subj + ' gives <b>' + n + '/' + d + '</b> to ' + pick(['her neighbours', 'his neighbours', 'the class', 'a friend']) + '. How many does ' + person.obj + ' give away?',
+    vis: 0, emo: '',
+    opts: mcq.opts.map(function(v) { return v + ' ' + item; }), ans: mcq.ans,
+    e: n + '/' + d + ' of ' + total + ' = ' + total + ' ÷ ' + d + ' × ' + n + ' = ' + answer + ' ' + item
+  };
+}
+function fp4_populationFraction() {
+  var scenario = pick([
+    { group:'learners', thing:'girls' }, { group:'animals on Fraction Farm', thing:'cows' },
+    { group:'sweets in a jar', thing:'red sweets' }, { group:'fans at the match', thing:'home fans' },
+    { group:'books on the shelf', thing:'storybooks' }
+  ]);
+  var d = pick(FP_DENOMS), mult = randInt(2, 6), total = d * mult;
+  var n = randInt(1, d - 1), answer = (total / d) * n;
+  var mcq = fp_amountOptions(answer);
+  return {
+    p: 'There are <b>' + total + ' ' + scenario.group + '</b>. <b>' + n + '/' + d + '</b> of them are ' + scenario.thing + '. How many ' + scenario.thing + ' are there?',
+    vis: 0, emo: '',
+    opts: mcq.opts.map(String), ans: mcq.ans,
+    e: n + '/' + d + ' of ' + total + ' = (' + total + ' ÷ ' + d + ') × ' + n + ' = ' + answer + ' ' + scenario.thing
+  };
+}
+function fp4_remainingSlices() {
+  var item = pick([['pizza','🍕'], ['cake','🎂'], ['watermelon','🍉'], ['chocolate slab','🍫']]);
+  var total = pick([6, 8, 10, 12]);
+  var k1 = randInt(1, Math.floor(total / 2));
+  var k2 = randInt(1, total - k1 - 1);
+  var eaten = k1 + k2, left = total - eaten;
+  var names = shuffle(FP4_PEOPLE).slice(0, 2);
+  var opt = fp_fracOptions(left, total);
+  return {
+    p: 'A ' + item[0] + ' is cut into <b>' + total + ' equal slices</b>. ' + names[0].name + ' eats <b>' + k1 + '</b> and ' + names[1].name + ' eats <b>' + k2 + '</b>. What fraction is left?',
+    vis: total, emo: item[1],
+    opts: opt.opts, ans: opt.ans,
+    e: k1 + ' + ' + k2 + ' = ' + eaten + ' eaten. ' + total + ' − ' + eaten + ' = ' + left + ' left = ' + left + '/' + total
+  };
+}
+function fp4_generate(count) {
+  var templates = [fp4_moneySpend, fp4_itemsGivenAway, fp4_populationFraction, fp4_remainingSlices];
+  var qs = [];
+  for (var i = 0; i < count; i++) qs.push(pick(templates)());
+  return qs;
+}
+function buildLv4() { G.lv4Q = fp4_generate(9); G.lv4q = 0; G.score = 0; G.total = G.lv4Q.length; renderLv4(); }
+function renderLv4() {
+  setProgress(4, G.lv4q, G.lv4Q.length);
+  var q = G.lv4Q[G.lv4q];
+  var vis = '';
+  if (q.vis > 0) {
+    vis = '<div class="prob-vis">';
+    for (var v = 0; v < q.vis; v++) vis += '<span style="font-size:24px;">' + q.emo + '</span>';
+    vis += '</div>';
+  }
+  document.getElementById('bd4').innerHTML =
+    '<div class="q-card">' +
+    '<div class="q-tag">Question ' + (G.lv4q + 1) + ' of ' + G.lv4Q.length + '</div>' +
+    '<div class="prob-card"><div class="prob-tag">☕ WORD PROBLEM</div><div class="prob-txt">' + q.p + '</div>' + vis + '</div>' +
+    '<div class="ans-grid" id="ag4">' +
+    q.opts.map(function(o, i) { return '<button class="ans-btn" data-i="' + i + '">' + fracInline(o) + '</button>'; }).join('') +
+    '</div>' +
+    '<div class="feedback" id="fb4"></div>' +
+    '<button class="btn btn-orange btn-nxt" id="nx4">Next →</button>' +
+    '</div>';
+  document.querySelectorAll('#ag4 .ans-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { ansLv4(parseInt(this.getAttribute('data-i'))); });
+  });
+  document.getElementById('nx4').addEventListener('click', nextLv4);
+}
+function ansLv4(i) {
+  var q = G.lv4Q[G.lv4q];
+  var btns = document.querySelectorAll('#ag4 .ans-btn');
+  btns.forEach(function(b) { b.disabled = true; });
+  var fb = document.getElementById('fb4');
+  if (i === q.ans) { btns[i].classList.add('correct'); fb.className = 'feedback fb-ok'; fb.textContent = '✅ Correct! ' + q.e; G.score++; }
+  else { btns[i].classList.add('wrong'); btns[q.ans].classList.add('correct'); fb.className = 'feedback fb-no'; fb.textContent = '❌ ' + q.e; }
+  document.getElementById('nx4').classList.add('show');
+}
+function nextLv4() {
+  G.lv4q++;
+  if (G.lv4q >= G.lv4Q.length) { setProgress(4, G.lv4Q.length, G.lv4Q.length); showComplete(G.score, G.lv4Q.length); }
+  else renderLv4();
+}
+
+/* ═══════════════════════════════════════════════
+   LEVEL 5: NUMBER TOWER (procedurally generated sorting rounds)
+═══════════════════════════════════════════════ */
+function fp5_gen() {
+  var mode = randInt(0, 2);
+  var fracs = [];
+  if (mode === 0) { // same denominator, 4 distinct numerators
+    var d = pick(FP_DENOMS.filter(function(x) { return x >= 5; }));
+    var pool = [];
+    for (var i = 1; i < d; i++) pool.push(i);
+    var chosen = shuffle(pool).slice(0, 4);
+    fracs = chosen.map(function(n) { return [n, d]; });
+  } else if (mode === 1) { // unit fractions, different denominators
+    var dens = shuffle(FP_DENOMS.slice()).slice(0, 4);
+    fracs = dens.map(function(dd) { return [1, dd]; });
+  } else { // fully mixed, ensure distinct values
+    var guard = 0;
+    while (fracs.length < 4 && guard < 100) {
+      guard++;
+      var dd2 = pick(FP_DENOMS), nn2 = randInt(1, dd2 - 1);
+      var val = nn2 / dd2;
+      var dup = fracs.some(function(f) { return Math.abs(f[0] / f[1] - val) < 1e-9; });
+      if (!dup) fracs.push([nn2, dd2]);
+    }
+  }
+  return { fracs: fracs, label: 'Sort from SMALLEST to LARGEST' };
+}
+function fp5_generate(count) {
+  var qs = [];
+  for (var i = 0; i < count; i++) qs.push(fp5_gen());
+  return qs;
+}
+function buildLv5() { G.lv5Sets = fp5_generate(6); G.lv5q = 0; G.score = 0; G.total = G.lv5Sets.length; G.lv5selTile = null; renderLv5(); }
+function renderLv5() {
+  setProgress(5, G.lv5q, G.lv5Sets.length);
+  var set = G.lv5Sets[G.lv5q];
+  var shuffled = set.fracs.slice().sort(function() { return Math.random() - .5; });
+  G.lv5sorted = set.fracs.slice().sort(function(a, b) { return a[0]/a[1] - b[0]/b[1]; });
+  G.lv5placed = [];
+  for (var x = 0; x < set.fracs.length; x++) G.lv5placed.push(null);
+  G.lv5selTile = null;
+
+  var tiles = shuffled.map(function(f) {
+    return '<div class="ftile" data-n="' + f[0] + '" data-d="' + f[1] + '" id="tile_' + f[0] + '_' + f[1] + '">' +
+      '<span class="tn">' + f[0] + '</span><span class="tl"></span><span class="td">' + f[1] + '</span></div>';
+  }).join('');
+
+  var slots = set.fracs.map(function(_, i) {
+    return '<div class="sort-slot" id="sl' + i + '" data-slot="' + i + '"><span style="font-size:22px;">?</span></div>';
+  }).join('');
+
+  document.getElementById('bd5').innerHTML =
+    '<div class="q-card">' +
+    '<div class="q-tag">Round ' + (G.lv5q + 1) + ' of ' + G.lv5Sets.length + '</div>' +
+    '<div class="tile-ins">' + set.label + '<small>① Click a tile to select it &nbsp; ② Click a slot to place it &nbsp; ③ Click a filled slot to clear it</small></div>' +
+    '<div style="font-size:12px;font-weight:900;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;align-self:flex-start;">Fraction Tiles:</div>' +
+    '<div class="tiles-src" id="tileSrc">' + tiles + '</div>' +
+    '<div style="font-size:12px;font-weight:900;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;align-self:flex-start;">Place in order (smallest → largest):</div>' +
+    '<div class="slot-row" id="slotRow">' + slots + '</div>' +
+    '<div class="feedback" id="fb5"></div>' +
+    '<button class="btn btn-green btn-nxt" id="chk5">✓ Check My Order!</button>' +
+    '<button class="btn btn-orange btn-nxt" id="nx5">Next Round →</button>' +
+    '</div>';
+
+  document.querySelectorAll('#tileSrc .ftile').forEach(function(t) {
+    t.addEventListener('click', function() { selTile(this); });
+  });
+  document.querySelectorAll('#slotRow .sort-slot').forEach(function(sl) {
+    sl.addEventListener('click', function() { placeSlot(parseInt(this.getAttribute('data-slot'))); });
+  });
+  document.getElementById('chk5').addEventListener('click', checkLv5);
+  document.getElementById('nx5').addEventListener('click', nextLv5);
+}
+function selTile(el) {
+  if (el.classList.contains('used')) return;
+  document.querySelectorAll('.ftile').forEach(function(t) { t.classList.remove('sel'); });
+  if (G.lv5selTile && G.lv5selTile.id === el.id) { G.lv5selTile = null; return; }
+  el.classList.add('sel');
+  G.lv5selTile = el;
+}
+function placeSlot(idx) {
+  var slot = document.getElementById('sl' + idx);
+  if (G.lv5placed[idx]) {
+    var prev = G.lv5placed[idx];
+    var prevEl = document.getElementById('tile_' + prev.n + '_' + prev.d);
+    if (prevEl) { prevEl.classList.remove('used', 'sel'); }
+    G.lv5placed[idx] = null;
+    slot.innerHTML = '<span style="font-size:22px;">?</span>';
+    slot.classList.remove('filled','slot-ok','slot-err');
+    if (!G.lv5selTile) return;
+  }
+  if (!G.lv5selTile) {
+    var fb5 = document.getElementById('fb5');
+    fb5.className = 'feedback fb-no'; fb5.textContent = '👆 First click a fraction tile above!';
+    setTimeout(function() { var f = document.getElementById('fb5'); if(f) f.className = 'feedback'; }, 1200);
+    return;
+  }
+  var tn = G.lv5selTile.getAttribute('data-n');
+  var td = G.lv5selTile.getAttribute('data-d');
+  // Remove this tile from any other slot
+  for (var j = 0; j < G.lv5placed.length; j++) {
+    if (j !== idx && G.lv5placed[j] && G.lv5placed[j].n === tn && G.lv5placed[j].d === td) {
+      var s = document.getElementById('sl' + j);
+      s.innerHTML = '<span style="font-size:22px;">?</span>';
+      s.classList.remove('filled','slot-ok','slot-err');
+      G.lv5placed[j] = null;
+    }
+  }
+  slot.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;font-family:\'Fredoka One\',cursive;color:#8B5CF6;"><span style="font-size:22px;">' + tn + '</span><span style="width:34px;height:3px;background:#8B5CF6;border-radius:2px;margin:3px 0;"></span><span style="font-size:22px;">' + td + '</span></div>';
+  slot.classList.add('filled');
+  G.lv5selTile.classList.add('used'); G.lv5selTile.classList.remove('sel');
+  G.lv5placed[idx] = { n: tn, d: td };
+  G.lv5selTile = null;
+  var allDone = G.lv5placed.every(function(p) { return p !== null; });
+  document.getElementById('chk5').classList.toggle('show', allDone);
+}
+function checkLv5() {
+  var ok = true;
+  G.lv5sorted.forEach(function(f, i) {
+    var p = G.lv5placed[i];
+    var sl = document.getElementById('sl' + i);
+    if (!p || p.n !== String(f[0]) || p.d !== String(f[1])) { sl.classList.add('slot-err'); ok = false; }
+    else sl.classList.add('slot-ok');
+  });
+  document.getElementById('chk5').classList.remove('show');
+  var fb = document.getElementById('fb5');
+  if (ok) { fb.className = 'feedback fb-ok'; fb.textContent = '✅ Perfect order! Correctly sorted!'; G.score++; }
+  else {
+    var sortedStr = G.lv5sorted.map(function(f) { return f[0] + '/' + f[1]; }).join(' → ');
+    fb.className = 'feedback fb-no'; fb.textContent = '❌ Correct order: ' + sortedStr;
+  }
+  document.getElementById('nx5').classList.add('show');
+}
+function nextLv5() {
+  G.lv5q++;
+  if (G.lv5q >= G.lv5Sets.length) { setProgress(5, G.lv5Sets.length, G.lv5Sets.length); showComplete(G.score, G.lv5Sets.length); }
+  else renderLv5();
+}
+
+/* ═══════════════════════════════════════════════
+   LEVEL 6: WISDOM SCHOOL (Matching Names)
+═══════════════════════════════════════════════ */
+var ALL_PAIRS = [
+  { sym:'½', nm:'One Half' }, { sym:'¼', nm:'One Quarter' }, { sym:'¾', nm:'Three Quarters' },
+  { sym:'⅓', nm:'One Third' }, { sym:'⅔', nm:'Two Thirds' }, { sym:'⅛', nm:'One Eighth' },
+  { sym:'⅜', nm:'Three Eighths' }, { sym:'⅕', nm:'One Fifth' }, { sym:'⅖', nm:'Two Fifths' },
+  { sym:'⅗', nm:'Three Fifths' }, { sym:'⅝', nm:'Five Eighths' }, { sym:'⅞', nm:'Seven Eighths' },
+  { sym:'⅙', nm:'One Sixth' }, { sym:'⅚', nm:'Five Sixths' }, { sym:'⅐', nm:'One Seventh' },
+  { sym:'⅑', nm:'One Ninth' }, { sym:'⅒', nm:'One Tenth' }
+];
+function buildLv6() {
+  var pairs = ALL_PAIRS.slice().sort(function() { return Math.random() - .5; }).slice(0, 6);
+  G.lv6pairs = pairs; G.lv6matched = 0; G.lv6selSym = null; G.lv6selName = null;
+  G.score = 0; G.total = 6;
+  setProgress(6, 0, 6);
+  var syms = pairs.slice().sort(function() { return Math.random() - .5; });
+  var nms  = pairs.slice().sort(function() { return Math.random() - .5; });
+  var symHtml = syms.map(function(p) {
+    var safeId = 'sym_' + pairs.indexOf(p);
+    return '<div class="match-it" id="' + safeId + '" data-sym="' + pairs.indexOf(p) + '">' + p.sym + '</div>';
+  }).join('');
+  var nmHtml = nms.map(function(p) {
+    var safeId = 'nm_' + pairs.indexOf(p);
+    return '<div class="match-it" id="' + safeId + '" data-nm="' + pairs.indexOf(p) + '">' + p.nm + '</div>';
+  }).join('');
+  document.getElementById('bd6').innerHTML =
+    '<div class="q-card">' +
+    '<div class="q-tag">Matching Game: 6 Pairs</div>' +
+    '<div style="font-size:15px;font-weight:700;color:#1E293B;text-align:center;">🔗 Match each fraction symbol to its name!<br><small style="color:#94A3B8;font-weight:600;">Click a symbol, then click the matching name.</small></div>' +
+    '<div class="match-cols">' +
+    '<div><div class="match-col-hd">✏️ Fraction Symbol</div>' + symHtml + '</div>' +
+    '<div><div class="match-col-hd">📢 Fraction Name</div>'   + nmHtml  + '</div>' +
+    '</div>' +
+    '<div class="feedback" id="fb6"></div>' +
+    '<div style="font-size:15px;font-weight:900;color:#1E293B;">Matched: <span id="mc6" style="color:#22C55E;">0</span> / 6</div>' +
+    '<button class="btn btn-orange btn-nxt" id="nx6">Finish Level →</button>' +
+    '</div>';
+  document.querySelectorAll('[data-sym]').forEach(function(el) {
+    el.addEventListener('click', function() { selSym(this); });
+  });
+  document.querySelectorAll('[data-nm]').forEach(function(el) {
+    el.addEventListener('click', function() { selNm(this); });
+  });
+  document.getElementById('nx6').addEventListener('click', function() { setProgress(6,6,6); showComplete(G.score, 6); });
+}
+function selSym(el) {
+  if (el.classList.contains('matched')) return;
+  document.querySelectorAll('[data-sym]').forEach(function(e) { e.classList.remove('sel'); });
+  if (G.lv6selSym === el.getAttribute('data-sym')) { G.lv6selSym = null; return; }
+  el.classList.add('sel'); G.lv6selSym = el.getAttribute('data-sym');
+  tryMatch6();
+}
+function selNm(el) {
+  if (el.classList.contains('matched')) return;
+  document.querySelectorAll('[data-nm]').forEach(function(e) { e.classList.remove('sel'); });
+  if (G.lv6selName === el.getAttribute('data-nm')) { G.lv6selName = null; return; }
+  el.classList.add('sel'); G.lv6selName = el.getAttribute('data-nm');
+  tryMatch6();
+}
+function tryMatch6() {
+  if (!G.lv6selSym || !G.lv6selName) return;
+  var symEl = document.getElementById('sym_' + G.lv6selSym);
+  var nmEl  = document.getElementById('nm_'  + G.lv6selName);
+  var fb    = document.getElementById('fb6');
+  if (G.lv6selSym === G.lv6selName) {
+    symEl.classList.remove('sel'); symEl.classList.add('matched');
+    nmEl.classList.remove('sel');  nmEl.classList.add('matched');
+    G.lv6matched++; G.score++;
+    document.getElementById('mc6').textContent = G.lv6matched;
+    setProgress(6, G.lv6matched, 6);
+    fb.className = 'feedback fb-ok';
+    fb.textContent = '✅ ' + G.lv6pairs[parseInt(G.lv6selSym)].sym + ' = ' + G.lv6pairs[parseInt(G.lv6selSym)].nm + '!';
+    if (G.lv6matched === 6) { fb.textContent = '🌟 Brilliant! All 6 pairs matched!'; document.getElementById('nx6').classList.add('show'); }
+  } else {
+    symEl.classList.add('err'); nmEl.classList.add('err');
+    fb.className = 'feedback fb-no'; fb.textContent = '❌ Not a match, try again!';
+    setTimeout(function() { symEl.classList.remove('err','sel'); nmEl.classList.remove('err','sel'); }, 450);
+  }
+  G.lv6selSym = null; G.lv6selName = null;
+}
+
+/* ═══════════════════════════════════════════════
+   LEVEL 7: DECIMAL BRIDGE
+═══════════════════════════════════════════════ */
+var LV7_ALL = [
+  { f:[1,2],  dec:0.5,  disp:'½',    hint:'1 ÷ 2 = ?' },
+  { f:[1,4],  dec:0.25, disp:'¼',    hint:'1 ÷ 4 = ?' },
+  { f:[3,4],  dec:0.75, disp:'¾',    hint:'3 ÷ 4 = ?' },
+  { f:[1,5],  dec:0.2,  disp:'⅕',    hint:'1 ÷ 5 = ?' },
+  { f:[2,5],  dec:0.4,  disp:'⅖',    hint:'2 ÷ 5 = ?' },
+  { f:[3,10], dec:0.3,  disp:'3/10', hint:'3 ÷ 10 = ?' },
+  { f:[7,10], dec:0.7,  disp:'7/10', hint:'7 ÷ 10 = ?' },
+  { f:[1,10], dec:0.1,  disp:'1/10', hint:'1 ÷ 10 = ?' },
+  { f:[3,5],  dec:0.6,  disp:'⅗',    hint:'3 ÷ 5 = ?' },
+  { f:[4,5],  dec:0.8,  disp:'⅘',    hint:'4 ÷ 5 = ?' },
+  { f:[3,8],  dec:0.375,disp:'3/8',  hint:'3 ÷ 8 = ?' },
+  { f:[9,10], dec:0.9,  disp:'9/10', hint:'9 ÷ 10 = ?' },
+  { f:[1,8],  dec:0.125,disp:'1/8',  hint:'1 ÷ 8 = ?' },
+  { f:[5,8],  dec:0.625,disp:'5/8',  hint:'5 ÷ 8 = ?' },
+  { f:[7,8],  dec:0.875,disp:'7/8',  hint:'7 ÷ 8 = ?' },
+  { f:[2,10], dec:0.2,  disp:'2/10', hint:'2 ÷ 10 = ?' },
+  { f:[4,10], dec:0.4,  disp:'4/10', hint:'4 ÷ 10 = ?' },
+  { f:[6,10], dec:0.6,  disp:'6/10', hint:'6 ÷ 10 = ?' },
+  { f:[8,10], dec:0.8,  disp:'8/10', hint:'8 ÷ 10 = ?' }
+];
+var REF = [
+  { f:'1/2', d:'0.5' }, { f:'1/4', d:'0.25' }, { f:'3/4', d:'0.75' },
+  { f:'1/5', d:'0.2' }, { f:'2/5', d:'0.4'  }, { f:'3/5', d:'0.6'  }, { f:'4/5', d:'0.8'  },
+  { f:'1/10',d:'0.1' }, { f:'3/10',d:'0.3'  }, { f:'7/10',d:'0.7'  }, { f:'9/10',d:'0.9'  },
+  // eighths added so a student who draws an eighths question (LV7_ALL includes
+  // 1/8, 3/8, 5/8, 7/8) has a worked example to reference, not just tenths/fifths.
+  { f:'1/8', d:'0.125' }, { f:'3/8', d:'0.375' }, { f:'5/8', d:'0.625' }, { f:'7/8', d:'0.875' }
+];
+function buildLv7() {
+  G.lv7qs = LV7_ALL.slice().sort(function() { return Math.random() - .5; }).slice(0, 6);
+  G.lv7q = 0; G.score = 0; G.total = 6;
+  renderLv7();
+}
+function renderLv7() {
+  setProgress(7, G.lv7q, 6);
+  var q = G.lv7qs[G.lv7q];
+  var fracHtml = q.disp.indexOf('/') !== -1 ? frac(q.f[0], q.f[1], 'frac-lg') : '<span style="font-family:\'Fredoka One\',cursive;font-size:72px;color:#FF6B35;">' + q.disp + '</span>';
+  var refRows = REF.map(function(r) {
+    return '<div class="ref-row"><span class="ref-fr">' + r.f + '</span><span class="ref-arr">→</span><span class="ref-dc">' + r.d + '</span><div class="ref-bar"><div class="ref-fill" style="width:' + (parseFloat(r.d)*100) + '%"></div></div></div>';
+  }).join('');
+  document.getElementById('bd7').innerHTML =
+    '<div class="q-card">' +
+    '<div class="q-tag">Question ' + (G.lv7q + 1) + ' of 6</div>' +
+    '<div class="q-txt">Convert this fraction to a decimal:</div>' +
+    '<div style="display:flex;align-items:center;gap:18px;justify-content:center;flex-wrap:wrap;">' + fracHtml +
+    '<span style="font-family:\'Fredoka One\',cursive;font-size:36px;color:#94A3B8;">=</span>' +
+    '<span style="font-family:\'Fredoka One\',cursive;font-size:42px;color:#3B82F6;">?</span></div>' +
+    '<div class="nl-card"><div class="nl-ttl">📍 Number Line (0 → 1)</div>' +
+    '<div class="nl-wrap"><div class="nl-rail"></div><div class="nl-dot" id="nld" style="left:8%;"></div>' +
+    '<div class="nl-ticks"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></div>' +
+    '<div class="nl-nums"><span>0</span><span>0.1</span><span>0.2</span><span>0.3</span><span>0.4</span><span>0.5</span><span>0.6</span><span>0.7</span><span>0.8</span><span>0.9</span><span>1</span></div></div>' +
+    '<div class="dec-area"><div class="dec-hint">💡 Hint: ' + q.hint + '</div>' +
+    '<input class="dec-inp" id="decI" type="number" step="0.01" min="0" max="1" placeholder="0.00">' +
+    '<button class="btn btn-blue" id="chkDec" style="font-size:17px;padding:12px 34px;">Check Answer ✓</button></div>' +
+    '<div class="feedback" id="fb7"></div>' +
+    '<button class="btn btn-orange btn-nxt" id="nx7">Next →</button>' +
+    '</div>' +
+    '<div class="ref-table"><div class="ref-ttl">📖 Reference Table</div>' + refRows + '</div>';
+
+  document.getElementById('decI').addEventListener('input', function() {
+    var v = parseFloat(this.value);
+    if (!isNaN(v) && v >= 0 && v <= 1) {
+      var dot = document.getElementById('nld');
+      if (dot) dot.style.left = (v * 84 + 8) + '%';
+    }
+  });
+  document.getElementById('chkDec').addEventListener('click', checkLv7);
+  document.getElementById('nx7').addEventListener('click', nextLv7);
+}
+function checkLv7() {
+  var q = G.lv7qs[G.lv7q];
+  var inp = document.getElementById('decI');
+  var val = parseFloat(inp.value);
+  var fb  = document.getElementById('fb7');
+  if (isNaN(val)) { fb.className = 'feedback fb-no'; fb.textContent = 'Please type a decimal number!'; return; }
+  var dot = document.getElementById('nld');
+  if (dot) dot.style.left = (q.dec * 84 + 8) + '%';
+  inp.disabled = true;
+  document.getElementById('chkDec').disabled = true;
+  // The eighths (1/8, 3/8, 5/8, 7/8) have 3-decimal exact values
+  // (0.125, 0.375, 0.625, 0.875), but the input's own step="0.01" and
+  // placeholder="0.00" invite a 2-decimal answer - and the old
+  // Math.abs(val - q.dec) < 0.005 check rejected that natural 2dp answer
+  // every time (e.g. 0.125 - 0.13 = 0.005 exactly, which is not < 0.005,
+  // so even the "right" rounded answer always failed). Rounding both sides
+  // to 2 decimals first compares what the child actually typed against the
+  // same 2dp rounding of the true value, so it always accepts the correct
+  // 2-decimal answer.
+  var val2 = Math.round(val * 100) / 100;
+  var dec2 = Math.round(q.dec * 100) / 100;
+  if (Math.abs(val2 - dec2) < 0.005) {
+    fb.className = 'feedback fb-ok'; fb.textContent = '✅ Correct! ' + q.disp + ' = ' + q.dec;
+    inp.style.borderColor = '#22C55E'; G.score++;
+  } else {
+    fb.className = 'feedback fb-no'; fb.textContent = '❌ ' + q.disp + ' = ' + q.dec + '  (' + q.f[0] + ' ÷ ' + q.f[1] + ' = ' + q.dec + ')';
+    inp.style.borderColor = '#EF4444';
+  }
+  document.getElementById('nx7').classList.add('show');
+}
+function nextLv7() {
+  G.lv7q++;
+  if (G.lv7q >= 6) { setProgress(7, 6, 6); showComplete(G.score, 6); }
+  else renderLv7();
+}
+
+/* ═══════════════════════════════════════════════
+   WIRE UP ALL BUTTONS ON PAGE LOAD
+═══════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function() {
+  generateStars();
+
+  document.getElementById('btnStart').addEventListener('click', function() { go('p-setup'); });
+  document.getElementById('btnBackSetup').addEventListener('click', function() { go('p-land'); });
+  document.getElementById('btnGo').addEventListener('click', enterTown);
+  document.getElementById('btnReplay').addEventListener('click', replayLv);
+  document.getElementById('btnTown').addEventListener('click', backTown);
+
+  document.querySelectorAll('.char-card').forEach(function(c) {
+    c.addEventListener('click', function() { pickChar(this); });
+  });
+  for (var i = 1; i <= 7; i++) {
+    (function(lvId) {
+      var btn = document.getElementById('back' + lvId);
+      if (btn) btn.addEventListener('click', askBack);
+    }(i));
+  }
+});
+</script>
+</body>
+</html>
