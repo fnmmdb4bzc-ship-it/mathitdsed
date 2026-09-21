@@ -43,6 +43,11 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    X-Frame-Options        = "DENY"
+    # SAMEORIGIN rather than DENY: index.html frames fractopia.html from this
+    # same site, and DENY blocks framing by everyone including ourselves, so
+    # the Fractopia tab rendered a Netlify error instead of the mini-app.
+    # SAMEORIGIN keeps the clickjacking protection that matters (no other
+    # site can frame the app or its admin page) while allowing our own frame.
+    X-Frame-Options        = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy        = "same-origin"
