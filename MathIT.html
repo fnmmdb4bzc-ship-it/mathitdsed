@@ -626,7 +626,17 @@
   .mtools-panel-tab { border: 2px solid var(--border); background: var(--surface-2); color: var(--text); border-radius: 10px; padding: 8px 16px; cursor: pointer; font-size: 1.1rem; font-weight: 700; }
   .mtools-panel-tab.active { background: var(--holo-gradient); border-color: transparent; color: #fff; }
   .mtools-close { border: none; background: transparent; font-size: 1.3rem; cursor: pointer; color: var(--text-soft); padding: 6px 10px; }
-  .mtools-panel-body { padding: 16px; overflow-y: auto; }
+  /* The body is a column so the scratchpad can claim whatever height the
+     drawer leaves over. min-height:0 at every level is what lets a flex
+     child actually shrink; without it the canvas refuses to give ground and
+     the panel grows a scrollbar instead. */
+  .mtools-panel-body { padding: 16px; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  #mtools-pane-manip { flex: 1; min-height: 0; overflow-y: auto; }
+  #mtools-pane-scratch { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  /* Overrides the fixed 900x500 shape of the generic rule. The drawing
+     surface itself is rebuilt to match this box in mtoolsScratchFit, so the
+     pad fills the drawer without any stretching of what is written on it. */
+  #mtools-scratch-canvas { flex: 1 1 0; min-height: 150px; width: 100%; max-width: none; height: auto; aspect-ratio: auto; }
   .m-scratch-swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px var(--border); cursor: pointer; padding: 0; }
   .m-scratch-canvas { width: 100%; max-width: 900px; height: auto; aspect-ratio: 900 / 500; border: 2px dashed var(--border); border-radius: 12px; background: #fff; touch-action: none; cursor: crosshair; }
 
@@ -9998,6 +10008,43 @@ function manipGoTo(id) {
 
 // ---- Floating in-activity Tools (manipulatives + scratchpad) ----
 let mtoolsActiveTab = 'manip', mtoolsScratchColorVal = '#12303B', mtoolsScratchLineWidth = 3, mtoolsScratchSavedImage = null, mtoolsScratchWired = false;
+// Scratchpad sizing state. mtoolsScratchScale is the device pixel ratio the
+// current surface was built at, and mtoolsScratchInset is the canvas border,
+// which sits between the element's outer edge and the pixels we draw on.
+let mtoolsScratchScale = 1, mtoolsScratchFitted = false, mtoolsScratchInset = { x: 0, y: 0 };
+// Rebuilds the drawing surface to match however much room the drawer has
+// given the canvas. The pad used to be a fixed 900 by 500 image squashed
+// into whatever space was going, which wasted most of the drawer and, worse,
+// scaled the two axes by different amounts, so a circle came out an oval.
+// Matching the surface to the box means neither happens.
+function mtoolsScratchFit() {
+  const canvas = document.getElementById('mtools-scratch-canvas');
+  if (!canvas) return;
+  const cw = canvas.clientWidth, ch = canvas.clientHeight;   // inside the border
+  if (cw < 2 || ch < 2) return;                              // hidden tab, nothing to measure yet
+  // Cap the ratio at 3. Beyond that the extra pixels cost memory and buy
+  // nothing a pencil tip can resolve.
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  const w = Math.round(cw * dpr), h = Math.round(ch * dpr);
+  if (mtoolsScratchFitted && canvas.width === w && canvas.height === h) return;
+  const prev = mtoolsScratchSavedImage, prevScale = mtoolsScratchScale;
+  canvas.width = w; canvas.height = h;
+  mtoolsScratchScale = dpr;
+  mtoolsScratchFitted = true;
+  const cs = getComputedStyle(canvas);
+  mtoolsScratchInset = { x: parseFloat(cs.borderLeftWidth) || 0, y: parseFloat(cs.borderTopWidth) || 0 };
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);   // from here on we draw in CSS pixels
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (prev) {
+    const img = new Image();
+    // Put the old work back at the size it was written, so turning the iPad
+    // or opening the drawer wider reveals more paper rather than stretching
+    // the handwriting that is already on it.
+    img.onload = () => ctx.drawImage(img, 0, 0, img.width / prevScale, img.height / prevScale);
+    img.src = prev;
+  }
+}
 // The button toggles now. With the panel docked to the side rather than
 // covering the screen, it is easy to forget it is open, and reaching for the
 // same button to put it away is the obvious move.
@@ -10032,17 +10079,22 @@ function mtoolsSwitchTab(tab) {
   document.getElementById('mtools-tab-scratch').classList.toggle('active', tab === 'scratch');
   document.getElementById('mtools-pane-manip').style.display = tab === 'manip' ? '' : 'none';
   document.getElementById('mtools-pane-scratch').style.display = tab === 'scratch' ? '' : 'none';
+  // The pad has no measurable size while its tab is hidden, so it can only be
+  // fitted once it is actually on screen.
+  if (tab === 'scratch') mtoolsScratchFit();
 }
 function mtoolsScratchInit() {
   const canvas = document.getElementById('mtools-scratch-canvas');
   const ctx = canvas.getContext('2d');
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  if (mtoolsScratchSavedImage) {
-    const img = new Image();
-    img.onload = () => ctx.drawImage(img, 0, 0);
-    img.src = mtoolsScratchSavedImage;
-  }
+  mtoolsScratchFit();
   if (mtoolsScratchWired) return;
+  // Docking the drawer, closing it and turning the iPad all change how much
+  // room the pad has, and all of them arrive here as a resize.
+  window.addEventListener('resize', () => {
+    if (document.getElementById('mtools-overlay').hidden || mtoolsActiveTab !== 'scratch') return;
+    mtoolsScratchFit();
+  });
   mtoolsScratchWired = true;
   // Writing with an Apple Pencil exposed four problems here, all of which
   // only show up on a touchscreen and none of which show up with a mouse:
@@ -10063,9 +10115,12 @@ function mtoolsScratchInit() {
   let drawing = false, lastX = 0, lastY = 0;
   let activePointerId = null;      // one pointer draws at a time, never two
   let penSeen = false;             // set once a stylus touches, enables palm rejection
+  // CSS pixels relative to the drawable area. The context carries the device
+  // pixel ratio as a transform, so nothing has to be scaled here, and the
+  // border is subtracted because the bitmap starts inside it.
   function pos(evt) {
     const rect = canvas.getBoundingClientRect();
-    return { x: (evt.clientX - rect.left) * (canvas.width / rect.width), y: (evt.clientY - rect.top) * (canvas.height / rect.height) };
+    return { x: evt.clientX - rect.left - mtoolsScratchInset.x, y: evt.clientY - rect.top - mtoolsScratchInset.y };
   }
   function lineTo(p) {
     ctx.strokeStyle = mtoolsScratchColorVal; ctx.lineWidth = mtoolsScratchLineWidth;
@@ -10107,7 +10162,13 @@ function mtoolsScratchColor(c) { mtoolsScratchColorVal = c; mtoolsScratchLineWid
 function mtoolsScratchErase() { mtoolsScratchColorVal = '#FFFFFF'; mtoolsScratchLineWidth = 26; }
 function mtoolsScratchClear() {
   const canvas = document.getElementById('mtools-scratch-canvas');
-  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  const ctx = canvas.getContext('2d');
+  // Clear in raw surface pixels, not the CSS pixels the context is scaled to,
+  // or only the top left corner of a retina pad would come clean.
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
   mtoolsScratchSavedImage = null;
 }
 
