@@ -132,6 +132,7 @@
     margin-bottom: 16px;
     box-shadow: 0 2px 10px rgba(2,132,199,0.07);
   }
+
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -340,7 +341,13 @@
   .numgrid { display: grid; grid-template-columns: repeat(10, 38px); gap: 3px; margin: 14px 0; }
   .numgrid .ncell { width: 38px; height: 38px; border: 1px solid var(--border); border-radius: 4px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 700; color: var(--ocean-dark); }
   .numgrid .ncell.given { background: var(--sand-light); }
-  .numgrid .ncell input { width: 100%; height: 100%; border: none; background: transparent; text-align: center; font-size: 0.82rem; font-weight: 700; color: inherit; font-family: inherit; }
+  /* padding:0 matters here. Without it these inherit the 9px/12px padding
+     from the generic input rule above, and inside a 38px grid cell that
+     leaves a content box 4px wide for a 16px digit, so a typed number was
+     clipped completely out of sight. The child types and nothing appears. */
+  .numgrid .ncell input { width: 100%; height: 100%; padding: 0; margin: 0; border: none; background: transparent; text-align: center; font-size: 0.82rem; font-weight: 700; color: inherit; font-family: inherit; }
+  /* Same trap for the other in-cell inputs that sit in tight boxes. */
+  .pbrick input { padding: 0; margin: 0; }
   .numgrid .ncell.right { background: var(--good-bg); }
   .numgrid .ncell.wrongcell { background: var(--bad-bg); }
   .pyramid { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 16px 0; }
@@ -397,13 +404,59 @@
   .sh-purse-total { font-size: 1.3rem; font-weight: 800; color: var(--ocean-dark); margin: 8px 0; text-align: center; }
   .sh-empty { color: var(--text-soft); font-size: 0.9rem; }
 
-  .pv-stage { position: relative; height: 170px; margin: 20px 0 30px; overflow-x: auto; overflow-y: visible; }
-  .pv-card {
-    position: absolute; top: 0; height: 150px; border-radius: 14px; display: flex; align-items: center; justify-content: flex-end;
-    padding-right: 18px; font-size: 2.6rem; font-weight: 800; color: #fff; box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-    transition: all 0.5s cubic-bezier(.3,1.4,.5,1); cursor: pointer;
+  /* Place value cards. Widths are deliberately proportional to the number of
+     digits, because that is what makes the apparatus work: a hundreds card is
+     three digits wide, so laying a two-digit tens card on top of it, aligned
+     right, covers exactly one zero. */
+  .pv-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
+  .pv-row-label { min-width: 74px; font-weight: 800; color: var(--text-soft); font-size: 0.85rem; }
+  .pv-row-cards { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pv-pick {
+    color: #fff; font-weight: 800; border-radius: 9px; cursor: grab;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 8px 10px; font-size: 1.05rem; line-height: 1;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.16); user-select: none; touch-action: manipulation;
+    border: 2px solid transparent; transition: transform .12s, border-color .12s;
   }
-  .pv-label { position: absolute; bottom: -24px; font-size: 0.85rem; font-weight: 700; color: var(--text-soft); width: 100%; text-align: center; left: 0; }
+  .pv-pick:hover { transform: translateY(-2px); }
+  .pv-pick:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+  .pv-pick.pv-dragging { opacity: 0.45; }
+  .pv-pick.pv-picked { border-color: var(--text); transform: translateY(-2px); }
+  .pv-p100 { min-width: 76px; }
+  .pv-p10  { min-width: 58px; }
+  .pv-p1   { min-width: 40px; }
+
+  .pv-mat {
+    border: 3px dashed var(--border); border-radius: 14px; background: #fafcff;
+    min-height: 104px; margin: 10px 0; padding: 12px;
+    display: flex; align-items: center; justify-content: center; transition: background .15s, border-color .15s;
+  }
+  .pv-mat.pv-mat-over { border-color: var(--ocean); background: var(--ocean-light); }
+  .pv-mat-hint { color: var(--text-soft); font-weight: 700; font-size: 0.95rem; }
+  /* The stack is right-aligned and the cards overlap, so each smaller card
+     hides the zeros of the one behind it. */
+  .pv-stack { display: flex; align-items: center; justify-content: center; }
+  /* Digits are laid out from the LEFT of each card, one 52px column per digit,
+     so that when a narrower card covers the right-hand end of a wider one the
+     surviving digits line up as a single number: 300 with 60 over it and 5
+     over that reads 3 6 5. Right-aligning the text instead would bury every
+     digit except the front card's, which is the bug this replaced. */
+  .pv-laid {
+    color: #fff; font-weight: 800; border-radius: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: flex-start;
+    height: 74px; padding: 0; font-size: 2.1rem; line-height: 1;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.18); user-select: none; touch-action: manipulation;
+  }
+  /* Each digit gets its own fixed 52px column, so a digit never spills into
+     the next card's column and peek out from under it. Relying on the font's
+     own widths gave "30605" instead of "365". */
+  .pv-laid .pv-d { width: 52px; flex: none; text-align: center; }
+  .pv-laid.pv-p100 { width: 156px; }                        /* 3 digit columns */
+  .pv-laid.pv-p10  { width: 104px; margin-left: -104px; }   /* 2, sitting over the last 2 */
+  .pv-laid.pv-p1   { width: 52px;  margin-left: -52px; }    /* 1, over the last */
+  .pv-target { font-weight: 800; margin: 8px 0; color: var(--ocean-dark); }
+  .pv-readout { text-align: center; font-size: 1.15rem; font-weight: 700; color: var(--text); min-height: 1.5em; margin: 4px 0 8px; }
+  .pv-readout strong { color: var(--ocean-dark); font-size: 1.3rem; }
 
   .b10-mat { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-end; min-height: 220px; border: 2px dashed var(--border); border-radius: 12px; padding: 14px; background: #fafcff; }
   .b10-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-end; }
@@ -584,7 +637,10 @@
   .tg-picker-btn.active { background: var(--ocean); border-color: var(--ocean-dark); color: #fff; }
   .tg-controls { display: flex; gap: 10px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
   .tg-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
-  #tg-svg { border: 1.5px solid var(--border); border-radius: 14px; }
+  /* max-width lives here rather than inline on the element, so the
+     tablet media query can override it. Inline styles beat stylesheet
+     rules, which is why capping it there had no effect. */
+  #tg-svg { border: 1.5px solid var(--border); border-radius: 14px; max-width: 780px; }
   .dm-tile {
     display: flex; border: 2.5px solid rgba(255,255,255,0.8); border-radius: 8px;
     background: linear-gradient(120deg, #DCEEFE 0%, #EEE3FC 30%, #FCE1E7 60%, #FDF0C7 85%, #DCEEFE 100%);
@@ -647,20 +703,10 @@
   .a5-guess-row input { width: 90px; padding: 8px; font-size: 1.1rem; text-align: center; border-radius: 8px; border: 2px solid var(--border); font-family: inherit; }
   .fo-timer { font-size: 1.5rem; font-weight: 800; text-align: center; margin: 10px 0; color: var(--ocean-dark); }
   .fo-flipped { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 500px; margin: 12px auto; min-height: 90px; }
-  .is-target { font-size: 1.15rem; font-weight: 800; text-align: center; margin: 10px 0; }
-  .is-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; max-width: 320px; margin: 12px auto; }
-  .is-card {
     aspect-ratio: 3 / 4; display: flex; flex-direction: column; align-items: center; justify-content: center;
     font-weight: 800; font-size: 0.95rem; border-radius: 7px; border: 2px solid var(--border);
     background: var(--card-bg); cursor: pointer; transition: transform 0.1s; line-height: 1.1;
   }
-  .is-card span { font-size: 0.9rem; }
-  .is-card.nb-red { color: var(--coral-dark, #c0392b); }
-  .is-card.nb-black { color: var(--text); }
-  .is-card:hover { transform: translateY(-2px); }
-  .is-card.is-selected { outline: 3px solid var(--ocean); outline-offset: -3px; background: var(--ocean-light); }
-  .is-card.is-computer-pick { outline: 3px solid var(--coral); outline-offset: -3px; background: var(--sand-light, var(--surface-2)); }
-  .is-card.is-empty { visibility: hidden; cursor: default; }
   .bcard-clickable { cursor: pointer; transition: transform 0.1s; }
   .bcard-clickable:hover { transform: translateY(-2px); }
   .bcard-selected { outline: 3px solid var(--ocean); outline-offset: -3px; background: var(--ocean-light); }
@@ -692,6 +738,137 @@
   .cc-challenge-box { text-align: center; font-size: 1.15rem; font-weight: 800; margin: 10px 0; }
   .cc-callout { text-align: center; font-weight: 800; color: var(--coral-dark); margin: 4px 0; min-height: 1.3em; }
   .cc-computer-hand { text-align: center; font-weight: 700; margin: 6px 0; }
+  /* Snakes and Ladders: a square 10 by 10 board, so unlike the deck it
+     replaced it scales by width and stays on a tablet screen in either
+     orientation. */
+  .snl-board {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px;
+    max-width: min(520px, 44vh); margin: 6px auto; width: 100%;
+  }
+  .snl-cell {
+    aspect-ratio: 1; position: relative; border-radius: 4px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; font-weight: 700; color: var(--text-soft);
+  }
+  .snl-cell.snl-ladder { background: var(--good-bg); border-color: var(--good, #3a9b63); }
+  .snl-cell.snl-snake  { background: var(--bad-bg);  border-color: var(--bad, #c0392b); }
+  .snl-n { position: absolute; top: 1px; left: 3px; font-size: 0.52rem; opacity: 0.75; }
+  .snl-mark { font-size: 0.85rem; line-height: 1; }
+  .snl-tok { position: absolute; bottom: 1px; font-size: 0.95rem; line-height: 1; text-shadow: 0 0 2px #fff; }
+  .snl-tok-p { left: 2px; color: var(--ocean); }
+  .snl-tok-c { right: 2px; color: var(--coral); }
+  .snl-die {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; border-radius: 9px; background: #fff;
+    border: 2px solid var(--border); font-size: 1.5rem; font-weight: 800; color: var(--text);
+  }
+  .snl-sign, .snl-eq { font-size: 1.3rem; font-weight: 800; color: var(--text-soft); margin: 0 6px; }
+  .snl-answers { display: inline-flex; gap: 6px; flex-wrap: wrap; margin-left: 8px; vertical-align: middle; }
+  .snl-answers .mcq-opt { padding: 5px 14px; font-size: 1rem; }
+
+  .mathilde-face { vertical-align: -4px; margin-right: 4px; height: auto; }
+
+  /* ---------- Focus mode: the activity gets the whole screen ---------- */
+  .activity-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .focusbtn {
+    background: var(--surface-2); color: var(--text); border: 1.5px solid var(--border);
+    border-radius: 18px; padding: 5px 13px; font-size: 0.82rem; font-weight: 800;
+    cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .focusbtn:hover { border-color: var(--ocean); color: var(--ocean-dark); }
+  .focusbtn:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+  .focus-ico { font-size: 1rem; line-height: 1; }
+  body.focus-mode header,
+  body.focus-mode footer { display: none; }
+  body.focus-mode main { max-width: none; padding: 6px 10px 10px; }
+  body.focus-mode .card { margin-bottom: 0; }
+  /* The exit control has to stay reachable, so it pins to the top of the view
+     rather than scrolling away with the activity. */
+  body.focus-mode .activity-bar {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30;
+    background: var(--bg); padding: 4px 0; margin-bottom: 2px;
+  }
+  body.focus-mode .focusbtn { border-color: var(--ocean); color: var(--ocean-dark); }
+
+  /* ---------- Compact mode for short screens ----------
+     A landscape iPad is only about 820px tall, and the header alone was
+     taking 283px of that before a single game board was drawn. Measured on
+     an 1180x820 viewport, 15 of the 16 games needed scrolling to reach the
+     board or the controls, which is unusable for a child holding a tablet.
+
+     Rather than patch each game, this trims the furniture, header, footer,
+     page padding, card padding, on any screen shorter than 900px. Nothing
+     changes on a desktop monitor. Keyed on height, not width, because the
+     problem is vertical and a landscape tablet is wide but short. */
+  /* Also triggers on narrow screens: an iPad in portrait is tall enough to
+     dodge the height test, but at 820px wide the grade tabs wrap onto extra
+     rows and the header reclaims the space it just gave back. */
+  @media (max-height: 900px), (max-width: 1080px) {
+    header { padding: 10px 20px 16px; }
+    header h1 { font-size: 1.15rem; }
+    header p { display: none; }                 /* the tagline is the cheapest thing to drop */
+    .header-title-row { margin-bottom: 0; gap: 7px; }
+    .header-title-row .mascot { width: 30px; }
+    header .wave { height: 14px; }
+    #mathit-header-greeting { margin-top: 4px; gap: 7px; }
+    .mathit-greet-name, .mathit-streak-badge { font-size: 0.8rem; padding: 3px 10px; }
+    .level-tabs { margin-top: 8px; gap: 6px; }
+    .level-tab { padding: 4px 11px; font-size: 0.8rem; border-width: 1.5px; }
+    main { padding: 10px 14px 16px; }
+    .card { padding: 13px; margin-bottom: 10px; border-radius: 13px; }
+    .activity-title { font-size: 1.15rem; margin-bottom: 2px; }
+    .subtext { font-size: 0.85rem; margin-bottom: 6px; }
+    footer { display: none; }                   /* the credit line reappears on any taller screen */
+
+    /* Square-ish game boards are sized by width, so their height follows from
+       it. Capping the width in viewport-height units is what actually keeps
+       the board on screen: a 7x6 grid is about 0.86 as tall as it is wide, so
+       47vh of width lands the board near 40vh of height and leaves room for
+       the dice row and the controls underneath. */
+    .gc-board { max-width: min(560px, 44vh); margin: 6px auto; }
+    .gc-dice-row { min-height: 0; margin: 4px 0; }
+    .gc-dice-row .die, .gc-dice-row img { max-height: 58px; }
+    .tutor-box { margin: 4px 0; }
+
+    /* Partners to 10, Pyramid and Shop each hang off one tall board that a
+       narrower header cannot rescue, so the board itself is scaled down on a
+       short screen. Safe for these three specifically: none of them convert
+       pointer coordinates into game positions, so a visual scale cannot put
+       taps out of register the way it would in the tangram. transform-origin
+       keeps the board centred under its heading as it shrinks. */
+    .pt-board, .py-pyramid, .sh-shelf {
+      transform: scale(0.78);
+      transform-origin: top center;
+      margin-bottom: -18%;      /* reclaim the space the scale leaves behind */
+    }
+    .py-stockrow, .m-tray { transform: scale(0.88); transform-origin: top center; margin-bottom: -8%; }
+    .pt-controls { margin: 2px 0; }
+
+    /* The tangram's viewBox is 18 wide by 30 tall, so sizing it by width alone
+       made it 1300px tall at its 780px maximum. Capping the WIDTH in
+       viewport-height units is what bounds its height: at 3:5 the width has to
+       stay near 0.6 of the height we can afford. */
+    #tg-svg { max-width: min(780px, 44vh); }
+    .tg-controls { margin: 4px 0; }
+    /* I Spy Sums deals the whole 52-card deck four columns wide, so it is
+       thirteen rows deep whatever else is trimmed. Sizing the board by height
+       keeps it on screen without touching the adjacency rule the game runs on. */
+  }
+  /* With the header and footer gone there is more room, so both boards may
+     grow again rather than staying at the compact size. */
+  body.focus-mode #tg-svg { max-width: min(780px, 38vh); }
+  body.focus-mode .is-board { max-width: min(320px, 15vh); }
+  /* The tangram's puzzle picker wraps onto several rows and took 164px, which
+     is a quarter of a landscape tablet's height spent on choosing a puzzle you
+     have already chosen. In focus mode it becomes one scrolling row. */
+  body.focus-mode .tg-picker {
+    display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px;
+    max-height: 46px; margin: 4px 0; padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+  }
+  body.focus-mode .tg-picker > * { flex: none; }
+  body.focus-mode .tutor-box { display: none; }   /* tutor notes are for the adult, not mid-game */
 </style>
 </head>
 <body>
@@ -916,16 +1093,16 @@ const TUTOR_NOTES = {
   g8_pythagoras: "Pythagoras' theorem only works on right-angled triangles, and the hypotenuse, the longest side opposite the right angle, must be correctly identified before starting. A common error is subtracting instead of adding the two squares when finding the hypotenuse itself, or the reverse when finding a shorter side.",
   g8_enlarge: "Enlargement by a scale factor greater than 1 makes a shape bigger, a scale factor between 0 and 1 makes it smaller, which surprises many learners the first time they meet it. Every length on the original shape gets multiplied by the same scale factor, that consistency is the property worth checking on any answer.",
   games_race20: "Each roll just gets added to that player's own running total, there is no choice to make, so the real skill here is keeping an accurate mental tally turn after turn rather than losing count partway through. Saying the new total out loud after every roll, 'I had 11, plus 4 is 15', is what makes this addition practice rather than just dice-rolling.",
-  games_connect4: "This drills the addition facts for two dice, sums from 2 to 12, under a bit of game pressure. Because both players share one board, she also has to scan it for her own best move and notice when the computer is one square away from winning. Saying the two numbers and the sum out loud before tapping keeps it addition practice rather than just square-tapping.",
+  games_connect4: "This drills the addition facts for two dice, sums from 2 to 12, under a bit of game pressure. Because both players share one board, she also has to scan it for her own best move and notice when Mathilde is one square away from winning. Saying the two numbers and the sum out loud before tapping keeps it addition practice rather than just square-tapping.",
   games_multconnect4: "Same shared board as the addition version, but every roll asks for a times-table fact up to 6 x 6. This is worth returning to often once times tables are being learned, since it turns fact recall into something with a little stakes and strategy attached, rather than a bare drill.",
   games_ticteen: "Teen numbers, 11 to 19, are 'ten and some more', the exact idea Grade 1 and 2 build their number sense from before working with bigger numbers. Saying '10 and 4 makes 14' out loud on every roll, rather than just reading the final number off the tile, is what makes this practise the concept rather than plain number recognition.",
   games_tangram: "This is spatial reasoning rather than number work, but it matters just as much for maths: mentally rotating and flipping a shape to see where it fits is the same skill she'll use later for symmetry, nets of 3D shapes, and reading diagrams. Encourage her to look for a matching angle or a matching straight edge first, rather than only relying on trial and error.",
   games_dominoes: "Reading the dots on a domino at a glance rather than counting one by one (subitising) is exactly the skill that later makes mental addition fast. Deciding which end to play on, and keeping track of what's already been played, also asks her to hold a couple of numbers in mind at once - if she's stuck, ask her to say both numbers on a tile out loud before deciding where it goes.",
   games_partners10: "Bonds to 10 (knowing 3 and 7, 6 and 4, and so on without counting) are the single biggest building block for mental addition and later for column subtraction with regrouping. Scanning nine cards for a pair, rather than being handed two numbers to add, is what makes this stick better than a worksheet - if she's stuck, ask her to pick any card and say out loud what it still needs to make 10, then look for that number. The 'Number Combinations' mode swaps the fixed target of 10 for a fresh dice-rolled total each turn, which is a good next step once bonds to 10 are solid - it forces her to re-scan the board for a different target instead of relying on memorised pairs.",
-  games_numberbattle: "This is subtraction practice disguised as luck - every round asks her to find the difference between two cards twice (her own pair, then compare to the computer's pair), which is far more reps than a worksheet gets through in the same time. Because the cards are random, she can't predict or memorise her way through it, so each flip is a fresh mental subtraction. If she's checking her own difference, encourage her to say the bigger number first out loud (\"9 take away 4\") rather than just naming the answer - that's the habit that carries over to written column subtraction later.",
+  games_numberbattle: "This is subtraction practice disguised as luck - every round asks her to find the difference between two cards twice (her own pair, then compare to Mathilde's pair), which is far more reps than a worksheet gets through in the same time. Because the cards are random, she can't predict or memorise her way through it, so each flip is a fresh mental subtraction. If she's checking her own difference, encourage her to say the bigger number first out loud (\"9 take away 4\") rather than just naming the answer - that's the habit that carries over to written column subtraction later.",
   games_add5cards: "Adding five single-digit-to-ten values in a row is real mental-maths stamina work - it pushes her past the two-number sums most worksheets stop at, towards the running totals she'll need for money, scores, and multi-step word problems. Encourage her to add in pairs first (find two cards that make a friendly ten, then add the rest) rather than straight left-to-right - that's the strategy the compare-hands step at the end is there to reinforce, not just to mark her right or wrong.",
   games_flipout: "The timer is what makes this different from an ordinary addition worksheet - she has to keep a running total live in her head as each card lands, which is a genuinely harder skill than adding a finished list, and it's exactly what mental arithmetic under real time pressure (a checkout queue, a game score) actually demands. If she keeps forfeiting on the total, that's a sign to shorten the timer to 30 seconds rather than to stop the game - the goal is a running total she can trust, not a long one.",
-  games_ispysums: "This one trains two things at once: addition fact fluency (with bigger cards worth 11-14, so the sums run higher than most bonds work) and visual scanning, since she has to hold a target number in mind while checking pairs in eight different directions. If she's only checking cards right next to each other and missing the diagonals, point out one diagonal pair explicitly rather than telling her the answer - the scanning habit is worth more here than any single correct claim.",
+  games_snakesladders: "The board is the reward, not the maths, which is exactly why this works: she has to compute the roll before her counter moves, so a full game is thirty or forty repetitions of the same operation without it feeling like a worksheet. Switch to multiplying once adding the dice is automatic. The bounce-back rule at the top is worth pointing out, since needing exactly the right number to land on 100 is a small lesson in itself about how far away she still is.",
   games_ten: "Same bonds-to-10 skill as Partners to 10, but with a bigger board (12 cards instead of 9) and real playing cards instead of number chips, which is a good stretch once she's comfortable with the smaller version - more cards on the table means more distractions to scan past to find the pair that actually works.",
   games_pyramid: "This is bonds to 10 plus a bit of planning: she has to notice which cards are 'stuck' under others and think ahead about which pair to clear first to unlock more of the pyramid, rather than just grabbing the first ten she spots. If she's stuck, ask her to point out the two cards directly under a locked card she wants - naming what's blocking it is the reasoning step worth practising here, not just the addition.",
   games_horseshoe: "The middle pile keeps growing across both players' turns, so she has to keep re-scanning a changing set of cards rather than a fixed board, which is closer to real mental-maths conditions (a shopping trolley filling up, a running scoreboard) than a static worksheet. If the pile gets big and she's overwhelmed, suggest she scan systematically left-to-right rather than jumping around - that habit will help her everywhere, not just in this game.",
@@ -1058,7 +1235,7 @@ const SECTIONS_BY_LEVEL = {
   // it does not run through scoreHTML()/mathitReportProgress like the quiz
   // activities do - a game result is not a "practice attempt" in that sense.
   games: [
-    { title: 'Games', keys: ['game_race20', 'game_connect4', 'game_multconnect4', 'game_ticteen', 'game_tangram', 'game_dominoes', 'game_partners10', 'game_numberbattle', 'game_add5cards', 'game_flipout', 'game_ispysums', 'game_ten', 'game_pyramid', 'game_horseshoe', 'game_colorclash', 'game_shop'] },
+    { title: 'Games', keys: ['game_race20', 'game_connect4', 'game_multconnect4', 'game_ticteen', 'game_tangram', 'game_dominoes', 'game_partners10', 'game_numberbattle', 'game_add5cards', 'game_flipout', 'game_snakesladders', 'game_ten', 'game_pyramid', 'game_horseshoe', 'game_colorclash', 'game_shop'] },
   ],
   // Fractopia: a standalone illustrated "fraction town" adventure (its own
   // landing page, character setup and 7-level town map) rather than
@@ -1302,8 +1479,8 @@ const ACTIVITIES = {
   game_partners10: { icon: '🔟', title: 'Partners to 10', desc: 'Find two cards on the board that add up to 10 (the star is wild - it can be anything you need). Most pairs when the deck runs out wins! Includes a Number Combinations mode with a dice-rolled target.' },
   game_numberbattle: { icon: '⚔️', title: 'Subtraction Number Battle', desc: "Flip two cards and find the difference between them - whoever's difference is bigger wins all four cards! Ties send the cards to a pot for the next winner. Most cards when the deck runs out wins." },
   game_add5cards: { icon: '➕', title: 'Add 5 Cards', desc: 'Add up 5 face-up cards and type in the total, then compare against a second hand to check your addition. 5 rounds per game.' },
-  game_flipout: { icon: '⏱️', title: 'Flip Out', desc: "Cards flip one at a time against the clock - keep a running total in your head. Get it right to see if you beat the computer's total; get it wrong and you forfeit the round!" },
-  game_ispysums: { icon: '🔍', title: 'I Spy Sums', desc: 'The whole deck is laid out face up. A sum is called - find two touching cards (side by side, above/below, or diagonal) that add up to it and claim them! Ace = 11, Jack = 12, Queen = 13, King = 14.' },
+  game_flipout: { icon: '⏱️', title: 'Flip Out', desc: "Cards flip one at a time against the clock - keep a running total in your head. Get it right to see if you beat Mathilde's total; get it wrong and you forfeit the round!" },
+  game_snakesladders: { icon: '🐍', title: 'Snakes and Ladders', desc: 'Roll two dice and work out the answer to move that many squares. Ladders take you up, snakes send you down. First to exactly 100 wins. Choose adding or multiplying the dice.' },
   game_ten: { icon: '🔟', title: 'TEN!', desc: 'Tap two of the 12 face-up cards that add up to 10. Face cards = 10, Ace = 1. Most pairs when the deck runs out wins!' },
   game_pyramid: { icon: '🔺', title: 'Pyramid', desc: 'Clear the 15-card pyramid by pairing free (uncovered) cards, or a free card with the stock card, to make 10. Face cards = 10, Ace = 1. Clear it all before the stock runs out!' },
   game_horseshoe: { icon: '🧲', title: 'Horse Shoe', desc: 'Take turns flipping a card into the middle and claim any two cards there that add up to 10. Face cards = 10, Ace = 1. Most cards when the deck is empty wins!' },
@@ -1526,8 +1703,8 @@ const ACTIVITIES_AF = {
   game_partners10: { title: 'Maats vir 10', desc: "Vind twee kaarte op die bord wat saam 10 maak (die ster is wild - dit kan enigiets wees wat jy nodig het). Meeste paartjies wanneer die stapel op is, wen! Sluit 'n Getalkombinasies-modus in met 'n teiken wat met dobbelstene bepaal word." },
   game_numberbattle: { title: 'Aftrekking-slag', desc: "Draai twee kaarte om en vind die verskil tussen hulle - wie ook al die grootste verskil het, wen al vier kaarte! Gelykop stuur die kaarte na 'n pot vir die volgende wenner. Meeste kaarte wanneer die stapel op is, wen." },
   game_add5cards: { title: 'Tel 5 Kaarte', desc: "Tel 5 oop kaarte op en tik die totaal in, vergelyk dan met 'n tweede stel kaarte om jou optelling na te gaan. 5 rondtes per speletjie." },
-  game_flipout: { title: 'Draai Uit', desc: "Kaarte draai een-een om teen die tydhouer - hou 'n lopende totaal in jou kop. Kry dit reg om te sien of jy die rekenaar se totaal klop; kry dit verkeerd en jy verbeur die ronde!" },
-  game_ispysums: { title: 'Ek Spioeneer Somme', desc: "Die hele stapel kaarte lê oop. 'n Som word geroep - vind twee kaarte wat aan mekaar raak (langsaan, bo of onder, of skuins) wat saam optel daartoe en eis dit op! Aas = 11, Boer = 12, Vrou = 13, Koning = 14." },
+  game_flipout: { title: 'Draai Uit', desc: "Kaarte draai een-een om teen die tydhouer - hou 'n lopende totaal in jou kop. Kry dit reg om te sien of jy Mathilde se totaal klop; kry dit verkeerd en jy verbeur die ronde!" },
+  game_snakesladders: { title: 'Slange en Lere', desc: 'Rol twee dobbelstene en werk die antwoord uit om soveel blokkies te beweeg. Lere neem jou op, slange stuur jou af. Eerste om presies 100 te bereik wen. Kies om die dobbelstene te tel of te vermenigvuldig.' },
   game_ten: { title: 'TIEN!', desc: "Tik op twee van die 12 oop kaarte wat saam 10 maak. Prentkaarte = 10, Aas = 1. Meeste paartjies wanneer die stapel op is, wen!" },
   game_pyramid: { title: 'Piramide', desc: "Maak die 15-kaart piramide skoon deur oop kaarte met mekaar te vat, of 'n oop kaart met die stapelkaart, om 10 te maak. Prentkaarte = 10, Aas = 1. Maak alles skoon voor die stapel op is!" },
   game_horseshoe: { title: 'Hoefyster', desc: "Neem beurte om 'n kaart in die middel om te draai en eis enige twee kaarte daar op wat saam 10 maak. Prentkaarte = 10, Aas = 1. Meeste kaarte wanneer die stapel leeg is, wen!" },
@@ -1864,10 +2041,47 @@ async function mathitInit() {
   mathitChooseProfile();
 }
 
+// ---- Mathilde MathIT, the app's character ----
+// Children play against Mathilde rather than "Mathilde". She is the
+// protractor mascot from the header, so her face is reused from the image
+// already loaded there rather than embedding a second copy of it.
+function mathildeName() { return 'Mathilde MathIT'; }
+function mathildeFace(px) {
+  const m = document.querySelector('.header-title-row .mascot');
+  const src = m && m.getAttribute('src');
+  return src ? `<img class="mathilde-face" src="${src}" alt="" aria-hidden="true" style="width:${px||20}px;">` : '';
+}
+function mathildeLabel(px) { return mathildeFace(px) + mathildeName(); }
 function backBtn() {
   const showAf = currentLang === 'af' && currentLevel !== '7' && currentLevel !== '8';
-  return `<button class="backbtn" onclick="goTo('home')">${showAf ? '&#8592; Alle aktiwiteite' : '&#8592; All activities'}</button>`;
+  return `<div class="activity-bar">`
+    + `<button class="backbtn" onclick="goTo('home')">${showAf ? '&#8592; Alle aktiwiteite' : '&#8592; All activities'}</button>`
+    + `<button class="focusbtn" id="focus-btn" onclick="toggleFocusMode()" aria-pressed="false"`
+    + ` title="${tr('Give the activity the whole screen', 'Gee die aktiwiteit die hele skerm')}">`
+    + `<span class="focus-ico" aria-hidden="true">&#9974;</span> <span id="focus-btn-label">${tr('Full screen', 'Volskerm')}</span></button>`
+    + `</div>`;
 }
+// ---- Focus mode ----
+// A landscape tablet is only about 820px tall, and the header, the grade tabs
+// and the footer take a fixed slice of that before an activity draws anything.
+// Trimming them helped, but two activities are simply bigger than what is
+// left: the tangram board and the 52-card I Spy Sums deck. Focus mode hides
+// the page furniture entirely and hands the whole screen to the activity,
+// which is the only thing that buys enough room for those two.
+let mathitFocusMode = false;
+function toggleFocusMode(force) {
+  mathitFocusMode = (typeof force === 'boolean') ? force : !mathitFocusMode;
+  document.body.classList.toggle('focus-mode', mathitFocusMode);
+  const btn = document.getElementById('focus-btn');
+  const lbl = document.getElementById('focus-btn-label');
+  if (btn) btn.setAttribute('aria-pressed', mathitFocusMode ? 'true' : 'false');
+  if (lbl) lbl.textContent = mathitFocusMode ? tr('Exit full screen', 'Verlaat volskerm') : tr('Full screen', 'Volskerm');
+  // Let an activity that sizes itself from the viewport pick up the new room.
+  window.dispatchEvent(new Event('resize'));
+}
+// Escape is the gesture people already expect for leaving a full-screen view,
+// and it matters here because a child who cannot find the exit button is stuck.
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && mathitFocusMode) toggleFocusMode(false); });
 function levelNote(a) {
   if (!a.badge) return '';
   const showAf = currentLang === 'af' && currentLevel !== '7' && currentLevel !== '8';
@@ -1920,6 +2134,10 @@ function scoreHTML(state) {
 
 function goTo(key) {
   currentActivityKey = key;
+  // Leaving an activity always returns the page furniture, otherwise a child
+  // who switched on full screen lands on an activity list with no grade tabs
+  // and no way back.
+  if (key === 'home' && mathitFocusMode) toggleFocusMode(false);
   if (key === 'home') { renderHome(); return; }
 
   const builders = {
@@ -2021,7 +2239,7 @@ function goTo(key) {
     game_numberbattle: nb_render,
     game_add5cards: a5_render,
     game_flipout: fo_render,
-    game_ispysums: is_render,
+    game_snakesladders: snl_render,
     game_ten: tn_render,
     game_pyramid: py_render,
     game_horseshoe: hs_render,
@@ -7325,6 +7543,10 @@ function g4_patternCount(type, n) {
   if (type === 'staircase') return 2 * n - 1;
   if (type === 'cross') return 4 * n - 3;
   if (type === 'hollow') return n === 1 ? 1 : 4 * (n - 1);
+  if (type === 'doublerow') return 2 * n;              // two rows of n, grows by two
+  if (type === 'rect') return n * (n + 1);            // one column taller than it is wide
+  if (type === 'tshape') return 3 * n - 2;            // a T, same count as the L, different picture
+  if (type === 'diagonal') return n;                  // the simplest growth of all
   return n;
 }
 function g4_renderPatternStep(type, n) {
@@ -7346,6 +7568,23 @@ function g4_renderPatternStep(type, n) {
     const mid = n - 1;
     html = `<div class="pattern-grid" style="grid-template-columns: repeat(${size}, 22px);">`;
     for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) html += `<div class="blk ${(r === mid || c === mid) ? 'on' : ''}"></div>`;
+    html += '</div>';
+  } else if (type === 'doublerow') {
+    html = `<div class="pattern-grid" style="grid-template-columns: repeat(${n}, 22px);">`;
+    for (let i = 0; i < 2 * n; i++) html += '<div class="blk on"></div>';
+    html += '</div>';
+  } else if (type === 'rect') {
+    html = `<div class="pattern-grid" style="grid-template-columns: repeat(${n}, 22px);">`;
+    for (let i = 0; i < n * (n + 1); i++) html += '<div class="blk on"></div>';
+    html += '</div>';
+  } else if (type === 'tshape') {
+    const w = 2 * n - 1;
+    html = `<div class="pattern-grid" style="grid-template-columns: repeat(${w}, 22px);">`;
+    for (let r = 0; r < n; r++) for (let c = 0; c < w; c++) html += `<div class="blk ${(r === 0 || c === n - 1) ? 'on' : ''}"></div>`;
+    html += '</div>';
+  } else if (type === 'diagonal') {
+    html = `<div class="pattern-grid" style="grid-template-columns: repeat(${n}, 22px);">`;
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) html += `<div class="blk ${(r === c) ? 'on' : ''}"></div>`;
     html += '</div>';
   } else if (type === 'hollow') {
     html = `<div class="pattern-grid" style="grid-template-columns: repeat(${n}, 22px);">`;
@@ -7380,9 +7619,19 @@ function g4_markGPLevel() {
   ['simple','medium','complex'].forEach(l => document.getElementById('gp-lvl-' + l).classList.toggle('correct', g4_gpState.level === l));
 }
 function g4_newGPQuestion() {
-  const pools = { simple: ['staircase'], medium: ['triangle', 'square'], complex: ['cross', 'hollow'] };
+  // Five shapes, each always asked at step 4, gave exactly five possible
+  // questions in the whole activity. More shapes per level, and asking for a
+  // step further along, takes it to roughly sixty without changing the maths.
+  const pools = {
+    simple:  ['staircase', 'diagonal', 'doublerow'],
+    medium:  ['triangle', 'square', 'rect'],
+    complex: ['cross', 'hollow', 'tshape'],
+  };
   g4_gpState.type = pick(pools[g4_gpState.level]);
-  const nextStep = 4;
+  // Asking beyond the three drawn steps is the point: the child has to see the
+  // rule rather than count the picture. Step 6 or 7 makes counting impractical.
+  const nextStep = randInt(4, g4_gpState.level === 'complex' ? 7 : 6);
+  g4_gpState.step = nextStep;
   g4_gpState.answer = g4_patternCount(g4_gpState.type, nextStep);
   const stepsHTML = [1,2,3].map(n => `
     <div class="pattern-step">
@@ -7392,7 +7641,7 @@ function g4_newGPQuestion() {
   `).join('');
   document.getElementById('gp-question').innerHTML = `
     <div>${stepsHTML}</div>
-    <div class="q-box">${tr('How many blocks will step 4 have?', 'Hoeveel blokkies sal stap 4 hê?')} <input type="number" id="gp-in" style="width:90px;" /></div>
+    <div class="q-box">${tr(`How many blocks will step ${nextStep} have?`, `Hoeveel blokkies sal stap ${nextStep} hê?`)} <input type="number" id="gp-in" style="width:90px;" /></div>
     <button class="action" onclick="g4_checkGP()">${tr('Check', 'Gaan na')}</button>
     <button class="secondary" onclick="g4_newGPQuestion()">${tr('New pattern', 'Nuwe patroon')}</button>
   `;
@@ -8829,7 +9078,11 @@ function g6_updateFDPReadout() {
   }
 }
 function g6_newFDPTarget() {
-  g6_fdpTarget = pick([5,10,15,20,25,30,40,50,60,65,75,80,90]);
+  // Any whole percent is shadeable on a hundred grid, so there is no reason
+  // to reuse thirteen fixed values. The friendly benchmarks still come up
+  // about half the time, because recognising those on sight is the skill.
+  const friendly = [5,10,15,20,25,30,40,50,60,65,70,75,80,90];
+  g6_fdpTarget = Math.random() < 0.5 ? pick(friendly) : randInt(1, 99);
   g6_clearFDP();
   document.getElementById('fdp-target').innerHTML = `<div class="q-box">${tr(`Shade ${g6_fdpTarget}% of the grid`, `Skakeer ${g6_fdpTarget}% van die rooster`)}</div>`;
 }
@@ -9035,21 +9288,34 @@ function g6_checkSH(el, val) {
 // =====================================================================
 // 11. MIRROR MATCH
 // =====================================================================
-const g6_MIRROR_SHAPES = [
-  [[0,1],[1,1],[2,1],[2,2],[2,3]],
-  [[0,1],[0,2],[0,3],[1,2],[2,2]],
-  [[0,0],[1,0],[1,1],[2,1],[2,2],[3,2]],
-  [[1,2],[2,1],[2,2],[2,3],[3,2]],
-  [[0,3],[1,3],[2,0],[2,1],[2,2],[2,3]],
-  [[0,0],[1,0],[2,0],[2,1],[2,2]],
-  [[0,1],[0,2],[0,3],[1,2],[2,2]],
-  [[0,2],[1,1],[1,2],[1,3],[2,2]],
-  [[0,0],[0,1],[1,1],[1,2],[2,2],[2,3]],
-  [[0,0],[1,0],[2,0],[2,1],[2,2],[1,2],[0,2]],
-];
+// Ten shapes were hand-drawn here, two of them identical, so the activity had
+// nine distinct reflections in it and then repeated forever. Generating the
+// shape instead makes it effectively unlimited, and a grown blob is a better
+// exercise than a tidy hand-drawn one because it has no symmetry of its own
+// to shortcut the reflection.
+function g6_randomMirrorShape() {
+  const ROWS = 5, COLS = 5;                 // the half left of the mirror line
+  const size = randInt(5, 7);
+  const start = [randInt(0, ROWS - 1), randInt(0, COLS - 1)];
+  const key = (cell) => cell[0] + ',' + cell[1];
+  const chosen = new Map([[key(start), start]]);
+  let guard = 0;
+  while (chosen.size < size && guard < 200) {
+    guard++;
+    // grow outward from a cell already in the shape, so the result is always
+    // one connected piece rather than scattered squares
+    const vals = [...chosen.values()];
+    const from = vals[randInt(0, vals.length - 1)];
+    const step = pick([[1,0],[-1,0],[0,1],[0,-1]]);
+    const next = [from[0] + step[0], from[1] + step[1]];
+    if (next[0] < 0 || next[0] >= ROWS || next[1] < 0 || next[1] >= COLS) continue;
+    chosen.set(key(next), next);
+  }
+  return [...chosen.values()];
+}
 let g6_mmState = { shape: null, userCells: new Set() };
 function g6_renderMirror() {
-  g6_mmState.shape = pick(g6_MIRROR_SHAPES);
+  g6_mmState.shape = g6_randomMirrorShape();
   g6_mmState.userCells = new Set();
   app.innerHTML = `
     ${backBtn()}
@@ -9113,7 +9379,20 @@ function g6_checkMirror() {
 // =====================================================================
 let g6_dbState = { labels: ['Apple','Banana','Grapes','Orange','Other'], counts: [0,0,0,0,0] };
 function g6_renderDataBars() {
-  g6_dbState = { labels: tr(['Apple','Banana','Grapes','Orange','Other'], ['Appel','Piesang','Druiwe','Lemoen','Ander']), counts: [0,0,0,0,0] };
+  // A different survey to start from each time. The categories stay editable,
+  // so this only changes where a child begins, not what they can ask about.
+  const surveys = [
+    { en: ['Apple','Banana','Grapes','Orange','Other'],            af: ['Appel','Piesang','Druiwe','Lemoen','Ander'] },
+    { en: ['Dog','Cat','Fish','Bird','No pet'],                    af: ['Hond','Kat','Vis','Voël','Geen troeteldier'] },
+    { en: ['Soccer','Netball','Rugby','Cricket','Swimming'],       af: ['Sokker','Netbal','Rugby','Krieket','Swem'] },
+    { en: ['Walk','Car','Taxi','Bus','Bicycle'],                   af: ['Loop','Motor','Taxi','Bus','Fiets'] },
+    { en: ['Red','Blue','Green','Yellow','Purple'],                af: ['Rooi','Blou','Groen','Geel','Pers'] },
+    { en: ['Maths','English','Science','History','Art'],           af: ['Wiskunde','Engels','Wetenskap','Geskiedenis','Kuns'] },
+    { en: ['Summer','Autumn','Winter','Spring','No favourite'],    af: ['Somer','Herfs','Winter','Lente','Geen gunsteling'] },
+    { en: ['Reading','Gaming','Sport','Music','Drawing'],          af: ['Lees','Speletjies','Sport','Musiek','Teken'] },
+  ];
+  const survey = pick(surveys);
+  g6_dbState = { labels: tr(survey.en, survey.af), counts: [0,0,0,0,0] };
   app.innerHTML = `
     ${backBtn()}
     <div class="card">
@@ -9721,25 +10000,64 @@ function mtoolsScratchInit() {
   }
   if (mtoolsScratchWired) return;
   mtoolsScratchWired = true;
+  // Writing with an Apple Pencil exposed four problems here, all of which
+  // only show up on a touchscreen and none of which show up with a mouse:
+  //
+  //  1. A hand resting on the screen drew. Every pointer was treated the
+  //     same, so the palm was just another pen. Once a stylus has been seen
+  //     we ignore finger input entirely, which is what palm rejection is.
+  //  2. Strokes broke at the edge. pointermove was bound to the canvas, so
+  //     moving even slightly outside it stopped the line. setPointerCapture
+  //     keeps the events coming until the pen lifts.
+  //  3. iPadOS cancels a pointer when it decides a gesture is starting, and
+  //     nothing listened for that, so `drawing` stayed true and the next
+  //     touch drew a stray line in from wherever the last one stopped.
+  //  4. An Apple Pencil reports far faster than the screen refreshes, and
+  //     only the final position of each frame was used, so quick handwriting
+  //     came out as visible straight segments. getCoalescedEvents returns
+  //     the positions that were skipped, which is what makes a stroke smooth.
   let drawing = false, lastX = 0, lastY = 0;
+  let activePointerId = null;      // one pointer draws at a time, never two
+  let penSeen = false;             // set once a stylus touches, enables palm rejection
   function pos(evt) {
     const rect = canvas.getBoundingClientRect();
     return { x: (evt.clientX - rect.left) * (canvas.width / rect.width), y: (evt.clientY - rect.top) * (canvas.height / rect.height) };
   }
+  function lineTo(p) {
+    ctx.strokeStyle = mtoolsScratchColorVal; ctx.lineWidth = mtoolsScratchLineWidth;
+    ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke();
+    lastX = p.x; lastY = p.y;
+  }
+  function endStroke() {
+    if (!drawing) return;
+    drawing = false; activePointerId = null;
+    mtoolsScratchSavedImage = canvas.toDataURL();
+  }
   canvas.addEventListener('pointerdown', (evt) => {
+    if (evt.pointerType === 'pen') penSeen = true;
+    // Palm rejection: once the child is using a stylus, fingers and palms
+    // resting on the glass must not draw.
+    if (penSeen && evt.pointerType === 'touch') return;
+    if (drawing) return;                       // ignore a second finger mid-stroke
     evt.preventDefault();
+    activePointerId = evt.pointerId;
+    try { canvas.setPointerCapture(evt.pointerId); } catch (e) { /* capture is best effort */ }
     drawing = true;
     const p = pos(evt); lastX = p.x; lastY = p.y;
     ctx.beginPath(); ctx.fillStyle = mtoolsScratchColorVal; ctx.arc(p.x, p.y, mtoolsScratchLineWidth / 2, 0, Math.PI * 2); ctx.fill();
   });
   canvas.addEventListener('pointermove', (evt) => {
-    if (!drawing) return;
-    const p = pos(evt);
-    ctx.strokeStyle = mtoolsScratchColorVal; ctx.lineWidth = mtoolsScratchLineWidth;
-    ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke();
-    lastX = p.x; lastY = p.y;
+    if (!drawing || evt.pointerId !== activePointerId) return;
+    evt.preventDefault();
+    // Draw through the skipped positions too, so fast handwriting stays smooth.
+    const pts = (typeof evt.getCoalescedEvents === 'function') ? evt.getCoalescedEvents() : null;
+    if (pts && pts.length) { for (const e of pts) lineTo(pos(e)); }
+    else lineTo(pos(evt));
   });
-  window.addEventListener('pointerup', () => { if (drawing) { drawing = false; mtoolsScratchSavedImage = canvas.toDataURL(); } });
+  canvas.addEventListener('pointerup', endStroke);
+  canvas.addEventListener('pointercancel', endStroke);   // iPadOS gesture takeover
+  canvas.addEventListener('lostpointercapture', endStroke);
+  window.addEventListener('pointerup', endStroke);       // belt and braces if capture failed
 }
 function mtoolsScratchColor(c) { mtoolsScratchColorVal = c; mtoolsScratchLineWidth = 3; }
 function mtoolsScratchErase() { mtoolsScratchColorVal = '#FFFFFF'; mtoolsScratchLineWidth = 26; }
@@ -9832,59 +10150,142 @@ function manipMoneyCheck() {
 }
 
 // ---- Place Value Cards ----
-let manipPV = { number: 247, expanded: false, mode: 'explore', target: null };
-const MANIP_PV_DEFS = [
-  { place: 100, label: 'Hundreds', labelAf: 'Honderde', color: 'var(--ocean)', slots: 3 },
-  { place: 10, label: 'Tens', labelAf: 'Tiene', color: 'var(--aqua)', slots: 2 },
-  { place: 1, label: 'Units', labelAf: 'Eenhede', color: 'var(--coral)', slots: 1 },
+// ---- Place Value Cards ----
+// Rebuilt to work the way the physical apparatus does. The previous version
+// took one number and pulled it apart, which is the reverse of what the real
+// cards teach: a child picks a hundreds card, a tens card and a units card,
+// lays them on top of one another right-aligned, and the zeros disappear
+// under the card in front. 200 + 40 + 7 becomes 247 in their hands.
+//
+// Every card is on display, as on a real mat. Both gestures work: dragging a
+// card to the mat is the natural one, and tapping it also sends it there,
+// which matters because precise dragging is hard for small hands on glass.
+const MANIP_PV_ROWS = [
+  { place: 100, label: 'Hundreds', labelAf: 'Honderde', color: 'var(--ocean)' },
+  { place: 10,  label: 'Tens',     labelAf: 'Tiene',    color: 'var(--aqua)' },
+  { place: 1,   label: 'Units',    labelAf: 'Eenhede',  color: 'var(--coral)' },
 ];
-const MANIP_PV_BASE_SLOT = 78, MANIP_PV_BASE_GAP = 22;
-let MANIP_PV_SLOT = 78, MANIP_PV_GAP = 22;
-let manipPVCardEls = [], manipPVExpandedLefts = [], manipPVExpandedWidths = [];
-let manipPVResizeHandler = null;
-// Recomputes MANIP_PV_SLOT/GAP (and a matching font scale) so the fully expanded
-// row of cards always fits the space actually available, instead of always
-// using the same fixed pixel sizes and overflowing on a narrower screen.
-function manipPVComputeScale(stage) {
-  const prevWidth = stage.style.width;
-  stage.style.width = ''; // let it size naturally so clientWidth reflects the real available space
-  const available = stage.clientWidth || 512;
-  stage.style.width = prevWidth;
-  const totalSlots = MANIP_PV_DEFS.reduce((s, d) => s + d.slots, 0);
-  const naturalWidth = totalSlots * MANIP_PV_BASE_SLOT + (MANIP_PV_DEFS.length - 1) * MANIP_PV_BASE_GAP;
-  const scale = Math.max(0.42, Math.min(1, (available - 4) / naturalWidth));
-  MANIP_PV_SLOT = MANIP_PV_BASE_SLOT * scale;
-  MANIP_PV_GAP = MANIP_PV_BASE_GAP * scale;
-  return scale;
+let manipPV = { built: { 100: 0, 10: 0, 1: 0 }, mode: 'explore', target: null };
+
+function manipPVValue() {
+  return manipPV.built[100] * 100 + manipPV.built[10] * 10 + manipPV.built[1];
 }
 function manipInitPlaceValue() {
-  manipPV = { number: 247, expanded: false, mode: 'explore', target: null };
+  manipPV = { built: { 100: 0, 10: 0, 1: 0 }, mode: 'explore', target: null };
+  const rows = MANIP_PV_ROWS.map(r => `
+    <div class="pv-row">
+      <div class="pv-row-label">${tr(r.label, r.labelAf)}</div>
+      <div class="pv-row-cards" data-place="${r.place}">
+        ${Array.from({ length: 9 }, (_, i) => {
+          const v = (i + 1) * r.place;
+          return `<div class="pv-pick pv-p${r.place}" draggable="true" data-place="${r.place}" data-value="${v}"
+                       style="background:${r.color};" role="button" tabindex="0"
+                       aria-label="${v}">${v}</div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
   document.getElementById('manip-container').innerHTML = `
     <div class="card">
-      <h3 style="margin-top:0;">${tr('Expanding Place Value Cards', 'Uitbreidende Plekwaardekaarte')}</h3>
-      <p class="m-help">${tr('Type a number from 0 to 999, then click a card to pull the place values apart, or click again to build it back together.', 'Tik \'n getal van 0 tot 999, en klik dan \'n kaart om die plekwaardes uitmekaar te trek, of klik weer om dit terug te bou.')}</p>
+      <h3 style="margin-top:0;">${tr('Place Value Cards', 'Plekwaardekaarte')}</h3>
+      <p class="m-help">${tr('Drag a card onto the mat, or just tap it. Stack hundreds, tens and units to build a number. Tap a card on the mat to take it off again.', 'Sleep \'n kaart op die mat, of tik dit net. Stapel honderde, tiene en eenhede om \'n getal te bou. Tik \'n kaart op die mat om dit weer af te haal.')}</p>
       <div class="mcq-opts">
-        <div class="mcq-opt" id="mpv-mode-explore" onclick="manipPVSetMode('explore')">${tr('Explore a Number', 'Verken \'n Getal')}</div>
-        <div class="mcq-opt" id="mpv-mode-challenge" onclick="manipPVSetMode('challenge')">${tr('Number Challenge', 'Getal-uitdaging')}</div>
+        <div class="mcq-opt" id="mpv-mode-explore" onclick="manipPVSetMode('explore')">${tr('Free Build', 'Bou Vry')}</div>
+        <div class="mcq-opt" id="mpv-mode-challenge" onclick="manipPVSetMode('challenge')">${tr('Build the Number', 'Bou die Getal')}</div>
       </div>
-      <div id="mpv-target" style="font-weight:700; margin: 8px 0; color:var(--ocean-dark);"></div>
+      <div id="mpv-target" class="pv-target"></div>
+      <div class="pv-mat" id="mpv-mat">
+        <div class="pv-mat-hint" id="mpv-mat-hint">${tr('Drop cards here', 'Los kaarte hier')}</div>
+        <div class="pv-stack" id="mpv-stack"></div>
+      </div>
+      <div class="pv-readout" id="mpv-readout"></div>
       <div class="m-row">
-        <input type="number" id="mpv-input" min="0" max="999" value="247" style="width:100px;" />
-        <button class="action" onclick="manipPVSet()">${tr('Set Number', 'Stel Getal')}</button>
-        <button class="secondary" onclick="manipPVRandom()">${tr('Random Number', 'Lukrake Getal')}</button>
-        <button class="secondary" id="mpv-toggle-btn" onclick="manipPVToggle()">${tr('Pull Apart', 'Trek Uitmekaar')}</button>
-        <button class="secondary" id="mpv-check-btn" style="display:none;" onclick="manipPVCheck()">${tr('Check My Number', 'Gaan My Getal Na')}</button>
+        <button class="secondary" onclick="manipPVClear()">${tr('Clear the mat', 'Maak mat skoon')}</button>
+        <button class="secondary" id="mpv-check-btn" style="display:none;" onclick="manipPVCheck()">${tr('Check my number', 'Gaan my getal na')}</button>
       </div>
       <div id="mpv-feedback" class="feedback"></div>
-      <div class="pv-stage" id="mpv-stage"></div>
+      ${rows}
     </div>
   `;
-  manipPVBuildCards();
+  manipPVWire();
   manipPVMarkMode();
   manipPVRenderMode();
-  manipRenderPV();
+  manipPVRender();
 }
-function manipPVSetMode(m) { manipPV.mode = m; manipPV.target = null; manipPVMarkMode(); manipPVRenderMode(); }
+function manipPVWire() {
+  const mat = document.getElementById('mpv-mat');
+  document.querySelectorAll('.pv-pick').forEach(el => {
+    const place = +el.getAttribute('data-place');
+    const value = +el.getAttribute('data-value');
+    // Tap, the reliable gesture on a tablet.
+    el.addEventListener('click', () => manipPVPlace(place, value));
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); manipPVPlace(place, value); }
+    });
+    // Drag, the gesture that feels like the real cards.
+    el.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', place + ':' + value);
+      e.dataTransfer.effectAllowed = 'copy';
+      el.classList.add('pv-dragging');
+    });
+    el.addEventListener('dragend', () => el.classList.remove('pv-dragging'));
+  });
+  mat.addEventListener('dragover', e => { e.preventDefault(); mat.classList.add('pv-mat-over'); });
+  mat.addEventListener('dragleave', () => mat.classList.remove('pv-mat-over'));
+  mat.addEventListener('drop', e => {
+    e.preventDefault();
+    mat.classList.remove('pv-mat-over');
+    const [place, value] = (e.dataTransfer.getData('text/plain') || '').split(':').map(Number);
+    if (place) manipPVPlace(place, value);
+  });
+}
+function manipPVPlace(place, value) {
+  // One card per place, exactly like the real apparatus: laying a new tens
+  // card down replaces the tens card already there rather than adding to it.
+  manipPV.built[place] = value / place;
+  manipPVRender();
+}
+function manipPVRemove(place) { manipPV.built[place] = 0; manipPVRender(); }
+function manipPVClear() {
+  manipPV.built = { 100: 0, 10: 0, 1: 0 };
+  const fb = document.getElementById('mpv-feedback');
+  if (fb) { fb.className = 'feedback'; fb.textContent = ''; }
+  manipPVRender();
+}
+function manipPVRender() {
+  const stack = document.getElementById('mpv-stack');
+  const hint = document.getElementById('mpv-mat-hint');
+  if (!stack) return;
+  stack.innerHTML = '';
+  const any = MANIP_PV_ROWS.some(r => manipPV.built[r.place] > 0);
+  hint.style.display = any ? 'none' : 'block';
+  // Cards are laid right-aligned and overlapping, so the zeros of the bigger
+  // card sit underneath the smaller one. That overlap IS the lesson.
+  MANIP_PV_ROWS.forEach(r => {
+    const digit = manipPV.built[r.place];
+    if (!digit) return;
+    const el = document.createElement('div');
+    el.className = 'pv-laid pv-p' + r.place;
+    el.style.background = r.color;
+    // one span per digit so each sits in its own fixed column
+    el.innerHTML = String(digit * r.place).split('').map(d => `<span class="pv-d">${d}</span>`).join('');
+    el.title = tr('Tap to take this card off', 'Tik om hierdie kaart af te haal');
+    el.addEventListener('click', () => manipPVRemove(r.place));
+    stack.appendChild(el);
+  });
+  const n = manipPVValue();
+  const readout = document.getElementById('mpv-readout');
+  if (readout) {
+    readout.innerHTML = any
+      ? `${MANIP_PV_ROWS.filter(r => manipPV.built[r.place]).map(r => `<span>${manipPV.built[r.place] * r.place}</span>`).join(' + ')} = <strong>${n}</strong>`
+      : '';
+  }
+  MANIP_PV_ROWS.forEach(r => {
+    document.querySelectorAll(`.pv-pick[data-place="${r.place}"]`).forEach(el => {
+      el.classList.toggle('pv-picked', +el.getAttribute('data-value') === manipPV.built[r.place] * r.place && manipPV.built[r.place] > 0);
+    });
+  });
+}
+function manipPVSetMode(m) { manipPV.mode = m; manipPVClear(); manipPVMarkMode(); manipPVRenderMode(); }
 function manipPVMarkMode() {
   document.getElementById('mpv-mode-explore').classList.toggle('correct', manipPV.mode === 'explore');
   document.getElementById('mpv-mode-challenge').classList.toggle('correct', manipPV.mode === 'challenge');
@@ -9892,132 +10293,30 @@ function manipPVMarkMode() {
 function manipPVRenderMode() {
   const targetEl = document.getElementById('mpv-target');
   const checkBtn = document.getElementById('mpv-check-btn');
-  const fb = document.getElementById('mpv-feedback');
-  fb.className = 'feedback'; fb.textContent = '';
   if (manipPV.mode === 'challenge') {
-    manipPV.target = randInt(10, 999);
+    // Avoid zeros in any place: a target like 305 cannot be built with these
+    // cards, since there is no "0 tens" card to lay down.
+    manipPV.target = randInt(1, 9) * 100 + randInt(1, 9) * 10 + randInt(1, 9);
     targetEl.textContent = tr(`Build this number: ${manipPV.target}`, `Bou hierdie getal: ${manipPV.target}`);
     checkBtn.style.display = 'inline-block';
   } else {
+    manipPV.target = null;
     targetEl.textContent = '';
     checkBtn.style.display = 'none';
   }
 }
 function manipPVCheck() {
   const fb = document.getElementById('mpv-feedback');
-  if (manipPV.number === manipPV.target) { fb.className = 'feedback good'; fb.textContent = tr('Correct! Well done.', 'Reg! Mooi so.'); }
-  else { fb.className = 'feedback bad'; fb.textContent = tr('Not quite. Check the number you typed against the target above.', 'Nie heeltemal reg nie. Kyk die getal wat jy getik het teen die teiken hierbo na.'); }
-}
-function manipPVBuildCards() {
-  const stage = document.getElementById('mpv-stage');
-  const scale = manipPVComputeScale(stage);
-  const fontRem = Math.max(1.15, 2.6 * scale);
-  const labelRem = Math.max(0.68, 0.85 * scale);
-  const padRight = Math.max(6, 18 * scale);
-  stage.innerHTML = '';
-  manipPVCardEls = MANIP_PV_DEFS.map(p => {
-    const card = document.createElement('div');
-    card.className = 'pv-card';
-    card.style.background = p.color;
-    card.style.top = '0px';
-    card.style.fontSize = fontRem + 'rem';
-    card.style.paddingRight = padRight + 'px';
-    const numSpan = document.createElement('span');
-    card.appendChild(numSpan);
-    const lbl = document.createElement('div');
-    lbl.className = 'pv-label';
-    lbl.style.fontSize = labelRem + 'rem';
-    card.appendChild(lbl);
-    card.addEventListener('click', () => { manipPV.expanded = !manipPV.expanded; manipRenderPV(); });
-    stage.appendChild(card);
-    return { card, numSpan, lbl };
-  });
-  const widths = MANIP_PV_DEFS.map(d => d.slots * MANIP_PV_SLOT);
-  let running = 0;
-  manipPVExpandedLefts = widths.map(w => { const left = running; running += w + MANIP_PV_GAP; return left; });
-  manipPVExpandedWidths = widths;
-  stage.style.width = (running - MANIP_PV_GAP) + 'px';
-  if (manipPVResizeHandler) window.removeEventListener('resize', manipPVResizeHandler);
-  manipPVResizeHandler = () => {
-    if (!document.getElementById('mpv-stage')) { window.removeEventListener('resize', manipPVResizeHandler); return; }
-    manipPVBuildCards();
-    manipRenderPV();
-  };
-  window.addEventListener('resize', manipPVResizeHandler);
-}
-function manipRenderPV() {
-  const n = Math.max(0, Math.min(999, manipPV.number));
-  const digits = [Math.floor(n / 100), Math.floor((n % 100) / 10), n % 10];
-  const slots = MANIP_PV_DEFS.map(d => d.slots);
-  if (manipPV.expanded) {
-    manipPVCardEls.forEach((els, i) => {
-      const p = MANIP_PV_DEFS[i];
-      const digit = digits[i];
-      const value = digit * p.place;
-      const width = manipPVExpandedWidths[i];
-      els.card.style.width = width + 'px';
-      els.card.style.left = manipPVExpandedLefts[i] + 'px';
-      els.card.style.zIndex = i + 1;
-      els.card.style.opacity = '1';
-      els.card.style.pointerEvents = 'auto';
-      els.numSpan.style.position = 'static';
-      els.numSpan.style.width = 'auto';
-      els.numSpan.textContent = value;
-      els.lbl.textContent = `${tr(p.label, p.labelAf)} (${digit})`;
-      els.lbl.style.opacity = '1';
-      els.lbl.style.width = width + 'px';
-      els.lbl.style.left = '0px';
-    });
-    document.getElementById('mpv-toggle-btn').textContent = tr('Build It', 'Bou Dit');
-    return;
+  const n = manipPVValue();
+  if (n === manipPV.target) {
+    fb.className = 'feedback good';
+    fb.textContent = tr(`Correct! ${manipPV.target} is ${manipPV.built[100]} hundreds, ${manipPV.built[10]} tens and ${manipPV.built[1]} units.`, `Reg! ${manipPV.target} is ${manipPV.built[100]} honderde, ${manipPV.built[10]} tiene en ${manipPV.built[1]} eenhede.`);
+    setTimeout(() => { manipPVClear(); manipPVRenderMode(); }, 1800);
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = tr(`That builds ${n}, not ${manipPV.target}. Look at which place is wrong.`, `Dit bou ${n}, nie ${manipPV.target} nie. Kyk watter plek verkeerd is.`);
   }
-  const sigDigits = n === 0 ? 1 : String(n).length;
-  const startIdx = 3 - sigDigits;
-  const sharedRight = slots[startIdx] * MANIP_PV_SLOT;
-  manipPVCardEls.forEach((els, i) => {
-    if (i < startIdx) {
-      els.card.style.opacity = '0';
-      els.card.style.pointerEvents = 'none';
-      els.lbl.style.opacity = '0';
-      return;
-    }
-    const p = MANIP_PV_DEFS[i];
-    const digit = digits[i];
-    const width = slots[i] * MANIP_PV_SLOT;
-    const left = sharedRight - width;
-    const posInStack = i - startIdx;
-    els.card.style.width = width + 'px';
-    els.card.style.left = left + 'px';
-    els.card.style.zIndex = posInStack + 1;
-    els.card.style.opacity = '1';
-    els.card.style.pointerEvents = 'auto';
-    els.numSpan.style.position = 'absolute';
-    els.numSpan.style.left = '0px';
-    els.numSpan.style.top = '0px';
-    els.numSpan.style.bottom = '0px';
-    els.numSpan.style.width = MANIP_PV_SLOT + 'px';
-    els.numSpan.style.display = 'flex';
-    els.numSpan.style.alignItems = 'center';
-    els.numSpan.style.justifyContent = 'center';
-    els.numSpan.textContent = digit;
-    els.lbl.textContent = `${tr(p.label, p.labelAf)} (${digit})`;
-    els.lbl.style.opacity = '0';
-  });
-  document.getElementById('mpv-toggle-btn').textContent = tr('Pull Apart', 'Trek Uitmekaar');
 }
-function manipPVSet() {
-  let v = parseInt(document.getElementById('mpv-input').value, 10);
-  if (isNaN(v)) v = 0;
-  manipPV.number = Math.max(0, Math.min(999, v));
-  document.getElementById('mpv-input').value = manipPV.number;
-  manipRenderPV();
-}
-function manipPVRandom() {
-  manipPV.number = randInt(0, 999);
-  document.getElementById('mpv-input').value = manipPV.number;
-  manipRenderPV();
-}
-function manipPVToggle() { manipPV.expanded = !manipPV.expanded; manipRenderPV(); }
 
 // ---- Base-10 Blocks ----
 let manipB10 = { hundreds: 0, tens: 0, units: 0, mode: 'free', target: null };
@@ -10924,9 +11223,16 @@ function manipProtRenderSVG() {
   const mk = (tag, attrs) => { const el = document.createElementNS(NS, tag); Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v)); return el; };
   // outer semicircle body
   svg.appendChild(mk('path', { d: `M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy} Z`, fill: '#EAF6FC', stroke: 'var(--ocean)', 'stroke-width': 2 }));
-  // degree ticks
+  // Degree ticks.
+  // These used to be placed with (180 - d), which put 0 at the left-hand end,
+  // while angleFromEvent below reads the pointer with atan2 so that 0 is at
+  // the RIGHT, and the fixed baseline ray is likewise drawn pointing right.
+  // Scale and readout therefore ran in opposite directions: dragging towards
+  // 30 on the printed scale reported 150. The baseline and the readout already
+  // agreed with each other, so the scale, the target ray and the arm are the
+  // three things corrected here, measuring anticlockwise from the baseline.
   for (let d = 0; d <= 180; d += 10) {
-    const rad = (180 - d) * Math.PI / 180;
+    const rad = d * Math.PI / 180;
     const isMajor = d % 30 === 0;
     const rIn = r - (isMajor ? 18 : 10);
     const x1 = cx + r * Math.cos(rad), y1 = cy - r * Math.sin(rad);
@@ -10944,11 +11250,11 @@ function manipProtRenderSVG() {
   svg.appendChild(mk('line', { x1: cx, y1: cy, x2: cx + r, y2: cy, stroke: '#12303B', 'stroke-width': 3 }));
   // target ray (dashed), if set
   if (manipProtTarget !== null) {
-    const rad = (180 - manipProtTarget) * Math.PI / 180;
+    const rad = manipProtTarget * Math.PI / 180;
     svg.appendChild(mk('line', { x1: cx, y1: cy, x2: cx + r * Math.cos(rad), y2: cy - r * Math.sin(rad), stroke: 'var(--coral)', 'stroke-width': 3, 'stroke-dasharray': '6,5' }));
   }
   // draggable arm
-  const rad = (180 - manipProtAngle) * Math.PI / 180;
+  const rad = manipProtAngle * Math.PI / 180;
   const ax = cx + (r - 6) * Math.cos(rad), ay = cy - (r - 6) * Math.sin(rad);
   svg.appendChild(mk('line', { x1: cx, y1: cy, x2: ax, y2: ay, stroke: 'var(--sand-dark)', 'stroke-width': 4 }));
   const handle = mk('circle', { cx: ax, cy: ay, r: 11, fill: 'var(--sand)', stroke: '#fff', 'stroke-width': 2, class: 'm-protractor-handle' });
@@ -12715,7 +13021,7 @@ function g8_checkEN() {
 // games last.
 //
 // These are genuine printable classroom games the tutor plays with
-// learners, digitised here as solo practice against a computer opponent
+// learners, digitised here as solo practice against a Mathilde opponent
 // (confirmed with the tutor rather than assumed): Connect 4 and
 // Multiplication Connect 4 both come from a "roll two dice, cover the
 // answer on a shared board, first to 4 in a row wins" family (seen in her
@@ -12750,7 +13056,7 @@ function r20_render() {
       ${tutorHTML('games_race20')}
       <div class="gc-scoreboard">
         <span class="gc-p-score">${tr('You', 'Jy')}: <span id="r20-score-p">0</span></span>
-        <span class="gc-c-score">${tr('Computer', 'Rekenaar')}: <span id="r20-score-c">0</span></span>
+        <span class="gc-c-score">${mathildeLabel(18)}: <span id="r20-score-c">0</span></span>
       </div>
       <div class="gc-status" id="r20-status"></div>
       <div class="r20-tracks">
@@ -12760,7 +13066,7 @@ function r20_render() {
           <div class="r20-track-total" id="r20-total-p">0</div>
         </div>
         <div class="r20-track">
-          <div class="r20-track-label" style="color:var(--coral-dark);">${tr('Computer', 'Rekenaar')}</div>
+          <div class="r20-track-label" style="color:var(--coral-dark);">${mathildeName()}</div>
           <div class="r20-track-bar"><div class="r20-track-fill r20-fill-c" id="r20-fill-c" style="width:0%"></div></div>
           <div class="r20-track-total" id="r20-total-c">0</div>
         </div>
@@ -12793,7 +13099,7 @@ function r20_takeTurn() {
     statusEl.textContent = tr('Your turn - roll!', 'Jou beurt - rol!');
     diceRow.innerHTML = `<button class="action" onclick="r20_roll()">${tr('🎲 Roll', '🎲 Rol')}</button>`;
   } else {
-    statusEl.textContent = tr("Computer's turn...", 'Rekenaar se beurt...');
+    statusEl.textContent = tr('Mathilde is thinking...', 'Mathilde dink...');
     diceRow.innerHTML = '';
     setTimeout(r20_roll, 900);
   }
@@ -12803,9 +13109,9 @@ function r20_roll() {
   const who = r20State.turn;
   const val = randInt(1, 6);
   if (who === 'c') {
-    // The computer still works out its own answer rather than the child -
+    // Mathilde still works out its own answer rather than the child -
     // but the roll stays on screen for a while first, so there's time to
-    // work out the computer's new total too before it's revealed.
+    // work out Mathilde's new total too before it's revealed.
     document.getElementById('r20-dice-row').innerHTML = manipMakeDie(val);
     setTimeout(() => {
       if (!r20State || !document.getElementById('r20-status')) return;
@@ -12862,7 +13168,7 @@ function r20_afterMove(who) {
     statusEl.className = 'gc-status ' + (who === 'p' ? 'gc-good' : 'gc-bad');
     statusEl.textContent = who === 'p'
       ? tr('You reached 20 first - you win!', 'Jy het eerste 20 bereik - jy wen!')
-      : tr('Computer reached 20 first this time.', 'Rekenaar het hierdie keer eerste 20 bereik.');
+      : tr('Mathilde reached 20 first this time.', 'Mathilde het hierdie keer eerste 20 bereik.');
     document.getElementById('r20-dice-row').innerHTML = `<button class="secondary" onclick="r20_render()">${tr('Play again', 'Speel weer')}</button>`;
     return;
   }
@@ -12917,7 +13223,7 @@ function gc_renderGridGame(cfg) {
       ${tutorHTML(cfg.tutorKey)}
       <div class="gc-scoreboard">
         <span class="gc-p-score">${tr('You', 'Jy')}: <span id="gc-score-p">0</span></span>
-        <span class="gc-c-score">${tr('Computer', 'Rekenaar')}: <span id="gc-score-c">0</span></span>
+        <span class="gc-c-score">${mathildeLabel(18)}: <span id="gc-score-c">0</span></span>
       </div>
       <div class="gc-status" id="gc-status"></div>
       <div class="gc-dice-row" id="gc-dice-row"></div>
@@ -12959,7 +13265,7 @@ function gc_startTurn() {
     diceRow.innerHTML = `<button class="action" onclick="gc_roll()">${tr('🎲 Roll', '🎲 Rol')}</button>`;
   } else {
     statusEl.className = 'gc-status';
-    statusEl.textContent = tr("Computer's turn...", 'Rekenaar se beurt...');
+    statusEl.textContent = tr('Mathilde is thinking...', 'Mathilde dink...');
     diceRow.innerHTML = '';
     setTimeout(gc_roll, 900);
   }
@@ -12985,10 +13291,10 @@ function gc_roll() {
     statusEl.textContent = tr('Work out the answer, then tap it on the board.', 'Werk die antwoord uit, en tik dit dan op die bord.');
     gc_renderBoard();
   } else {
-    // Leave the roll on screen for a while before the computer answers -
+    // Leave the roll on screen for a while before Mathilde answers -
     // it still works out its own answer, but this gives the child a
     // chance to work out the same roll for themselves in the meantime.
-    statusEl.textContent = tr('Computer is thinking...', 'Rekenaar dink...');
+    statusEl.textContent = tr('Mathilde is thinking...', 'Mathilde dink...');
     gc_renderBoard();
     setTimeout(gc_computerPick, 2500);
   }
@@ -13053,7 +13359,7 @@ function gc_afterPick() {
     statusEl.className = 'gc-status ' + (owner === 'p' ? 'gc-good' : 'gc-bad');
     statusEl.textContent = owner === 'p'
       ? tr('You win! Four in a row!', "Jy wen! Vier op 'n ry!")
-      : tr('Computer wins this time.', 'Rekenaar wen hierdie keer.');
+      : tr('Mathilde wins this time.', 'Mathilde wen hierdie keer.');
     document.getElementById('gc-dice-row').innerHTML = '';
     gc_renderBoard();
     return;
@@ -14197,7 +14503,7 @@ function g6_renderCapacity() { g4_renderMeasure('g6_capacity', '🧃', 'Capacity
 // isosceles triangle, the square and parallelogram have the expected side
 // lengths, no two pieces overlap, and their union exactly equals an 8x8
 // square with zero gaps. This is the standard tangram dissection, just
-// verified by computer rather than assumed.
+// verified by Mathilde rather than assumed.
 const TANGRAM_PIECES = [
   { id: 'L1', color: 'var(--ocean)', local: [[0, 0], [-4, -4], [-4, 4]] },
   { id: 'L2', color: 'var(--ocean-dark)', local: [[0, 0], [-4, 4], [4, 4]] },
@@ -14802,7 +15108,7 @@ function tg_render(puzzleKey, mode) {
         ? tr('Each piece has its own dashed outline to guide you.', 'Elke stuk het sy eie stippellyn om jou te help.')
         : tr('Only the outer outline is shown - work out where each piece goes yourself.', 'Net die buitenste buitelyn word gewys - werk self uit waar elke stuk gaan.')}</p>
       <div class="gc-status" id="tg-status">${tr('0 of 7 pieces placed', '0 van 7 stukke geplaas')}</div>
-      <svg id="tg-svg" viewBox="-5 -1 18 30" style="width:100%; max-width:780px; display:block; margin:0 auto; touch-action:none; background:var(--card-bg);"></svg>
+      <svg id="tg-svg" viewBox="-5 -1 18 30" style="width:100%; display:block; margin:0 auto; touch-action:none; background:var(--card-bg);"></svg>
       <div class="tg-controls">
         <button class="secondary" id="tg-rotate-btn" onclick="tg_rotateSelected()">${tr('↻ Rotate', '↻ Draai')}</button>
         <button class="secondary" id="tg-flip-btn" onclick="tg_flipSelected()">${tr('⇋ Flip', '⇋ Flip')}</button>
@@ -14851,19 +15157,36 @@ function tg_draw() {
   if (flipBtn) flipBtn.disabled = !enabled;
   tg_updateStatus();
 }
+// Repaint ONE piece by rewriting its points attribute, instead of rebuilding
+// the whole board. tg_draw() sets svg.innerHTML, which tears down and recreates
+// every polygon, and it used to run on every pointermove: on a tablet that is
+// sixty to a hundred full SVG rebuilds a second while a child drags a shape,
+// which is what made the puzzle freeze. Dragging now touches one attribute.
+function tg_movePieceFast(piece) {
+  const svg = document.getElementById('tg-svg');
+  if (!svg) return;
+  const el = svg.querySelector(`[data-piece="${piece.id}"]`);
+  if (!el) { tg_draw(); return; }
+  el.setAttribute('points', tg_transform(piece.local, piece.rot, piece.flip, piece.tx, piece.ty).map(pt => pt.join(',')).join(' '));
+}
 function tg_bindHandlers(svg) {
   let dragging = null;
+  // A tap is a press that neither travelled far nor lasted long. Anything else
+  // is a drag. TAP_DIST is in the SVG's own units, where a whole piece is
+  // roughly 1 to 2 units across, so this is a small wobble rather than a move.
+  const TAP_DIST = 0.18, TAP_MS = 400;
   svg.addEventListener('pointerdown', (evt) => {
     const target = evt.target.closest && evt.target.closest('[data-piece]');
     if (!target) return;
     const piece = tgState.pieces.find(p => p.id === target.getAttribute('data-piece'));
     if (!piece || piece.placed) return;
     evt.preventDefault();
-    svg.setPointerCapture(evt.pointerId);
+    try { svg.setPointerCapture(evt.pointerId); } catch (e) { /* best effort */ }
     tgState.selectedId = piece.id;
     const p = g4_svgPoint(svg, evt);
-    dragging = { id: piece.id, dx: p.x - piece.tx, dy: p.y - piece.ty };
-    tg_draw();
+    dragging = { id: piece.id, dx: p.x - piece.tx, dy: p.y - piece.ty,
+                 startX: p.x, startY: p.y, startT: Date.now(), moved: false };
+    tg_draw();   // once, to show the selection outline
   });
   svg.addEventListener('pointermove', (evt) => {
     if (!dragging) return;
@@ -14871,17 +15194,28 @@ function tg_bindHandlers(svg) {
     const piece = tgState.pieces.find(p => p.id === dragging.id);
     if (!piece) return;
     const p = g4_svgPoint(svg, evt);
+    if (Math.hypot(p.x - dragging.startX, p.y - dragging.startY) > TAP_DIST) dragging.moved = true;
     piece.tx = p.x - dragging.dx; piece.ty = p.y - dragging.dy;
-    tg_draw();
+    tg_movePieceFast(piece);
   });
   const endDrag = () => {
     if (!dragging) return;
     const piece = tgState.pieces.find(p => p.id === dragging.id);
+    const wasTap = !dragging.moved && (Date.now() - dragging.startT) < TAP_MS;
     dragging = null;
-    if (piece) tg_tryLock(piece);
+    if (!piece) return;
+    // Tapping the shape itself rotates it 45 degrees, so a child never has to
+    // reach for a button below the board that scrolls the piece out of view.
+    // Pressing and moving is a drag and does not rotate, so the two gestures
+    // do not collide.
+    if (wasTap && !piece.placed) {
+      piece.rot = (piece.rot + 45) % 360;
+    }
+    tg_tryLock(piece);   // redraws in full, which is fine once per gesture
   };
   svg.addEventListener('pointerup', endDrag);
   svg.addEventListener('pointercancel', endDrag);
+  svg.addEventListener('lostpointercapture', endDrag);
 }
 function tg_tryLock(piece) {
   const target = TANGRAM_PUZZLES[tgState.puzzleKey].targets[piece.id];
@@ -14921,7 +15255,7 @@ function tg_updateStatus() {
 
 // ---- Dominoes ----
 // A real double-six set (28 tiles, 0-0 through 6-6), dealt 7 each with 14
-// left in the boneyard, played against the computer with standard rules:
+// left in the boneyard, played against Mathilde with standard rules:
 // match a tile to either open end of the chain, draw from the boneyard
 // when you can't play, empty your hand first to win, or - if the boneyard
 // runs out and neither side can move - whoever is holding fewer pips wins.
@@ -14983,7 +15317,7 @@ function dm_render() {
       ${tutorHTML('games_dominoes')}
       <div class="gc-scoreboard">
         <span class="gc-p-score">${tr('You', 'Jy')}: <span id="dm-score-p">${dmState.scores.p}</span></span>
-        <span class="gc-c-score">${tr('Computer', 'Rekenaar')}: <span id="dm-score-c">${dmState.scores.c}</span></span>
+        <span class="gc-c-score">${mathildeLabel(18)}: <span id="dm-score-c">${dmState.scores.c}</span></span>
       </div>
       <div class="gc-status" id="dm-status"></div>
       <div class="dm-hand-label">${tr('Chain', 'Ketting')} · ${tr('boneyard', 'trekhoop')}: <span id="dm-boneyard-count"></span></div>
@@ -14992,7 +15326,7 @@ function dm_render() {
         <div class="dm-chain" id="dm-chain"></div>
         <div class="dm-drop-zone" id="dm-drop-right" onclick="dm_place('right')">➡</div>
       </div>
-      <div class="dm-hand-label">${tr('Computer\'s hand', 'Rekenaar se hand')}: <span id="dm-c-count"></span> ${tr('tiles', 'teëls')}</div>
+      <div class="dm-hand-label">${tr("Mathilde's hand", 'Mathilde se hand')}: <span id="dm-c-count"></span> ${tr('tiles', 'teëls')}</div>
       <div class="dm-hand" id="dm-c-hand"></div>
       <div class="dm-hand-label">${tr('Your hand - drag a domino onto the left or right end (or tap it, then tap an end)', 'Jou hand - sleep \'n domino na die linker- of regterkant (of tik dit, en tik dan op \'n kant)')}</div>
       <div class="dm-hand" id="dm-p-hand"></div>
@@ -15011,8 +15345,8 @@ function dm_draw() {
   document.getElementById('dm-boneyard-count').textContent = dmState.boneyard.length;
   document.getElementById('dm-c-count').textContent = dmState.hands.c.length;
   document.getElementById('dm-chain').innerHTML = dmState.chain.map(t => dm_tileHTML(t)).join('') || '';
-  document.getElementById('dm-c-hand').innerHTML = dmState.hands.c.map(() => dm_tileHTML({ a: 0, b: 0 }, { computer: true })).join('');
-  // The computer's tiles are shown face-down (as blanks) - only the count matters to the player.
+  document.getElementById('dm-c-hand').innerHTML = dmState.hands.c.map(() => dm_tileHTML({ a: 0, b: 0 }, { Mathilde: true })).join('');
+  // Mathilde's tiles are shown face-down (as blanks) - only the count matters to the player.
   document.getElementById('dm-c-hand').querySelectorAll('.dm-half').forEach(el => el.innerHTML = '');
   document.getElementById('dm-p-hand').innerHTML = dmState.hands.p.map((t, i) => dm_tileHTML(t, {
     clickable: dmState.turn === 'p' && dmState.status === 'playing',
@@ -15152,7 +15486,7 @@ function dm_drawOrPass() {
     dm_updateStatusText();
     return;
   }
-  // Nothing left to draw - pass, unless the computer is also stuck (blocked game).
+  // Nothing left to draw - pass, unless Mathilde is also stuck (blocked game).
   dm_afterMove('p', true);
 }
 function dm_afterMove(who, passed) {
@@ -15166,7 +15500,7 @@ function dm_afterMove(who, passed) {
     if (scoreEl) scoreEl.textContent = dmState.scores[who];
     dm_setStatus(who === 'p'
       ? tr('You played your last domino - you win!', 'Jy het jou laaste domino gespeel - jy wen!')
-      : tr('Computer played its last domino this time.', 'Rekenaar het hierdie keer sy laaste domino gespeel.'),
+      : tr('Mathilde played her last domino this time.', 'Mathilde het hierdie keer haar laaste domino gespeel.'),
       who === 'p' ? 'gc-good' : 'gc-bad');
     dm_showPlayAgain();
     return;
@@ -15194,7 +15528,7 @@ function dm_endBlocked() {
   }
   dm_setStatus(
     winner === 'p' ? tr(`No one can move. You had fewer pips (${pipsP} vs ${pipsC}) - you win!`, `Niemand kan speel nie. Jy het minder oogpunte gehad (${pipsP} teenoor ${pipsC}) - jy wen!`)
-    : winner === 'c' ? tr(`No one can move. Computer had fewer pips (${pipsC} vs ${pipsP}) this time.`, `Niemand kan speel nie. Rekenaar het hierdie keer minder oogpunte gehad (${pipsC} teenoor ${pipsP}).`)
+    : winner === 'c' ? tr(`No one can move. Mathilde had fewer pips (${pipsC} vs ${pipsP}) this time.`, `Niemand kan speel nie. Mathilde het hierdie keer minder oogpunte gehad (${pipsC} teenoor ${pipsP}).`)
     : tr(`No one can move, and it's a tie on pips (${pipsP} each) - a draw.`, `Niemand kan speel nie, en dit is gelykop in oogpunte (${pipsP} elk) - gelykop.`),
     winner === 'p' ? 'gc-good' : winner === 'c' ? 'gc-bad' : '');
   dm_draw();
@@ -15215,7 +15549,7 @@ function dm_setStatus(text, cls) {
 }
 function dm_updateStatusText() {
   if (dmState.status !== 'playing') return;
-  dm_setStatus(dmState.turn === 'p' ? tr('Your turn.', 'Jou beurt.') : tr("Computer's turn...", 'Rekenaar se beurt...'));
+  dm_setStatus(dmState.turn === 'p' ? tr('Your turn.', 'Jou beurt.') : tr('Mathilde is thinking...', 'Mathilde dink...'));
 }
 function dm_takeTurn() {
   if (dmState.status !== 'playing') return;
@@ -15324,7 +15658,7 @@ function pt_render(mode) {
       ${tutorHTML('games_partners10')}
       <div class="gc-scoreboard">
         <span class="gc-p-score">${tr('You', 'Jy')}: <span id="pt-score-p">0</span></span>
-        <span class="gc-c-score">${tr('Computer', 'Rekenaar')}: <span id="pt-score-c">0</span></span>
+        <span class="gc-c-score">${mathildeLabel(18)}: <span id="pt-score-c">0</span></span>
       </div>
       ${mode === 'combo' ? `<div class="gc-status" id="pt-target"></div>` : ''}
       <div class="gc-status" id="pt-status"></div>
@@ -15366,13 +15700,13 @@ function pt_draw() {
     statusEl.textContent = ptState.scores.p > ptState.scores.c
       ? tr('🎉 No more bonds - you win!', '🎉 Geen meer maats nie - jy wen!')
       : ptState.scores.p < ptState.scores.c
-        ? tr('No more bonds - computer wins.', 'Geen meer maats nie - rekenaar wen.')
+        ? tr('No more bonds - Mathilde wins.', 'Geen meer maats nie - Mathilde wen.')
         : tr("No more bonds - it's a tie!", 'Geen meer maats nie - dit is gelykop!');
   } else {
     statusEl.className = 'gc-status';
     statusEl.textContent = ptState.turn === 'p'
       ? tr(`Your turn - tap a pair that makes ${ptState.target}.`, `Jou beurt - tik op 'n paar wat ${ptState.target} maak.`)
-      : tr("Computer's turn...", 'Rekenaar se beurt...');
+      : tr('Mathilde is thinking...', 'Mathilde dink...');
   }
 }
 function pt_ensurePlayable() {
@@ -15548,7 +15882,7 @@ function nb_render() {
       ${tutorHTML('games_numberbattle')}
       <div class="nb-piles">
         <span class="gc-p-score">${tr('Your cards', 'Jou kaarte')}: <span id="nb-count-p">${nbState.p.length}</span></span>
-        <span class="gc-c-score">${tr("Computer's cards", 'Rekenaar se kaarte')}: <span id="nb-count-c">${nbState.c.length}</span></span>
+        <span class="gc-c-score">${tr("Mathilde's cards", 'Mathilde se kaarte')}: <span id="nb-count-c">${nbState.c.length}</span></span>
       </div>
       <div class="gc-status" id="nb-status">${tr('Tap "Flip cards!" to start.', 'Tik op "Draai kaarte om!" om te begin.')}</div>
       <div class="nb-round" id="nb-round"></div>
@@ -15661,7 +15995,7 @@ function nb_draw() {
     statusEl.textContent = tr('You had the bigger difference - you win these 4 cards!', 'Jy het die grootste verskil gehad - jy wen hierdie 4 kaarte!');
   } else if (r.winner === 'c') {
     statusEl.className = 'gc-status gc-bad';
-    statusEl.textContent = tr('Computer had the bigger difference - computer wins these 4 cards.', 'Rekenaar het die grootste verskil gehad - rekenaar wen hierdie 4 kaarte.');
+    statusEl.textContent = tr('Mathilde had the bigger difference, so she wins these 4 cards.', 'Mathilde het die grootste verskil gehad, so sy wen hierdie 4 kaarte.');
   } else {
     statusEl.className = 'gc-status';
     statusEl.textContent = tr("It's a tie! These 4 cards go into the pot for the next round's winner.", "Dit is gelykop! Hierdie 4 kaarte gaan na die pot vir die volgende ronde se wenner.");
@@ -15696,7 +16030,7 @@ function nb_finish() {
     statusEl.textContent = tr('🎉 Out of pairs to flip - you have more cards, you win!', '🎉 Geen pare meer om om te draai nie - jy het meer kaarte, jy wen!');
   } else {
     statusEl.className = 'gc-status gc-bad';
-    statusEl.textContent = tr('Out of pairs to flip - computer has more cards, computer wins.', 'Geen pare meer om om te draai nie - rekenaar het meer kaarte, rekenaar wen.');
+    statusEl.textContent = tr('Out of pairs to flip - Mathilde has more cards, Mathilde wins.', 'Geen pare meer om om te draai nie - Mathilde het meer kaarte, Mathilde wen.');
   }
 }
 
@@ -15706,7 +16040,7 @@ function nb_finish() {
 // second human at the keyboard, this build adapts the "check against a
 // partner" step into a self-check drill: you see your own 5 cards
 // immediately, type in what you think they add up to, and the app reveals
-// both the correct total and a second, independently-dealt "computer" hand
+// both the correct total and a second, independently-dealt "Mathilde" hand
 // so you still get the compare-your-addition experience the source game is
 // built around. Five rounds per deck (52 cards / 10 per round, with 2 left
 // over), face cards = 10, Ace = 1 - reusing the same deck/value helpers as
@@ -15789,7 +16123,7 @@ function a5_finish() {
 // the .tg-picker mode-switcher pattern already used elsewhere in Games. The
 // player's own flipped cards stay visible throughout (so, like the real
 // game, they can always re-add the pile), but the running total itself is
-// never shown - working it out is the point. The computer flips its own,
+// never shown - working it out is the point. Mathilde flips its own,
 // hidden hand for the same stretch of time so there is something to compare
 // against once the timer runs out. Face cards = 10, Ace = 1.
 const FO_DURATIONS = [30, 60, 120];
@@ -15907,16 +16241,16 @@ function fo_submitGuess() {
   let msg;
   if (!correct) {
     fb.className = 'feedback bad';
-    msg = tr(`Wrong total - you forfeit this round! Your cards actually added up to ${foState.playerTotal}. The computer had ${foState.computerTotal}.`, `Verkeerde totaal - jy verbeur hierdie ronde! Jou kaarte het eintlik op ${foState.playerTotal} getel. Die rekenaar het ${foState.computerTotal} gehad.`);
+    msg = tr(`Wrong total - you forfeit this round! Your cards actually added up to ${foState.playerTotal}. Mathilde had ${foState.computerTotal}.`, `Verkeerde totaal - jy verbeur hierdie ronde! Jou kaarte het eintlik op ${foState.playerTotal} getel. Mathilde het ${foState.computerTotal} gehad.`);
   } else if (foState.playerTotal > foState.computerTotal) {
     fb.className = 'feedback good';
-    msg = tr(`Correct, and your total of ${foState.playerTotal} beats the computer's ${foState.computerTotal} - you win!`, `Reg, en jou totaal van ${foState.playerTotal} klop die rekenaar se ${foState.computerTotal} - jy wen!`);
+    msg = tr(`Correct, and your total of ${foState.playerTotal} beats Mathilde's ${foState.computerTotal} - you win!`, `Reg, en jou totaal van ${foState.playerTotal} klop Mathilde se ${foState.computerTotal} - jy wen!`);
   } else if (foState.playerTotal < foState.computerTotal) {
     fb.className = 'feedback bad';
-    msg = tr(`Correct total of ${foState.playerTotal}, but the computer had ${foState.computerTotal} - computer wins this round.`, `Korrekte totaal van ${foState.playerTotal}, maar die rekenaar het ${foState.computerTotal} gehad - rekenaar wen hierdie ronde.`);
+    msg = tr(`Correct total of ${foState.playerTotal}, but Mathilde had ${foState.computerTotal} - Mathilde wins this round.`, `Korrekte totaal van ${foState.playerTotal}, maar Mathilde het ${foState.computerTotal} gehad - Mathilde wen hierdie ronde.`);
   } else {
     fb.className = 'feedback info';
-    msg = tr(`Correct total of ${foState.playerTotal} - it's a tie with the computer!`, `Korrekte totaal van ${foState.playerTotal} - dit is gelykop met die rekenaar!`);
+    msg = tr(`Correct total of ${foState.playerTotal} - it's a tie with Mathilde!`, `Korrekte totaal van ${foState.playerTotal} - dit is gelykop met Mathilde!`);
   }
   fb.textContent = msg;
   document.getElementById('fo-body').insertAdjacentHTML('beforeend', `
@@ -15939,197 +16273,187 @@ function fo_submitGuess() {
 // 52-card deck is used rather than dropping most of it - nothing from the
 // deck goes unused, and "touching" still means the same 8 neighbouring
 // directions the source describes.
-const IS_COLS = 4;
-function is_rankValue(rank) {
-  if (rank === 'A') return 11;
-  if (rank === 'J') return 12;
-  if (rank === 'Q') return 13;
-  if (rank === 'K') return 14;
-  return Number(rank);
+// ---------- Snakes and Ladders ----------
+// Replaces I Spy Sums, whose 52-card board was four columns by thirteen rows
+// and could never be made to fit a tablet without shrinking the card faces
+// past readability. A 10 by 10 board is square, so it scales by width like the
+// Connect 4 boards and stays on screen in both orientations.
+//
+// The maths is not decoration: you only move if you work out the roll. Each
+// turn rolls two dice and the child gives the answer before the counter moves,
+// so a full game is thirty or forty repetitions of the chosen operation
+// without feeling like a worksheet.
+const SNL_SNAKES = { 98: 79, 95: 75, 93: 73, 87: 24, 64: 60, 62: 19, 56: 53, 49: 11, 48: 26, 16: 6 };
+const SNL_LADDERS = { 1: 38, 4: 14, 9: 31, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 100 };
+let snlState = null;
+
+// Board squares run left to right on the bottom row, then right to left on the
+// next one up, the way a printed board does. This maps a square number to its
+// position in a normal top-left-first grid.
+function snl_gridIndex(square) {
+  const rowFromBottom = Math.floor((square - 1) / 10);
+  const posInRow = (square - 1) % 10;
+  const col = (rowFromBottom % 2 === 0) ? posInRow : 9 - posInRow;
+  const rowFromTop = 9 - rowFromBottom;
+  return rowFromTop * 10 + col;
 }
-function is_fullDeck() {
-  const out = [];
-  NB_SUITS.forEach(s => NB_RANKS.forEach(r => out.push({ rank: r, suit: s.sym, color: s.color, value: is_rankValue(r) })));
-  return out;
-}
-function is_neighbors(idx, cols, total) {
-  const row = Math.floor(idx / cols), col = idx % cols;
-  const rows = Math.ceil(total / cols);
-  const out = [];
-  for (let dr = -1; dr <= 1; dr++) {
-    for (let dc = -1; dc <= 1; dc++) {
-      if (dr === 0 && dc === 0) continue;
-      const r = row + dr, c = col + dc;
-      if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
-      const i2 = r * cols + c;
-      if (i2 >= 0 && i2 < total) out.push(i2);
-    }
-  }
-  return out;
-}
-function is_adjacentPairs(board, cols) {
-  const pairs = [];
-  for (let i = 0; i < board.length; i++) {
-    if (board[i] === null) continue;
-    is_neighbors(i, cols, board.length).forEach(j => {
-      if (j > i && board[j] !== null) pairs.push([i, j, board[i].value + board[j].value]);
-    });
-  }
-  return pairs;
-}
-let isState = null;
-function is_pickTarget() {
-  const pairs = is_adjacentPairs(isState.board, isState.cols);
-  if (pairs.length === 0) return null;
-  return pairs[randInt(0, pairs.length - 1)][2];
-}
-function is_render() {
-  const board = nb_shuffle(is_fullDeck());
-  isState = { board, cols: IS_COLS, scores: { p: 0, c: 0 }, selectedIdx: null, status: 'playing', computerPreview: null, target: null };
-  isState.target = is_pickTarget();
+function snl_render() {
+  snlState = {
+    pos: { p: 0, c: 0 }, turn: Math.random() < 0.5 ? 'p' : 'c',
+    op: 'add', status: 'rolling', dice: null, answer: null, scores: { p: 0, c: 0 },
+  };
   app.innerHTML = `
     ${backBtn()}
     <div class="card">
-      <h2 class="activity-title">🔍 ${tr('I Spy Sums', 'Ek Spioeneer Somme')}</h2>
-      <p class="subtext">${tr('The whole deck is laid out face up. A sum is called out - find two touching cards (side by side, above/below, or diagonal) that add up to it and tap them both to claim them! Ace = 11, Jack = 12, Queen = 13, King = 14.', 'Die hele stapel kaarte lê oop. \'n Som word geroep - vind twee kaarte wat aan mekaar raak (langsaan, bo of onder, of skuins) wat saam daardie som maak en tik op altwee om dit op te eis! Aas = 11, Boer = 12, Vrou = 13, Koning = 14.')}</p>
-      ${tutorHTML('games_ispysums')}
+      <h2 class="activity-title">🐍 ${tr('Snakes and Ladders', 'Slange en Lere')}</h2>
+      <p class="subtext">${tr('Roll two dice and work out the answer to move. Land on a ladder to climb, land on a snake and slide back down. First to exactly 100 wins.', 'Rol twee dobbelstene en werk die antwoord uit om te beweeg. Land op \'n leer om te klim, land op \'n slang en gly terug af. Eerste om presies 100 te bereik wen.')}</p>
+      ${tutorHTML('games_snakesladders')}
+      <div class="tg-picker" id="snl-op-picker">
+        <button class="tg-picker-btn active" onclick="snl_setOp('add')">${tr('Add the dice', 'Tel die dobbelstene')}</button>
+        <button class="tg-picker-btn" onclick="snl_setOp('mult')">${tr('Multiply the dice', 'Vermenigvuldig')}</button>
+      </div>
       <div class="gc-scoreboard">
-        <span class="gc-p-score">${tr('You', 'Jy')}: <span id="is-score-p">0</span></span>
-        <span class="gc-c-score">${tr('Computer', 'Rekenaar')}: <span id="is-score-c">0</span></span>
+        <span class="gc-p-score">${tr('You', 'Jy')}: <span id="snl-score-p">0</span></span>
+        <span class="gc-c-score">${mathildeLabel(18)}: <span id="snl-score-c">0</span></span>
       </div>
-      <div class="is-target" id="is-target"></div>
-      <div class="gc-status" id="is-status"></div>
-      <div class="pt-controls">
-        <button class="secondary" id="is-newtarget-btn" onclick="is_newTarget()">${tr('🔔 Call a new sum', '🔔 Roep \'n nuwe som')}</button>
-        <button class="secondary" id="is-pass-btn" onclick="is_pass()">${tr('🙋 Pass - let computer look', '🙋 Los dit - laat rekenaar kyk')}</button>
-      </div>
-      <div class="is-board" id="is-board"></div>
-      <div id="is-feedback" class="feedback"></div>
-      <div class="pt-controls">
-        <button class="secondary" onclick="is_render()">${tr('🔄 New game', '🔄 Nuwe speletjie')}</button>
-      </div>
+      <div class="gc-status" id="snl-status"></div>
+      <div class="gc-dice-row" id="snl-dice-row"></div>
+      <div class="snl-board" id="snl-board"></div>
+      <div id="snl-feedback" class="feedback"></div>
+      <div class="pt-controls"><button class="secondary" onclick="snl_render()">${tr('🆕 New game', '🆕 Nuwe speletjie')}</button></div>
     </div>
   `;
-  is_draw();
+  snl_drawBoard();
+  snl_startTurn();
 }
-function is_draw() {
-  const boardEl = document.getElementById('is-board');
-  if (!boardEl) return;
-  const clickable = isState.status === 'playing';
-  boardEl.innerHTML = isState.board.map((c, i) => {
-    if (c === null) return `<div class="is-card is-empty"></div>`;
-    const cls = ['is-card', c.color];
-    if (i === isState.selectedIdx) cls.push('is-selected');
-    if (isState.computerPreview && isState.computerPreview.includes(i)) cls.push('is-computer-pick');
-    return `<div class="${cls.join(' ')}"${clickable ? ` onclick="is_cellClick(${i})"` : ''}>${cardFaceHTML(c)}</div>`;
-  }).join('');
-  document.getElementById('is-score-p').textContent = isState.scores.p;
-  document.getElementById('is-score-c').textContent = isState.scores.c;
-  const targetEl = document.getElementById('is-target');
-  if (targetEl) {
-    targetEl.textContent = isState.status === 'playing'
-      ? tr(`Find two touching cards that add up to: ${isState.target}`, `Vind twee aanmekaarliggende kaarte wat saam optel tot: ${isState.target}`)
-      : '';
-  }
-  const statusEl = document.getElementById('is-status');
-  if (isState.status === 'over') {
-    statusEl.className = 'gc-status ' + (isState.scores.p === isState.scores.c ? '' : (isState.scores.p > isState.scores.c ? 'gc-good' : 'gc-bad'));
-    statusEl.textContent = isState.scores.p > isState.scores.c
-      ? tr('🎉 No more touching pairs left - you win!', '🎉 Geen aanmekaarliggende pare meer nie - jy wen!')
-      : isState.scores.p < isState.scores.c
-        ? tr('No more touching pairs left - computer wins.', 'Geen aanmekaarliggende pare meer nie - rekenaar wen.')
-        : tr("No more touching pairs left - it's a tie!", 'Geen aanmekaarliggende pare meer nie - dit is gelykop!');
-  } else {
-    statusEl.className = 'gc-status';
-  }
-  const passBtn = document.getElementById('is-pass-btn');
-  if (passBtn) passBtn.disabled = !clickable;
-  const newTargetBtn = document.getElementById('is-newtarget-btn');
-  if (newTargetBtn) newTargetBtn.disabled = !clickable;
+function snl_setOp(op) {
+  if (!snlState) return;
+  snlState.op = op;
+  [...document.querySelectorAll('#snl-op-picker .tg-picker-btn')].forEach((b, i) =>
+    b.classList.toggle('active', (i === 0) === (op === 'add')));
+  snl_startTurn();
 }
-function is_cellClick(idx) {
-  if (!isState || isState.status !== 'playing') return;
-  if (isState.board[idx] === null) return;
-  const fb = document.getElementById('is-feedback');
-  if (isState.selectedIdx === null) {
-    isState.selectedIdx = idx;
-    is_draw();
-    return;
+function snl_drawBoard() {
+  const cells = new Array(100);
+  for (let sq = 1; sq <= 100; sq++) {
+    const cls = ['snl-cell'];
+    let mark = '';
+    if (SNL_LADDERS[sq]) { cls.push('snl-ladder'); mark = `<span class="snl-mark">🪜</span>`; }
+    if (SNL_SNAKES[sq]) { cls.push('snl-snake'); mark = `<span class="snl-mark">🐍</span>`; }
+    const here = [];
+    if (snlState.pos.p === sq) here.push('<span class="snl-tok snl-tok-p" title="You">●</span>');
+    if (snlState.pos.c === sq) here.push('<span class="snl-tok snl-tok-c" title="Mathilde">●</span>');
+    cells[snl_gridIndex(sq)] = `<div class="${cls.join(' ')}"><span class="snl-n">${sq}</span>${mark}${here.join('')}</div>`;
   }
-  if (isState.selectedIdx === idx) {
-    isState.selectedIdx = null;
-    is_draw();
-    return;
-  }
-  const a = isState.selectedIdx, b = idx;
-  const isAdjacent = is_neighbors(a, isState.cols, isState.board.length).includes(b);
-  const sum = isState.board[a].value + isState.board[b].value;
-  if (isAdjacent && sum === isState.target) {
-    isState.board[a] = null;
-    isState.board[b] = null;
-    isState.scores.p += 2;
-    isState.selectedIdx = null;
-    fb.className = 'feedback good';
-    fb.textContent = tr(`Found it! ${sum} claimed.`, `Gevind! ${sum} opgeëis.`);
-    is_afterClaim();
+  const board = document.getElementById('snl-board');
+  if (board) board.innerHTML = cells.join('');
+}
+function snl_startTurn() {
+  if (!snlState || snlState.status === 'over') return;
+  const status = document.getElementById('snl-status');
+  const fb = document.getElementById('snl-feedback');
+  if (fb) { fb.className = 'feedback'; fb.textContent = ''; }
+  if (snlState.turn === 'p') {
+    snlState.status = 'rolling';
+    if (status) status.textContent = tr('Your turn. Roll the dice!', 'Jou beurt. Rol die dobbelstene!');
+    const row = document.getElementById('snl-dice-row');
+    if (row) row.innerHTML = `<button class="action" onclick="snl_roll()">${tr('🎲 Roll', '🎲 Rol')}</button>`;
   } else {
+    if (status) status.textContent = tr('Mathilde is thinking...', 'Mathilde dink...');
+    setTimeout(snl_computerTurn, 900);
+  }
+}
+function snl_roll() {
+  const a = randInt(1, 6), b = randInt(1, 6);
+  snlState.dice = [a, b];
+  snlState.answer = snlState.op === 'add' ? a + b : a * b;
+  snlState.status = 'answering';
+  const sign = snlState.op === 'add' ? '+' : '×';
+  const opts = shuffle(snl_options(snlState.answer));
+  document.getElementById('snl-dice-row').innerHTML =
+    `<span class="snl-die">${a}</span><span class="snl-sign">${sign}</span><span class="snl-die">${b}</span>`;
+  document.getElementById('snl-status').innerHTML =
+    `${tr('How many squares do you move?', 'Hoeveel blokkies beweeg jy?')} `
+    + `<span class="mcq-opts snl-answers">${opts.map(o => `<span class="mcq-opt" onclick="snl_answer(${o})">${o}</span>`).join('')}</span>`;
+}
+// Distractors are the near misses a child actually makes: one out either way,
+// and the other operation's result, so a guess is not a free move.
+function snl_options(correct) {
+  const [a, b] = snlState.dice;
+  const other = snlState.op === 'add' ? a * b : a + b;
+  const set = new Set([correct, correct + 1, Math.max(1, correct - 1), other]);
+  let n = 2;
+  while (set.size < 4) { set.add(Math.max(1, correct + n)); n++; }
+  return [...set].slice(0, 4);
+}
+function snl_answer(choice) {
+  if (!snlState || snlState.status !== 'answering') return;
+  const fb = document.getElementById('snl-feedback');
+  if (choice !== snlState.answer) {
     fb.className = 'feedback bad';
-    fb.textContent = !isAdjacent
-      ? tr("Those two cards aren't touching - pick two that are next to each other.", 'Daardie twee kaarte raak nie aan mekaar nie - kies twee wat langs mekaar is.')
-      : tr(`That adds up to ${sum}, not ${isState.target} - try again.`, `Dit tel op tot ${sum}, nie ${isState.target} nie - probeer weer.`);
-    isState.selectedIdx = null;
-    is_draw();
-  }
-}
-function is_afterClaim() {
-  const t = is_pickTarget();
-  if (t === null) {
-    is_finish();
+    const [a, b] = snlState.dice;
+    fb.textContent = snlState.op === 'add'
+      ? tr(`${a} + ${b} is ${snlState.answer}, so you stay where you are this turn.`, `${a} + ${b} is ${snlState.answer}, so jy bly hierdie beurt waar jy is.`)
+      : tr(`${a} × ${b} is ${snlState.answer}, so you stay where you are this turn.`, `${a} × ${b} is ${snlState.answer}, so jy bly hierdie beurt waar jy is.`);
+    snlState.turn = 'c';
+    snlState.status = 'rolling';
+    setTimeout(snl_startTurn, 1500);
     return;
   }
-  isState.target = t;
-  is_draw();
+  snl_move('p', snlState.answer);
 }
-function is_newTarget() {
-  if (!isState || isState.status !== 'playing') return;
-  const t = is_pickTarget();
-  if (t === null) {
-    is_finish();
-    return;
-  }
-  isState.target = t;
-  isState.selectedIdx = null;
-  document.getElementById('is-feedback').textContent = '';
-  is_draw();
+function snl_computerTurn() {
+  if (!snlState || snlState.status === 'over') return;
+  const a = randInt(1, 6), b = randInt(1, 6);
+  const steps = snlState.op === 'add' ? a + b : a * b;
+  const sign = snlState.op === 'add' ? '+' : '×';
+  const row = document.getElementById('snl-dice-row');
+  if (row) row.innerHTML = `<span class="snl-die">${a}</span><span class="snl-sign">${sign}</span><span class="snl-die">${b}</span><span class="snl-eq">= ${steps}</span>`;
+  setTimeout(() => snl_move('c', steps), 700);
 }
-function is_pass() {
-  if (!isState || isState.status !== 'playing') return;
-  const matches = is_adjacentPairs(isState.board, isState.cols).filter(p => p[2] === isState.target);
-  if (matches.length === 0) {
-    is_afterClaim();
-    return;
-  }
-  const [i, j] = matches[randInt(0, matches.length - 1)];
-  isState.computerPreview = [i, j];
-  isState.selectedIdx = null;
-  is_draw();
-  setTimeout(() => {
-    if (!isState || isState.status !== 'playing') return;
-    isState.board[i] = null;
-    isState.board[j] = null;
-    isState.scores.c += 2;
-    isState.computerPreview = null;
-    const fb = document.getElementById('is-feedback');
+function snl_move(who, steps) {
+  const fb = document.getElementById('snl-feedback');
+  const label = who === 'p' ? tr('You', 'Jy') : mathildeName();
+  let next = snlState.pos[who] + steps;
+  // Overshooting 100 bounces back, the usual house rule, and it means the last
+  // few squares need an exact roll rather than any big number.
+  if (next > 100) {
+    const bounced = 100 - (next - 100);
     fb.className = 'feedback info';
-    fb.textContent = tr('Computer spotted it first!', 'Rekenaar het dit eerste gesien!');
-    is_afterClaim();
-  }, 900);
-}
-function is_finish() {
-  isState.status = 'over';
-  isState.selectedIdx = null;
-  isState.computerPreview = null;
-  is_draw();
+    fb.textContent = tr(`${label} needed exactly ${100 - snlState.pos[who]} and rolled ${steps}, so ${who === 'p' ? 'you bounce' : 'it bounces'} back to ${bounced}.`, `${label} het presies ${100 - snlState.pos[who]} nodig gehad en ${steps} gerol, so ${who === 'p' ? 'jy spring' : 'dit spring'} terug na ${bounced}.`);
+    next = bounced;
+  }
+  snlState.pos[who] = next;
+  snl_drawBoard();
+  setTimeout(() => {
+    const climbed = SNL_LADDERS[next], slid = SNL_SNAKES[next];
+    if (climbed) {
+      snlState.pos[who] = climbed;
+      fb.className = 'feedback good';
+      fb.textContent = tr(`🪜 A ladder! ${label} climbed from ${next} up to ${climbed}.`, `🪜 'n Leer! ${label} het van ${next} tot ${climbed} geklim.`);
+      snl_drawBoard();
+    } else if (slid) {
+      snlState.pos[who] = slid;
+      fb.className = 'feedback bad';
+      fb.textContent = tr(`🐍 A snake! ${label} slid from ${next} down to ${slid}.`, `🐍 'n Slang! ${label} het van ${next} na ${slid} gegly.`);
+      snl_drawBoard();
+    }
+    if (snlState.pos[who] === 100) {
+      snlState.status = 'over';
+      snlState.scores[who]++;
+      document.getElementById('snl-score-' + who).textContent = snlState.scores[who];
+      fb.className = who === 'p' ? 'feedback good' : 'feedback bad';
+      fb.textContent = who === 'p'
+        ? tr('🎉 You reached 100 first. You win!', '🎉 Jy het eerste 100 bereik. Jy wen!')
+        : tr('Mathilde reached 100 first. Try again!', 'Mathilde het eerste 100 bereik. Probeer weer!');
+      document.getElementById('snl-status').textContent = '';
+      document.getElementById('snl-dice-row').innerHTML = '';
+      return;
+    }
+    snlState.turn = who === 'p' ? 'c' : 'p';
+    snlState.status = 'rolling';
+    setTimeout(snl_startTurn, 1100);
+  }, 550);
 }
 
 // ---------- TEN! ----------
@@ -16166,7 +16490,7 @@ function tn_render() {
       ${tutorHTML('games_ten')}
       <div class="gc-scoreboard">
         <span class="gc-p-score">${tr('You', 'Jy')}: <span id="tn-score-p">0</span></span>
-        <span class="gc-c-score">${tr('Computer', 'Rekenaar')}: <span id="tn-score-c">0</span></span>
+        <span class="gc-c-score">${mathildeLabel(18)}: <span id="tn-score-c">0</span></span>
       </div>
       <div class="gc-status" id="tn-status"></div>
       <div class="tn-board" id="tn-board"></div>
@@ -16202,11 +16526,11 @@ function tn_draw() {
     statusEl.textContent = tnState.scores.p > tnState.scores.c
       ? tr('🎉 No more tens - you win!', '🎉 Geen meer tiene nie - jy wen!')
       : tnState.scores.p < tnState.scores.c
-        ? tr('No more tens - computer wins.', 'Geen meer tiene nie - rekenaar wen.')
+        ? tr('No more tens - Mathilde wins.', 'Geen meer tiene nie - Mathilde wen.')
         : tr("No more tens - it's a tie!", 'Geen meer tiene nie - dit is gelykop!');
   } else {
     statusEl.className = 'gc-status';
-    statusEl.textContent = tnState.turn === 'p' ? tr('Your turn - tap a pair that makes 10.', 'Jou beurt - tik op \'n paar wat 10 maak.') : tr("Computer's turn...", 'Rekenaar se beurt...');
+    statusEl.textContent = tnState.turn === 'p' ? tr('Your turn - tap a pair that makes 10.', 'Jou beurt - tik op \'n paar wat 10 maak.') : tr('Mathilde is thinking...', 'Mathilde dink...');
   }
 }
 function tn_ensurePlayable() {
@@ -16483,7 +16807,7 @@ function hs_render() {
       ${tutorHTML('games_horseshoe')}
       <div class="gc-scoreboard">
         <span class="gc-p-score">${tr('You', 'Jy')}: <span id="hs-score-p">0</span></span>
-        <span class="gc-c-score">${tr('Computer', 'Rekenaar')}: <span id="hs-score-c">0</span></span>
+        <span class="gc-c-score">${mathildeLabel(18)}: <span id="hs-score-c">0</span></span>
       </div>
       <div class="hs-deck-count" id="hs-deck-count"></div>
       <div class="gc-status" id="hs-status"></div>
@@ -16519,11 +16843,11 @@ function hs_paint() {
     statusEl.textContent = hsState.scores.p > hsState.scores.c
       ? tr('🎉 No cards left to flip and no more tens - you win!', '🎉 Geen kaarte meer om te draai en geen meer tiene nie - jy wen!')
       : hsState.scores.p < hsState.scores.c
-        ? tr('No cards left to flip and no more tens - computer wins.', 'Geen kaarte meer om te draai en geen meer tiene nie - rekenaar wen.')
+        ? tr('No cards left to flip and no more tens - Mathilde wins.', 'Geen kaarte meer om te draai en geen meer tiene nie - Mathilde wen.')
         : tr("No cards left to flip and no more tens - it's a tie!", 'Geen kaarte meer om te draai en geen meer tiene nie - dit is gelykop!');
   } else {
     statusEl.className = 'gc-status';
-    statusEl.textContent = hsState.turn === 'p' ? tr('Your turn - tap a pair in the middle that makes 10.', 'Jou beurt - tik op \'n paar in die middel wat 10 maak.') : tr("Computer's turn...", 'Rekenaar se beurt...');
+    statusEl.textContent = hsState.turn === 'p' ? tr('Your turn - tap a pair in the middle that makes 10.', 'Jou beurt - tik op \'n paar in die middel wat 10 maak.') : tr('Mathilde is thinking...', 'Mathilde dink...');
   }
 }
 function hs_checkEnd() {
@@ -16606,7 +16930,7 @@ function hs_computerStep() {
 // "maths twist" the user picked: the two draw-cards (+2 and Wild +4) make
 // the player on the receiving end solve a quick sum first - answer right
 // and the draw penalty is reduced (to 0 for +2, to 2 for Wild +4) instead
-// of full. In this two-player (you vs computer) build, Skip/Reverse both
+// of full. In this two-player (you vs Mathilde) build, Skip/Reverse both
 // just return the turn to whoever played them, matching real Uno's
 // two-player behaviour.
 const CC_COLORS = ['red', 'yellow', 'green', 'blue'];
@@ -16727,7 +17051,7 @@ function cc_paint() {
 
   document.getElementById('cc-discard').innerHTML = cc_cardHTML(top, 'cc-top');
   document.getElementById('cc-active-color').innerHTML = `${tr('Active color', 'Aktiewe kleur')}: <span class="cc-swatch" style="background:${CC_COLOR_HEX[ccState.activeColor]};"></span>`;
-  document.getElementById('cc-computer-hand').textContent = tr(`Computer: ${ccState.hand.c.length} cards`, `Rekenaar: ${ccState.hand.c.length} kaarte`);
+  document.getElementById('cc-computer-hand').textContent = tr(`Mathilde: ${ccState.hand.c.length} cards`, `Mathilde: ${ccState.hand.c.length} kaarte`);
 
   const drawBtn = document.getElementById('cc-draw-btn');
   const endBtn = document.getElementById('cc-endturn-btn');
@@ -16752,7 +17076,7 @@ function cc_paint() {
       const inputEl = document.getElementById('cc-challenge-in');
       if (inputEl) inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') cc_submitChallengeAnswer(); });
     } else if (ccState.challenge && ccState.challenge.target === 'c') {
-      challengeEl.innerHTML = `<div class="cc-challenge-box">${tr('Computer is solving', 'Rekenaar los op')}: ${ccState.challenge.question.text} = ?</div>`;
+      challengeEl.innerHTML = `<div class="cc-challenge-box">${tr('Mathilde is solving', 'Mathilde los op')}: ${ccState.challenge.question.text} = ?</div>`;
     } else {
       challengeEl.innerHTML = '';
     }
@@ -16761,7 +17085,7 @@ function cc_paint() {
   const calloutEl = document.getElementById('cc-callout');
   if (calloutEl) {
     calloutEl.textContent = ccState.calloutFor
-      ? (ccState.calloutFor === 'p' ? tr('🎉 You have 1 card left!', '🎉 Jy het 1 kaart oor!') : tr('😮 Computer has 1 card left!', '😮 Rekenaar het 1 kaart oor!'))
+      ? (ccState.calloutFor === 'p' ? tr('🎉 You have 1 card left!', '🎉 Jy het 1 kaart oor!') : tr('😮 Mathilde has 1 card left!', '😮 Mathilde het 1 kaart oor!'))
       : '';
   }
 
@@ -16771,10 +17095,10 @@ function cc_paint() {
     statusEl.textContent = tr('🎉 You played your last card - you win!', '🎉 Jy het jou laaste kaart gespeel - jy wen!');
   } else if (ccState.status === 'lost') {
     statusEl.className = 'gc-status gc-bad';
-    statusEl.textContent = tr('Computer played its last card - computer wins.', 'Rekenaar het sy laaste kaart gespeel - rekenaar wen.');
+    statusEl.textContent = tr('Mathilde played her last card, so she wins.', 'Mathilde het haar laaste kaart gespeel, so sy wen.');
   } else {
     statusEl.className = 'gc-status';
-    statusEl.textContent = ccState.turn === 'p' ? tr('Your turn!', 'Jou beurt!') : tr("Computer's turn...", 'Rekenaar se beurt...');
+    statusEl.textContent = ccState.turn === 'p' ? tr('Your turn!', 'Jou beurt!') : tr('Mathilde is thinking...', 'Mathilde dink...');
   }
 }
 function cc_dealOne(who) {

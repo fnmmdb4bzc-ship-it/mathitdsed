@@ -92,6 +92,24 @@
   .muted { color: var(--muted); }
   .actions { display: flex; gap: 6px; justify-content: flex-end; }
   @media (max-width: 720px) { .hide-sm { display: none; } }
+
+/* Tasks a tutor sets for one student. Shown as a drawer under that student's
+   row rather than a separate page, so the context of who you are setting work
+   for is never lost. */
+.taskrow > td { background: #f7f9fc; padding: 0; }
+.taskpanel { padding: 14px 16px 16px; }
+.taskpanel h3 { margin: 0 0 10px; font-size: 15px; }
+.taskform { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-bottom: 12px; }
+.taskform label { display: block; font-size: 12px; color: #667; margin-bottom: 3px; }
+.taskform select, .taskform input { padding: 7px 9px; font: inherit; border: 1px solid #ccd; border-radius: 6px; }
+.taskform select { max-width: 340px; }
+.tasklist { list-style: none; margin: 0; padding: 0; }
+.tasklist li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid #e6eaf0; }
+.tasklist li.done { opacity: 0.55; }
+.tasklist .t-main { flex: 1; }
+.tasklist .t-note { color: #667; font-size: 13px; }
+.tasklist .t-due { font-size: 12px; color: #667; white-space: nowrap; }
+.tasklist .t-done-badge { font-size: 12px; color: #2a7; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -185,6 +203,10 @@ function ago(iso) {
 }
 
 function renderStats(c) {
+  // The page reloads every 30 seconds anyway, so putting the pending count in
+  // the tab title means a waiting student is visible from another tab without
+  // any notification service at all.
+  document.title = c.pending ? `(${c.pending}) MathIT Admin` : 'MathIT Admin';
   $('stats').innerHTML = [
     ['Online now', c.online], ['Awaiting approval', c.pending],
     ['Active', c.active], ['Disabled', c.disabled], ['Total', c.total],
@@ -202,7 +224,7 @@ function renderRows(students) {
       ? `<button data-act="approve" data-id="${s.id}">Approve</button>` : '';
     const disable = s.status === 'active'
       ? `<button data-act="disable" data-id="${s.id}">Disable</button>` : '';
-    return `<tr>
+    return `<tr data-student="${s.id}">
       <td><span class="dot ${s.online ? 'on' : ''}" title="${s.online ? 'active in the last 5 minutes' : 'not active recently'}"></span>
           <b>${esc(s.name)}</b><br><span class="muted">${esc(s.username)}</span></td>
       <td><span class="pill ${s.status}">${s.status}</span>${s.mustChangePassword
@@ -212,10 +234,93 @@ function renderRows(students) {
       <td class="hide-sm">${s.correct}/${s.attempted} <span class="muted">${pct}</span></td>
       <td class="hide-sm">${s.online ? '<b>online</b>' : esc(ago(s.lastSeenAt))}</td>
       <td><div class="actions">${approve}${disable}
+          <button data-act="tasks" data-id="${s.id}" data-name="${esc(s.name)}">Tasks</button>
           <button class="danger" data-act="delete" data-id="${s.id}" data-name="${esc(s.name)}">Delete</button>
       </div></td>
     </tr>`;
   }).join('');
+}
+
+// ---------------------------------------------------------------------------
+// Tasks a tutor sets for a student.
+// ---------------------------------------------------------------------------
+
+// GENERATED from MathIT.html's SECTIONS_BY_LEVEL and ACTIVITIES. It is a copy,
+// so adding activities to the app will not show them here until this list is
+// regenerated. Kept as a copy on purpose: the alternative is the admin page
+// downloading and parsing the 1.4MB app just to fill a dropdown.
+const ACTIVITIES = [{"k":"g1_counting_t1","g":"1","grp":"Grade 1 · Term 1","t":"Counting to 20"},{"k":"g1_addsub_t1","g":"1","grp":"Grade 1 · Term 1","t":"Add and Subtract to 5"},{"k":"g1_patterns_t1","g":"1","grp":"Grade 1 · Term 1","t":"Patterns"},{"k":"g1_shapes_t1","g":"1","grp":"Grade 1 · Term 1","t":"Space and Shape"},{"k":"g1_money_t1","g":"1","grp":"Grade 1 · Term 1","t":"Money"},{"k":"g1_measure_t1","g":"1","grp":"Grade 1 · Term 1","t":"Measurement"},{"k":"g1_data_t1","g":"1","grp":"Grade 1 · Term 1","t":"Data Handling"},{"k":"g1_wordprob_t1","g":"1","grp":"Grade 1 · Term 1","t":"Word Problems"},{"k":"g1_counting_t2","g":"1","grp":"Grade 1 · Term 2","t":"Counting to 50"},{"k":"g1_addsub_t2","g":"1","grp":"Grade 1 · Term 2","t":"Add and Subtract to 10"},{"k":"g1_skipcount_t2","g":"1","grp":"Grade 1 · Term 2","t":"Skip Counting in 10s"},{"k":"g1_patterns_t2","g":"1","grp":"Grade 1 · Term 2","t":"Patterns"},{"k":"g1_shapes_t2","g":"1","grp":"Grade 1 · Term 2","t":"Space and Shape"},{"k":"g1_money_t2","g":"1","grp":"Grade 1 · Term 2","t":"Money"},{"k":"g1_measure_t2","g":"1","grp":"Grade 1 · Term 2","t":"Measurement"},{"k":"g1_data_t2","g":"1","grp":"Grade 1 · Term 2","t":"Data Handling"},{"k":"g1_wordprob_t2","g":"1","grp":"Grade 1 · Term 2","t":"Word Problems"},{"k":"g1_counting_t3","g":"1","grp":"Grade 1 · Term 3","t":"Counting to 80"},{"k":"g1_addsub_t3","g":"1","grp":"Grade 1 · Term 3","t":"Add and Subtract to 15"},{"k":"g1_skipcount_t3","g":"1","grp":"Grade 1 · Term 3","t":"Skip Counting in 5s"},{"k":"g1_patterns_t3","g":"1","grp":"Grade 1 · Term 3","t":"Patterns"},{"k":"g1_shapes_t3","g":"1","grp":"Grade 1 · Term 3","t":"Space and Shape"},{"k":"g1_money_t3","g":"1","grp":"Grade 1 · Term 3","t":"Money"},{"k":"g1_measure_t3","g":"1","grp":"Grade 1 · Term 3","t":"Measurement"},{"k":"g1_data_t3","g":"1","grp":"Grade 1 · Term 3","t":"Data Handling"},{"k":"g1_wordprob_t3","g":"1","grp":"Grade 1 · Term 3","t":"Word Problems"},{"k":"g1_counting_t4","g":"1","grp":"Grade 1 · Term 4","t":"Counting to 100"},{"k":"g1_addsub_t4","g":"1","grp":"Grade 1 · Term 4","t":"Add and Subtract to 20"},{"k":"g1_skipcount_t4","g":"1","grp":"Grade 1 · Term 4","t":"Skip Counting in 2s"},{"k":"g1_patterns_t4","g":"1","grp":"Grade 1 · Term 4","t":"Patterns"},{"k":"g1_shapes_t4","g":"1","grp":"Grade 1 · Term 4","t":"Space and Shape"},{"k":"g1_money_t4","g":"1","grp":"Grade 1 · Term 4","t":"Money"},{"k":"g1_measure_t4","g":"1","grp":"Grade 1 · Term 4","t":"Measurement"},{"k":"g1_data_t4","g":"1","grp":"Grade 1 · Term 4","t":"Data Handling"},{"k":"g1_wordprob_t4","g":"1","grp":"Grade 1 · Term 4","t":"Word Problems"},{"k":"fp_bonds","g":"1","grp":"Grade 1 · Extra Practice","t":"Number Bonds"},{"k":"fp_tenframe","g":"1","grp":"Grade 1 · Extra Practice","t":"Ten Frames"},{"k":"fp_grid100","g":"1","grp":"Grade 1 · Extra Practice","t":"Hundred Grid"},{"k":"fp_bridge10","g":"1","grp":"Grade 1 · Extra Practice","t":"Building Up (Bridging Through 10)"},{"k":"fp_pyramid","g":"1","grp":"Grade 1 · Extra Practice","t":"Number Bond Pyramid"},{"k":"fp_shapes","g":"1","grp":"Grade 1 · Extra Practice","t":"Shape Sorting"},{"k":"fp_shapenames","g":"1","grp":"Grade 1 · Extra Practice","t":"Name the Shape"},{"k":"fp_picgraph","g":"1","grp":"Grade 1 · Extra Practice","t":"Picture Graph"},{"k":"g2_counting_t1","g":"2","grp":"Grade 2 · Term 1","t":"Counting and Number Recognition"},{"k":"g2_addsub_t1","g":"2","grp":"Grade 2 · Term 1","t":"Addition and Subtraction"},{"k":"g2_skipcount_t1","g":"2","grp":"Grade 2 · Term 1","t":"Skip Counting in 3s"},{"k":"g2_patterns_t1","g":"2","grp":"Grade 2 · Term 1","t":"Patterns"},{"k":"g2_shapes_t1","g":"2","grp":"Grade 2 · Term 1","t":"Space and Shape"},{"k":"g2_money_t1","g":"2","grp":"Grade 2 · Term 1","t":"Money"},{"k":"g2_measure_t1","g":"2","grp":"Grade 2 · Term 1","t":"Measurement"},{"k":"g2_data_t1","g":"2","grp":"Grade 2 · Term 1","t":"Data Handling"},{"k":"g2_wordprob_t1","g":"2","grp":"Grade 2 · Term 1","t":"Word Problems"},{"k":"g2_counting_t2","g":"2","grp":"Grade 2 · Term 2","t":"Counting and Number Recognition"},{"k":"g2_addsub_t2","g":"2","grp":"Grade 2 · Term 2","t":"Addition and Subtraction"},{"k":"g2_skipcount_t2","g":"2","grp":"Grade 2 · Term 2","t":"Skip Counting in 4s"},{"k":"g2_patterns_t2","g":"2","grp":"Grade 2 · Term 2","t":"Patterns"},{"k":"g2_shapes_t2","g":"2","grp":"Grade 2 · Term 2","t":"Space and Shape"},{"k":"g2_money_t2","g":"2","grp":"Grade 2 · Term 2","t":"Money"},{"k":"g2_measure_t2","g":"2","grp":"Grade 2 · Term 2","t":"Measurement"},{"k":"g2_data_t2","g":"2","grp":"Grade 2 · Term 2","t":"Data Handling"},{"k":"g2_wordprob_t2","g":"2","grp":"Grade 2 · Term 2","t":"Word Problems"},{"k":"g2_counting_t3","g":"2","grp":"Grade 2 · Term 3","t":"Counting and Number Recognition"},{"k":"g2_addsub_t3","g":"2","grp":"Grade 2 · Term 3","t":"Addition and Subtraction"},{"k":"g2_skipcount_t3","g":"2","grp":"Grade 2 · Term 3","t":"Skip Counting in 20s"},{"k":"g2_patterns_t3","g":"2","grp":"Grade 2 · Term 3","t":"Patterns"},{"k":"g2_shapes_t3","g":"2","grp":"Grade 2 · Term 3","t":"Space and Shape"},{"k":"g2_money_t3","g":"2","grp":"Grade 2 · Term 3","t":"Money"},{"k":"g2_measure_t3","g":"2","grp":"Grade 2 · Term 3","t":"Measurement"},{"k":"g2_data_t3","g":"2","grp":"Grade 2 · Term 3","t":"Data Handling"},{"k":"g2_wordprob_t3","g":"2","grp":"Grade 2 · Term 3","t":"Word Problems"},{"k":"g2_counting_t4","g":"2","grp":"Grade 2 · Term 4","t":"Counting and Number Recognition"},{"k":"g2_addsub_t4","g":"2","grp":"Grade 2 · Term 4","t":"Addition and Subtraction"},{"k":"g2_skipcount_t4","g":"2","grp":"Grade 2 · Term 4","t":"Skip Counting in 25s"},{"k":"g2_patterns_t4","g":"2","grp":"Grade 2 · Term 4","t":"Patterns"},{"k":"g2_shapes_t4","g":"2","grp":"Grade 2 · Term 4","t":"Space and Shape"},{"k":"g2_money_t4","g":"2","grp":"Grade 2 · Term 4","t":"Money"},{"k":"g2_measure_t4","g":"2","grp":"Grade 2 · Term 4","t":"Measurement"},{"k":"g2_data_t4","g":"2","grp":"Grade 2 · Term 4","t":"Data Handling"},{"k":"g2_wordprob_t4","g":"2","grp":"Grade 2 · Term 4","t":"Word Problems"},{"k":"fp_bonds","g":"2","grp":"Grade 2 · Extra Practice","t":"Number Bonds"},{"k":"fp_renaming","g":"2","grp":"Grade 2 · Extra Practice","t":"Place Value Renaming"},{"k":"fp_grid100","g":"2","grp":"Grade 2 · Extra Practice","t":"Hundred Grid"},{"k":"fp_breakup","g":"2","grp":"Grade 2 · Extra Practice","t":"Breaking Up Method"},{"k":"fp_bridge10","g":"2","grp":"Grade 2 · Extra Practice","t":"Building Up (Bridging Through 10)"},{"k":"fp_doublehalve","g":"2","grp":"Grade 2 · Extra Practice","t":"Doubling and Halving"},{"k":"fp_pyramid","g":"2","grp":"Grade 2 · Extra Practice","t":"Number Bond Pyramid"},{"k":"fp_shapenames","g":"2","grp":"Grade 2 · Extra Practice","t":"Name the Shape"},{"k":"fp_measure","g":"2","grp":"Grade 2 · Extra Practice","t":"Measurement Basics"},{"k":"fp_time","g":"2","grp":"Grade 2 · Extra Practice","t":"Telling Time"},{"k":"fp_picgraph","g":"2","grp":"Grade 2 · Extra Practice","t":"Picture Graph"},{"k":"g3_counting_t1","g":"3","grp":"Grade 3 · Term 1","t":"Counting and Number Recognition"},{"k":"g3_addsub_t1","g":"3","grp":"Grade 3 · Term 1","t":"Addition and Subtraction"},{"k":"g3_skipcount_t1","g":"3","grp":"Grade 3 · Term 1","t":"Skip Counting in 6s"},{"k":"g3_patterns_t1","g":"3","grp":"Grade 3 · Term 1","t":"Patterns"},{"k":"g3_shapes_t1","g":"3","grp":"Grade 3 · Term 1","t":"Space and Shape"},{"k":"g3_money_t1","g":"3","grp":"Grade 3 · Term 1","t":"Money"},{"k":"g3_measure_t1","g":"3","grp":"Grade 3 · Term 1","t":"Measurement"},{"k":"g3_data_t1","g":"3","grp":"Grade 3 · Term 1","t":"Data Handling"},{"k":"g3_wordprob_t1","g":"3","grp":"Grade 3 · Term 1","t":"Word Problems"},{"k":"g3_counting_t2","g":"3","grp":"Grade 3 · Term 2","t":"Counting and Number Recognition"},{"k":"g3_addsub_t2","g":"3","grp":"Grade 3 · Term 2","t":"Addition and Subtraction"},{"k":"g3_skipcount_t2","g":"3","grp":"Grade 3 · Term 2","t":"Skip Counting in 7s"},{"k":"g3_patterns_t2","g":"3","grp":"Grade 3 · Term 2","t":"Patterns"},{"k":"g3_shapes_t2","g":"3","grp":"Grade 3 · Term 2","t":"Space and Shape"},{"k":"g3_money_t2","g":"3","grp":"Grade 3 · Term 2","t":"Money"},{"k":"g3_measure_t2","g":"3","grp":"Grade 3 · Term 2","t":"Measurement"},{"k":"g3_data_t2","g":"3","grp":"Grade 3 · Term 2","t":"Data Handling"},{"k":"g3_wordprob_t2","g":"3","grp":"Grade 3 · Term 2","t":"Word Problems"},{"k":"g3_counting_t3","g":"3","grp":"Grade 3 · Term 3","t":"Counting and Number Recognition"},{"k":"g3_addsub_t3","g":"3","grp":"Grade 3 · Term 3","t":"Addition and Subtraction"},{"k":"g3_skipcount_t3","g":"3","grp":"Grade 3 · Term 3","t":"Skip Counting in 50s"},{"k":"g3_patterns_t3","g":"3","grp":"Grade 3 · Term 3","t":"Patterns"},{"k":"g3_shapes_t3","g":"3","grp":"Grade 3 · Term 3","t":"Space and Shape"},{"k":"g3_money_t3","g":"3","grp":"Grade 3 · Term 3","t":"Money"},{"k":"g3_measure_t3","g":"3","grp":"Grade 3 · Term 3","t":"Measurement"},{"k":"g3_data_t3","g":"3","grp":"Grade 3 · Term 3","t":"Data Handling"},{"k":"g3_wordprob_t3","g":"3","grp":"Grade 3 · Term 3","t":"Word Problems"},{"k":"g3_counting_t4","g":"3","grp":"Grade 3 · Term 4","t":"Counting and Number Recognition"},{"k":"g3_addsub_t4","g":"3","grp":"Grade 3 · Term 4","t":"Addition and Subtraction"},{"k":"g3_skipcount_t4","g":"3","grp":"Grade 3 · Term 4","t":"Skip Counting in 100s"},{"k":"g3_patterns_t4","g":"3","grp":"Grade 3 · Term 4","t":"Patterns"},{"k":"g3_shapes_t4","g":"3","grp":"Grade 3 · Term 4","t":"Space and Shape"},{"k":"g3_money_t4","g":"3","grp":"Grade 3 · Term 4","t":"Money"},{"k":"g3_measure_t4","g":"3","grp":"Grade 3 · Term 4","t":"Measurement"},{"k":"g3_data_t4","g":"3","grp":"Grade 3 · Term 4","t":"Data Handling"},{"k":"g3_wordprob_t4","g":"3","grp":"Grade 3 · Term 4","t":"Word Problems"},{"k":"fp_renaming","g":"3","grp":"Grade 3 · Extra Practice","t":"Place Value Renaming"},{"k":"fp_breakup","g":"3","grp":"Grade 3 · Extra Practice","t":"Breaking Up Method"},{"k":"fp_doublehalve","g":"3","grp":"Grade 3 · Extra Practice","t":"Doubling and Halving"},{"k":"fp_column","g":"3","grp":"Grade 3 · Extra Practice","t":"Column Method"},{"k":"fp_shapenames","g":"3","grp":"Grade 3 · Extra Practice","t":"Name the Shape"},{"k":"fp_measure","g":"3","grp":"Grade 3 · Extra Practice","t":"Measurement Basics"},{"k":"fp_time","g":"3","grp":"Grade 3 · Extra Practice","t":"Telling Time"},{"k":"g4_placevalue","g":"4","grp":"Grade 4 · Term 1","t":"Place Value Explorer"},{"k":"g4_compare","g":"4","grp":"Grade 4 · Term 1","t":"Compare and Order"},{"k":"g4_doublehalf","g":"4","grp":"Grade 4 · Term 1","t":"Double and Half"},{"k":"g4_fillten","g":"4","grp":"Grade 4 · Term 1","t":"Filling Up Tens"},{"k":"g4_addsub","g":"4","grp":"Grade 4 · Term 1","t":"Add and Subtract Blitz"},{"k":"g4_multiply","g":"4","grp":"Grade 4 · Term 1","t":"Multiplication Practice"},{"k":"g4_numsentence","g":"4","grp":"Grade 4 · Term 1","t":"Number Sentences"},{"k":"g4_tables","g":"4","grp":"Grade 4 · Term 1","t":"Times Tables Blitz"},{"k":"g4_rounding","g":"4","grp":"Grade 4 · Term 1","t":"Rounding Whole Numbers"},{"k":"g4_factors","g":"4","grp":"Grade 4 · Term 1","t":"Multiples and Factors"},{"k":"g4_divide","g":"4","grp":"Grade 4 · Term 2","t":"Division Practice"},{"k":"g4_shapes3d","g":"4","grp":"Grade 4 · Term 2","t":"3D Object Properties"},{"k":"g4_symmetry","g":"4","grp":"Grade 4 · Term 2","t":"Symmetry"},{"k":"g4_angles","g":"4","grp":"Grade 4 · Term 2","t":"Angles"},{"k":"g4_numpattern","g":"4","grp":"Grade 4 · Term 2","t":"Number Patterns"},{"k":"g4_geopattern","g":"4","grp":"Grade 4 · Term 2","t":"Growing Patterns"},{"k":"g4_shapes2d","g":"4","grp":"Grade 4 · Term 2","t":"2D Shape Properties"},{"k":"g4_comparefrac","g":"4","grp":"Grade 4 · Term 3","t":"Compare Fractions"},{"k":"g4_addfrac","g":"4","grp":"Grade 4 · Term 3","t":"Add and Subtract Fractions"},{"k":"g4_mass","g":"4","grp":"Grade 4 · Term 3","t":"Mass"},{"k":"g4_databars","g":"4","grp":"Grade 4 · Term 3","t":"Pictographs and Bar Graphs"},{"k":"g4_probability","g":"4","grp":"Grade 4 · Term 3","t":"Probability"},{"k":"g4_length","g":"4","grp":"Grade 4 · Term 4","t":"Length"},{"k":"g4_capacity","g":"4","grp":"Grade 4 · Term 4","t":"Capacity and Volume"},{"k":"g4_time","g":"4","grp":"Grade 4 · Term 4","t":"Time"},{"k":"g4_gridref","g":"4","grp":"Grade 4 · Term 4","t":"Grid References"},{"k":"g4_translate","g":"4","grp":"Grade 4 · Term 4","t":"Translations"},{"k":"g4_perimarea","g":"4","grp":"Grade 4 · Term 4","t":"Perimeter and Area"},{"k":"g4_temperature","g":"4","grp":"Grade 4 · Term 4","t":"Temperature"},{"k":"g5_placevalue","g":"5","grp":"Grade 5 · Term 1","t":"Place Value Explorer"},{"k":"g5_addsub","g":"5","grp":"Grade 5 · Term 1","t":"Add and Subtract Blitz"},{"k":"g5_rounding","g":"5","grp":"Grade 5 · Term 1","t":"Rounding Whole Numbers"},{"k":"g5_factors","g":"5","grp":"Grade 5 · Term 1","t":"Multiples and Factors"},{"k":"g5_numsentence","g":"5","grp":"Grade 5 · Term 1","t":"Number Sentences"},{"k":"g5_multiply","g":"5","grp":"Grade 5 · Term 2","t":"Multiplication Practice"},{"k":"g5_divide","g":"5","grp":"Grade 5 · Term 2","t":"Division Practice"},{"k":"g5_angles","g":"5","grp":"Grade 5 · Term 2","t":"Named Angles"},{"k":"g5_transform","g":"5","grp":"Grade 5 · Term 2","t":"Transformation Spotter"},{"k":"g5_shapes2d","g":"5","grp":"Grade 5 · Term 2","t":"2D Shape Properties"},{"k":"g5_numpattern","g":"5","grp":"Grade 5 · Term 2","t":"Number Patterns"},{"k":"g5_fracmixed","g":"5","grp":"Grade 5 · Term 3","t":"Add and Subtract Mixed Numbers"},{"k":"g5_decimals","g":"5","grp":"Grade 5 · Term 3","t":"Compare Decimals"},{"k":"g5_area","g":"5","grp":"Grade 5 · Term 3","t":"Area by Counting Squares"},{"k":"g5_databars","g":"5","grp":"Grade 5 · Term 3","t":"Pictographs and Mode"},{"k":"g5_shapes3d","g":"5","grp":"Grade 5 · Term 3","t":"3D Object Properties"},{"k":"g5_mass","g":"5","grp":"Grade 5 · Term 3","t":"Mass"},{"k":"g5_probability","g":"5","grp":"Grade 5 · Term 3","t":"Probability"},{"k":"g5_time","g":"5","grp":"Grade 5 · Term 4","t":"12 Hour and 24 Hour Time"},{"k":"g5_length","g":"5","grp":"Grade 5 · Term 4","t":"Length"},{"k":"g5_capacity","g":"5","grp":"Grade 5 · Term 4","t":"Capacity and Volume"},{"k":"g5_temperature","g":"5","grp":"Grade 5 · Term 4","t":"Temperature"},{"k":"g6_placevalue","g":"6","grp":"Grade 6 · Term 1","t":"Place Value Detective"},{"k":"g6_rounding","g":"6","grp":"Grade 6 · Term 1","t":"Round It"},{"k":"g6_bonds","g":"6","grp":"Grade 6 · Term 1","t":"Number Bonds Blitz"},{"k":"g6_tables","g":"6","grp":"Grade 6 · Term 1","t":"Times Tables Blitz"},{"k":"g6_factfamily","g":"6","grp":"Grade 6 · Term 1","t":"Fact Family Builder"},{"k":"g6_equivfrac","g":"6","grp":"Grade 6 · Term 1","t":"Equivalent Fractions"},{"k":"g6_primefactors","g":"6","grp":"Grade 6 · Term 1","t":"Prime Numbers, Factors and Multiples"},{"k":"g6_shapes","g":"6","grp":"Grade 6 · Term 2","t":"Shape Property Quiz"},{"k":"g6_mirror","g":"6","grp":"Grade 6 · Term 2","t":"Mirror Match"},{"k":"g6_numsentence","g":"6","grp":"Grade 6 · Term 2","t":"Number Sentences"},{"k":"g6_numpattern","g":"6","grp":"Grade 6 · Term 2","t":"Number Patterns"},{"k":"g6_geopattern","g":"6","grp":"Grade 6 · Term 2","t":"Growing Patterns"},{"k":"g6_percentamount","g":"6","grp":"Grade 6 · Term 2","t":"Percentage of an Amount"},{"k":"g6_fdp","g":"6","grp":"Grade 6 · Term 3","t":"Fraction, Decimal, Percentage Grid"},{"k":"g6_fracops","g":"6","grp":"Grade 6 · Term 3","t":"Fraction Add and Subtract"},{"k":"g6_ratio","g":"6","grp":"Grade 6 · Term 3","t":"Ratio Word Problems"},{"k":"g6_areaperim","g":"6","grp":"Grade 6 · Term 3","t":"Area and Perimeter"},{"k":"g6_shapes3d","g":"6","grp":"Grade 6 · Term 3","t":"3D Object Properties: Odd One Out"},{"k":"g6_transform","g":"6","grp":"Grade 6 · Term 3","t":"Transformation Spotter"},{"k":"g6_mass","g":"6","grp":"Grade 6 · Term 3","t":"Mass"},{"k":"g6_databars","g":"6","grp":"Grade 6 · Term 4","t":"Tally and Bar Chart Builder"},{"k":"g6_stats","g":"6","grp":"Grade 6 · Term 4","t":"Double Bar Graphs, Mode and Median"},{"k":"g6_wordprobs","g":"6","grp":"Grade 6 · Term 4","t":"Mixed Word Problems"},{"k":"g6_length","g":"6","grp":"Grade 6 · Term 4","t":"Length"},{"k":"g6_capacity","g":"6","grp":"Grade 6 · Term 4","t":"Capacity and Volume"},{"k":"g6_time","g":"6","grp":"Grade 6 · Term 4","t":"Time: 24 Hour Clock and Elapsed Time"},{"k":"g6_temperature","g":"6","grp":"Grade 6 · Term 4","t":"Temperature"},{"k":"g6_probability","g":"6","grp":"Grade 6 · Term 4","t":"Probability"},{"k":"g7_notation","g":"7","grp":"Grade 7 · Algebra","t":"Algebraic Notation"},{"k":"g7_equations","g":"7","grp":"Grade 7 · Algebra","t":"Solving Linear Equations"},{"k":"g7_sequences","g":"7","grp":"Grade 7 · Algebra","t":"Sequences and the nth Term"},{"k":"g7_directed","g":"7","grp":"Grade 7 · Number","t":"Directed Numbers"},{"k":"g7_bodmas","g":"7","grp":"Grade 7 · Number","t":"Order of Operations"},{"k":"g7_factors","g":"7","grp":"Grade 7 · Number","t":"Primes, Factors and Multiples"},{"k":"g7_angles","g":"7","grp":"Grade 7 · Geometry and Measures","t":"Angle Reasoning"},{"k":"g7_coordinates","g":"7","grp":"Grade 7 · Geometry and Measures","t":"Coordinates in Four Quadrants"},{"k":"g7_probability","g":"7","grp":"Grade 7 · Probability","t":"Probability Basics"},{"k":"g8_expand","g":"8","grp":"Grade 8 · Algebra","t":"Expanding Brackets"},{"k":"g8_equations2","g":"8","grp":"Grade 8 · Algebra","t":"Equations with Brackets"},{"k":"g8_ratio","g":"8","grp":"Grade 8 · Ratio, Proportion and Rates of Change","t":"Ratio and Proportion"},{"k":"g8_percentchange","g":"8","grp":"Grade 8 · Ratio, Proportion and Rates of Change","t":"Percentage Change"},{"k":"g8_speed","g":"8","grp":"Grade 8 · Ratio, Proportion and Rates of Change","t":"Speed, Distance and Time"},{"k":"g8_powers","g":"8","grp":"Grade 8 · Number","t":"Powers, Roots and Standard Form"},{"k":"g8_circles","g":"8","grp":"Grade 8 · Geometry and Measures","t":"Circumference and Area of a Circle"},{"k":"g8_pythagoras","g":"8","grp":"Grade 8 · Geometry and Measures","t":"Pythagoras' Theorem"},{"k":"g8_enlarge","g":"8","grp":"Grade 8 · Geometry and Measures","t":"Enlargement and Scale Factor"}];
+
+let openTasksFor = null;          // student id whose drawer is open, if any
+
+function taskFormHTML(studentId) {
+  const groups = [];
+  let last = null;
+  for (const a of ACTIVITIES) {
+    if (a.grp !== last) { groups.push({ grp: a.grp, items: [] }); last = a.grp; }
+    groups[groups.length - 1].items.push(a);
+  }
+  const options = groups.map(g =>
+    `<optgroup label="${esc(g.grp)}">` +
+    g.items.map(a => `<option value="${esc(a.k)}|${esc(a.g)}">${esc(a.t)}</option>`).join('') +
+    '</optgroup>').join('');
+  return `
+    <div class="taskform">
+      <div><label for="t-act-${studentId}">Activity</label>
+        <select id="t-act-${studentId}">${options}</select></div>
+      <div><label for="t-note-${studentId}">Note (optional)</label>
+        <input id="t-note-${studentId}" placeholder="e.g. before Friday" size="22"></div>
+      <div><label for="t-due-${studentId}">Due (optional)</label>
+        <input id="t-due-${studentId}" type="date"></div>
+      <div><button data-act="task-add" data-id="${studentId}">Set task</button></div>
+    </div>`;
+}
+
+function taskListHTML(tasks) {
+  if (!tasks.length) return '<p class="muted">Nothing set yet.</p>';
+  const nameOf = k => (ACTIVITIES.find(a => a.k === k) || {}).t || k;
+  return '<ul class="tasklist">' + tasks.map(t => `
+    <li class="${t.completedAt ? 'done' : ''}">
+      <span class="t-main"><b>${esc(nameOf(t.topic))}</b>${t.level ? ` <span class="muted">Grade ${esc(t.level)}</span>` : ''}
+        ${t.note ? `<br><span class="t-note">${esc(t.note)}</span>` : ''}</span>
+      ${t.dueDate ? `<span class="t-due">due ${esc(t.dueDate)}</span>` : ''}
+      ${t.completedAt
+          ? '<span class="t-done-badge">done</span>'
+          : `<button data-act="task-done" data-task="${t.id}">Mark done</button>`}
+      <button class="danger" data-act="task-del" data-task="${t.id}">Remove</button>
+    </li>`).join('') + '</ul>';
+}
+
+async function openTasks(studentId, name) {
+  const existing = document.querySelector('tr.taskrow');
+  if (existing) existing.remove();
+  if (openTasksFor === studentId) { openTasksFor = null; return; }   // toggle shut
+  openTasksFor = studentId;
+
+  const anchor = document.querySelector(`tr[data-student="${studentId}"]`);
+  if (!anchor) return;
+  const tr = document.createElement('tr');
+  tr.className = 'taskrow';
+  tr.innerHTML = `<td colspan="7"><div class="taskpanel">
+      <h3>Tasks for ${esc(name)}</h3>
+      ${taskFormHTML(studentId)}
+      <div id="tasklist-${studentId}" class="muted">Loading…</div>
+    </div></td>`;
+  anchor.after(tr);
+  await refreshTasks(studentId);
+}
+
+async function refreshTasks(studentId) {
+  const box = $(`tasklist-${studentId}`);
+  if (!box) return;
+  try {
+    const data = await MathITAuth.api(`/admin/students/${studentId}/tasks`);
+    box.className = '';
+    box.innerHTML = taskListHTML(data.tasks || []);
+  } catch (err) {
+    box.className = 'muted';
+    box.textContent = 'Could not load tasks: ' + err.message;
+  }
 }
 
 async function load() {
@@ -233,6 +338,38 @@ $('rows').addEventListener('click', async e => {
   const btn = e.target.closest('button[data-act]');
   if (!btn) return;
   const { act, id, name } = btn.dataset;
+
+  // Task buttons act on the drawer rather than the student, so they are
+  // handled here and returned before the approve/disable/delete path below.
+  if (act === 'tasks') { await openTasks(id, name); return; }
+  if (act === 'task-add') {
+    const sel = $(`t-act-${id}`);
+    const [topic, level] = sel.value.split('|');
+    btn.disabled = true;
+    try {
+      await MathITAuth.api(`/admin/students/${id}/tasks`, {
+        method: 'POST',
+        body: { topic, level, note: $(`t-note-${id}`).value.trim() || null,
+                dueDate: $(`t-due-${id}`).value || null },
+      });
+      $(`t-note-${id}`).value = ''; $(`t-due-${id}`).value = '';
+      flash('Task set for ' + (sel.options[sel.selectedIndex].text) + '.');
+      await refreshTasks(id);
+    } catch (err) { flash('Could not set task: ' + err.message, 'err'); }
+    finally { btn.disabled = false; }
+    return;
+  }
+  if (act === 'task-done' || act === 'task-del') {
+    const studentId = btn.closest('tr').previousElementSibling?.dataset.student;
+    btn.disabled = true;
+    try {
+      if (act === 'task-del') await MathITAuth.api(`/admin/tasks/${btn.dataset.task}`, { method: 'DELETE' });
+      else await MathITAuth.api(`/admin/tasks/${btn.dataset.task}/complete`, { method: 'POST' });
+      flash(act === 'task-del' ? 'Task removed.' : 'Task marked done.');
+      if (studentId) await refreshTasks(studentId);
+    } catch (err) { flash('Could not update task: ' + err.message, 'err'); btn.disabled = false; }
+    return;
+  }
 
   if (act === 'delete' && !confirm(
     `Delete ${name}?\n\nThis removes their login and all practice history. This cannot be undone.`)) return;

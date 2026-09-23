@@ -60,6 +60,7 @@ const ROUTES = [
   ['GET',    '/me/progress',                 me.getProgress,         'student'],
   ['POST',   '/me/practice',                 me.postPractice,        'student'],
   ['POST',   '/me/password',                 me.postPassword,        'student'],
+  ['GET',    '/me/tasks',                    me.getTasks,            'student'],
 
   ['GET',    '/admin/students',              admin.listStudents,     'admin'],
   ['POST',   '/admin/students',              admin.createStudent,    'admin'],
@@ -67,6 +68,10 @@ const ROUTES = [
   ['POST',   '/admin/students/:id/disable',  admin.disableStudent,   'admin'],
   ['DELETE', '/admin/students/:id',          admin.deleteStudent,    'admin'],
   ['GET',    '/admin/students/:id/progress', admin.studentProgress,  'admin'],
+  ['GET',    '/admin/students/:id/tasks',    admin.listTasks,        'admin'],
+  ['POST',   '/admin/students/:id/tasks',    admin.createTask,       'admin'],
+  ['POST',   '/admin/tasks/:taskId/complete', admin.completeTask,    'admin'],
+  ['DELETE', '/admin/tasks/:taskId',         admin.deleteTask,       'admin'],
 ];
 
 function match(method, path) {

@@ -155,3 +155,71 @@ export async function studentProgress({ params }) {
   );
   return { topics, recent };
 }
+
+// ---------------------------------------------------------------------------
+// Tasks a tutor sets for a student.
+// ---------------------------------------------------------------------------
+
+const taskRow = t => ({
+  id: t.id,
+  topic: t.topic,
+  level: t.level,
+  note: t.note,
+  dueDate: t.due_date ? new Date(t.due_date).toISOString().slice(0, 10) : null,
+  completedAt: t.completed_at ? new Date(t.completed_at).toISOString() : null,
+  createdAt: new Date(t.created_at).toISOString(),
+});
+
+/** Everything set for one student, open first, most recent first within that. */
+export async function listTasks({ params }) {
+  const { rows } = await query(
+    `SELECT * FROM tasks WHERE student_id = $1
+   ORDER BY (completed_at IS NULL) DESC, due_date NULLS LAST, created_at DESC`,
+    [params.id],
+  );
+  return { tasks: rows.map(taskRow) };
+}
+
+/**
+ * Set a task. Setting the same topic twice updates the existing one rather
+ * than stacking duplicates in the child's panel, which is what the partial
+ * unique index in migration 004 enforces.
+ */
+export async function createTask({ params, body, student }) {
+  const { topic, level = '', note = null, dueDate = null } = body ?? {};
+  if (!topic || typeof topic !== 'string') throw new HttpError(400, 'topic is required');
+  if (dueDate != null && dueDate !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+    throw new HttpError(400, 'dueDate must be YYYY-MM-DD');
+  }
+
+  const exists = await query('SELECT 1 FROM students WHERE id = $1', [params.id]);
+  if (!exists.rows.length) throw new HttpError(404, 'no such student');
+
+  const { rows } = await query(
+    `INSERT INTO tasks (student_id, topic, level, note, due_date, created_by)
+          VALUES ($1, $2, $3, $4, $5::date, $6)
+     ON CONFLICT (student_id, topic, level) WHERE completed_at IS NULL
+     DO UPDATE SET note = EXCLUDED.note, due_date = EXCLUDED.due_date
+       RETURNING *`,
+    [params.id, topic, level || '', note || null, dueDate || null, student?.id ?? null],
+  );
+  return taskRow(rows[0]);
+}
+
+/** Tick a task off by hand, for work done away from the screen. */
+export async function completeTask({ params }) {
+  const { rows } = await query(
+    `UPDATE tasks SET completed_at = now()
+      WHERE id = $1 AND completed_at IS NULL RETURNING *`,
+    [params.taskId],
+  );
+  if (!rows.length) throw new HttpError(404, 'no such open task');
+  return taskRow(rows[0]);
+}
+
+/** Remove a task entirely, for one set by mistake. */
+export async function deleteTask({ params }) {
+  const { rowCount } = await query('DELETE FROM tasks WHERE id = $1', [params.taskId]);
+  if (!rowCount) throw new HttpError(404, 'no such task');
+  return { deleted: true };
+}

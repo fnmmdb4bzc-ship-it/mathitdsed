@@ -124,6 +124,17 @@ export async function postPractice({ student, body }) {
   const r = rows[0];
   if (!r) throw new HttpError(409, 'practice could not be recorded');
 
+  // Practising a topic closes any open task for it, which is the behaviour the
+  // frontend already assumes: it removes the task from the panel on its own
+  // after a correct answer. A task saved with an empty level means "this topic
+  // on any grade", so it closes whichever grade the student practised on.
+  await query(
+    `UPDATE tasks SET completed_at = now()
+      WHERE student_id = $1 AND topic = $2 AND completed_at IS NULL
+        AND (level = '' OR level = $3)`,
+    [student.id, topic, level],
+  ).catch(err => console.warn('task auto-complete failed:', err.message));
+
   return {
     streak: r.streak,
     topic: { topic, level, correct: r.correct, attempted: r.attempted },
@@ -165,4 +176,33 @@ export async function postPassword({ student, body }) {
     [student.id],
   );
   return publicView(rows[0]);
+}
+
+/**
+ * The student's own open tasks, oldest first.
+ *
+ * MathIT.html has always called this on load and renders whatever comes back
+ * as the "Set for you by your tutor" panel; until now there was no route here
+ * to answer it, so the call 404'd, the frontend logged a warning and the panel
+ * silently never appeared.
+ */
+export async function getTasks({ student }) {
+  requireActive(student);
+  const { rows } = await query(
+    `SELECT id, topic, level, note, due_date, created_at
+       FROM tasks
+      WHERE student_id = $1 AND completed_at IS NULL
+   ORDER BY due_date NULLS LAST, created_at ASC`,
+    [student.id],
+  );
+  return {
+    tasks: rows.map(t => ({
+      id: t.id,
+      topic: t.topic,
+      level: t.level,
+      note: t.note,
+      dueDate: t.due_date ? new Date(t.due_date).toISOString().slice(0, 10) : null,
+      createdAt: new Date(t.created_at).toISOString(),
+    })),
+  };
 }
