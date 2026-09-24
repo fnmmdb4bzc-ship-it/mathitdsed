@@ -128,17 +128,101 @@ export async function postPractice({ student, body }) {
   // frontend already assumes: it removes the task from the panel on its own
   // after a correct answer. A task saved with an empty level means "this topic
   // on any grade", so it closes whichever grade the student practised on.
-  await query(
+  const closed = await query(
     `UPDATE tasks SET completed_at = now()
       WHERE student_id = $1 AND topic = $2 AND completed_at IS NULL
-        AND (level = '' OR level = $3)`,
+        AND (level = '' OR level = $3)
+  RETURNING topic`,
     [student.id, topic, level],
-  ).catch(err => console.warn('task auto-complete failed:', err.message));
+  ).catch(err => { console.warn('task auto-complete failed:', err.message); return { rows: [] }; });
+
+  // Stickers are the reward layer on top of all of that. Deliberately after
+  // the work is recorded and never in the way of it: a failure here must not
+  // cost a child the answer they just got right.
+  const stickers = await awardStickers(student.id, closed.rows, r.streak)
+    .catch(err => { console.warn('sticker award failed:', err.message); return []; });
 
   return {
     streak: r.streak,
     topic: { topic, level, correct: r.correct, attempted: r.attempted },
+    stickers,
   };
+}
+
+// The set a child collects. Codes only: what each one looks like is decided in
+// MathIT.html, so the artwork can change without touching stored rows.
+const STICKER_CATALOGUE = [
+  'rocket', 'rainbow', 'star', 'trophy', 'medal', 'crown', 'unicorn', 'dolphin',
+  'lion', 'elephant', 'zebra', 'protea', 'sunflower', 'watermelon', 'icecream',
+  'kite', 'drum', 'guitar', 'soccer', 'paintbrush',
+];
+const STREAK_MILESTONES = [3, 7, 14, 30];
+
+const stickerView = s => ({
+  kind: s.kind,
+  code: s.code,
+  reason: s.reason,
+  earnedAt: new Date(s.earned_at).toISOString(),
+});
+
+/**
+ * Works out which stickers this answer has just earned, and stores them.
+ *
+ * Milestones are awarded on `streak >= m` rather than `streak === m`. Equality
+ * looks tidier and is wrong: a child who was already on a 9 day streak before
+ * stickers existed would never be given the 3 and 7 day ones, and a missed day
+ * would leave a permanent hole in their book. The unique index makes repeats
+ * free, so asking every time is both simpler and more forgiving.
+ *
+ * Returns only the stickers that were actually new. ON CONFLICT DO NOTHING
+ * means the ones they already had come back as no rows, which is exactly what
+ * the frontend needs to decide whether to celebrate.
+ */
+async function awardStickers(studentId, completedTasks, streak) {
+  const awards = [];
+
+  if (completedTasks.length) {
+    // Prefer a sticker they have never had, so the book fills with variety
+    // rather than nine copies of the same rocket. Once the whole set is
+    // collected, duplicates are fine and rather the point.
+    const { rows: held } = await query('SELECT DISTINCT code FROM stickers WHERE student_id = $1', [studentId]);
+    const have = new Set(held.map(h => h.code));
+    for (const t of completedTasks) {
+      const fresh = STICKER_CATALOGUE.filter(c => !have.has(c));
+      const from = fresh.length ? fresh : STICKER_CATALOGUE;
+      const code = from[Math.floor(Math.random() * from.length)];
+      have.add(code);
+      awards.push(['task', code, t.topic]);
+    }
+  }
+  for (const m of STREAK_MILESTONES) {
+    if (streak >= m) awards.push(['streak', `streak${m}`, String(m)]);
+  }
+  if (!awards.length) return [];
+
+  const values = awards.map((_, i) => `($1, $${i * 3 + 2}, $${i * 3 + 3}, $${i * 3 + 4})`).join(', ');
+  const params = [studentId, ...awards.flat()];
+  const { rows } = await query(
+    `INSERT INTO stickers (student_id, kind, code, reason)
+          VALUES ${values}
+     ON CONFLICT DO NOTHING
+       RETURNING kind, code, reason, earned_at`,
+    params,
+  );
+  return rows.map(stickerView);
+}
+
+/** Everything in the student's sticker book, newest first. */
+export async function getStickers({ student }) {
+  requireActive(student);
+  const { rows } = await query(
+    `SELECT kind, code, reason, earned_at
+       FROM stickers
+      WHERE student_id = $1
+   ORDER BY earned_at DESC`,
+    [student.id],
+  );
+  return { stickers: rows.map(stickerView) };
 }
 
 /**

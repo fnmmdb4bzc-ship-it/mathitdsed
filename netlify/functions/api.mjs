@@ -61,6 +61,7 @@ const ROUTES = [
   ['POST',   '/me/practice',                 me.postPractice,        'student'],
   ['POST',   '/me/password',                 me.postPassword,        'student'],
   ['GET',    '/me/tasks',                    me.getTasks,            'student'],
+  ['GET',    '/me/stickers',                 me.getStickers,         'student'],
 
   ['GET',    '/admin/students',              admin.listStudents,     'admin'],
   ['POST',   '/admin/students',              admin.createStudent,    'admin'],
