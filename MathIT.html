@@ -20,17 +20,23 @@
   }
   :root {
     --ocean: #38BDF8;
-    --ocean-dark: #0EA5E9;
+    /* These four are used as TEXT nearly everywhere they appear: 55 colour
+       declarations against 4 backgrounds. They were accent shades, not
+       reading shades, and on the cream page they came out pale. Darkened to
+       shades that can actually be read. --coral-dark was the worst of it: it
+       was LIGHTER than --coral, so anything "dark" coral was the palest text
+       on the screen. */
+    --ocean-dark: #0369A1;
     --navy-dark: #1E293B;
     --ocean-light: rgba(56,189,248,0.16);
     --aqua: #22D3EE;
-    --aqua-dark: #0891B2;
+    --aqua-dark: #0E7490;
     --aqua-light: rgba(34,211,238,0.16);
     --coral: #FB7185;
-    --coral-dark: #FDA4AF;
+    --coral-dark: #BE123C;
     --coral-light: rgba(251,113,133,0.18);
     --sand: #FBBF24;
-    --sand-dark: #F59E0B;
+    --sand-dark: #B45309;
     --sand-light: rgba(251,191,36,0.16);
     --holo-purple: #C084FC;
     /* Light-yellow, dyslexia-friendly theme: a soft cream/yellow background
@@ -221,7 +227,7 @@
 
   .tutor-box { margin-bottom: 16px; }
   button.tutor-toggle {
-    background: var(--sand-light); color: var(--sand-dark); border: 1.5px dashed var(--sand);
+    background: var(--sand-light); color: #92400E; border: 1.5px dashed var(--sand);
     border-radius: 10px; padding: 8px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer;
   }
   button.tutor-toggle:hover { background: rgba(251,191,36,0.28); }
@@ -237,7 +243,7 @@
   }
   button.action:hover { filter: brightness(1.08); }
   button.secondary {
-    background: var(--surface-2); color: var(--ocean); border: 1.5px solid var(--border); border-radius: 10px;
+    background: var(--surface-2); color: var(--ocean-dark); border: 1.5px solid var(--border); border-radius: 10px;
     padding: 10px 18px; font-size: 0.95rem; font-weight: 700; cursor: pointer;
     margin-right: 8px; margin-top: 8px;
   }
@@ -267,11 +273,14 @@
   .feedback.bad { display: block; background: var(--bad-bg); color: var(--bad); }
   .feedback.info { display: block; background: var(--aqua-light); color: var(--aqua-dark); font-weight: 600; }
   .scorepill {
-    display: inline-block; background: var(--aqua-light); color: var(--aqua-dark);
+    display: inline-block; background: var(--aqua-light); color: var(--navy-dark);
     font-weight: 800; font-size: 0.85rem; padding: 5px 12px; border-radius: 20px; margin-bottom: 12px;
   }
+  /* Navy, not ocean blue. The question is the one thing on the screen a child
+     has to read, and mid blue on a pale blue panel was the palest text in the
+     app. Same reasoning as the back button. */
   .q-box {
-    font-size: 1.15rem; font-weight: 700; color: var(--ocean-dark); margin: 14px 0;
+    font-size: 1.15rem; font-weight: 700; color: var(--navy-dark); margin: 14px 0;
     background: var(--ocean-light); border-radius: 12px; padding: 14px 16px;
   }
   .mcq-opts { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
@@ -289,7 +298,10 @@
   .mcq-opt.big {
     font-size: 1.5rem; font-weight: 800; padding: 16px 24px; min-width: 64px; text-align: center;
     background: var(--aqua-light); border-color: var(--aqua-dark); border-width: 2px; border-radius: 14px;
-    color: var(--aqua-dark);
+    /* The number on a big tap target is navy too. The aqua fill and border
+       already say "these are the ones you tap"; the digit does not need to be
+       the accent colour as well, and it was hard to read when it was. */
+    color: var(--navy-dark);
   }
   .mcq-opt.big:hover { border-color: var(--coral); }
   .mcq-opt.big.correct { background: var(--good-bg); border-color: var(--good); color: var(--good); }
@@ -458,6 +470,11 @@
   .m-coin, .m-note {
     display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; cursor: pointer;
     user-select: none; border: 2px solid rgba(0,0,0,0.15); transition: transform 0.1s; color: #3a2e0d;
+    /* The denomination is white on some notes and the R10 green is light
+       enough that it nearly vanished. A shadow rather than a darker note,
+       because the note colours are the Reserve Bank's and not mine to
+       adjust for the sake of a label. */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.55);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     line-height: 1.05; gap: 1px;
   }
@@ -831,7 +848,7 @@
   }
   .tg-picker > * { flex: none; }
   .tg-picker-btn { background: var(--surface-2); border: 1.5px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; cursor: pointer; color: var(--text); font-family: inherit; }
-  .tg-picker-btn.active { background: var(--ocean); border-color: var(--ocean-dark); color: #fff; }
+  .tg-picker-btn.active { background: var(--ocean-dark); border-color: var(--ocean-dark); color: #fff; }
   .tg-controls { display: flex; gap: 10px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
   .tg-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
   /* max-width lives here rather than inline on the element, so the
@@ -959,7 +976,7 @@
   }
   .snl-cell.snl-ladder { background: var(--good-bg); border-color: var(--good, #3a9b63); }
   .snl-cell.snl-snake  { background: var(--bad-bg);  border-color: var(--bad, #c0392b); }
-  .snl-n { position: absolute; top: 1px; left: 3px; font-size: 0.52rem; opacity: 0.75; }
+  .snl-n { position: absolute; top: 1px; left: 3px; font-size: 0.56rem; font-weight: 800; color: var(--navy-dark); opacity: 0.9; }
   .snl-mark { font-size: 0.85rem; line-height: 1; }
   .snl-tok { position: absolute; bottom: 1px; font-size: 0.95rem; line-height: 1; text-shadow: 0 0 2px #fff; }
   .snl-tok-p { left: 2px; color: var(--ocean); }
@@ -4359,9 +4376,13 @@ const MATHIT_SURVEYS = [
   { title: 'Animals we saw on the farm', titleAf: 'Diere wat ons op die plaas gesien het', cats: [
     { label: 'Cows', labelAf: 'Koeie', icon: '🐄' }, { label: 'Sheep', labelAf: 'Skape', icon: '🐑' },
     { label: 'Chickens', labelAf: 'Hoenders', icon: '🐓' }, { label: 'Goats', labelAf: 'Bokke', icon: '🐐' }] },
+  // bar is the colour this category must be drawn in, for the one survey where
+  // the category IS a colour. Everything else takes the rotating palette.
   { title: 'Favourite colour', titleAf: 'Gunsteling kleur', cats: [
-    { label: 'Red', labelAf: 'Rooi', icon: '🔴' }, { label: 'Blue', labelAf: 'Blou', icon: '🔵' },
-    { label: 'Green', labelAf: 'Groen', icon: '🟢' }, { label: 'Yellow', labelAf: 'Geel', icon: '🟡' }] },
+    { label: 'Red', labelAf: 'Rooi', icon: '🔴', bar: '#E11D48' },
+    { label: 'Blue', labelAf: 'Blou', icon: '🔵', bar: '#0284C7' },
+    { label: 'Green', labelAf: 'Groen', icon: '🟢', bar: '#157F3C' },
+    { label: 'Yellow', labelAf: 'Geel', icon: '🟡', bar: '#F59E0B' }] },
 ];
 
 // ---- The one graph every activity draws ----
@@ -4405,7 +4426,12 @@ function mathitChartHTML(o) {
       const cls = ['mchart-cell'];
       if (r === rows) cls.push('mchart-top');
       if (i === 0) cls.push('mchart-first');
-      const bg = filled && o.kind === 'bar' ? `background:var(--${c.colour || 'ocean'});` : '';
+      // A colour starting with # is used as it is. That matters for the
+      // favourite colour survey: its bars have to BE the colours they are
+      // labelled with, and the rotating palette was drawing Red in blue.
+      const col = c.colour || 'ocean';
+      const bg = filled && o.kind === 'bar'
+        ? `background:${col.charAt(0) === '#' ? col : `var(--${col})`};` : '';
       const ico = filled && o.kind !== 'bar'
         ? `<span style="font-size:${Math.round(rowH * 0.72)}px; line-height:1;">${c.icon || '⬛'}</span>` : '';
       cells.push(`<div class="${cls.join(' ')}" style="grid-column:${i + 2}; grid-row:${gridRow}; ${bg}">${ico}</div>`);
@@ -6121,7 +6147,7 @@ function ce_newDTQuestion() {
     qEl.innerHTML = `
       ${mathitChartHTML({
         title: tr(survey.title, survey.titleAf), kind: 'bar',
-        cats: survey.cats.map((c, i) => ({ label: names[i], icon: c.icon, count: counts[i], colour: BEACH[i % BEACH.length] })),
+        cats: survey.cats.map((c, i) => ({ label: names[i], icon: c.icon, count: counts[i], colour: c.bar || BEACH[i % BEACH.length] })),
       })}
       <div class="q-box">${text}</div>
       <div class="mcq-opts">${options.map(o => `<div class="mcq-opt big" onclick="ce_checkDT(this, ${o})">${o}</div>`).join('')}</div>
