@@ -8227,14 +8227,14 @@ function g4_checkGP() {
 // LEVEL 4 - DATA HANDLING: PICTOGRAPHS AND BAR GRAPHS
 // =====================================================================
 const G4_DH_THEMES = [
-  { title: 'Favourite fruit at break time', titleAf: 'Gunsteling vrugte tydens pouse', labels: ['Apple', 'Banana', 'Naartjie', 'Grapes'], labelsAf: ['Appel', 'Piesang', 'Naartjie', 'Druiwe'], icon: '🍎', unit: 'learner' },
-  { title: 'Pets owned by the class', titleAf: 'Troeteldiere wat die klas het', labels: ['Dog', 'Cat', 'Fish', 'No pet'], labelsAf: ['Hond', 'Kat', 'Vis', 'Geen troeteldier'], icon: '🐶', unit: 'learner' },
-  { title: 'How learners get to school', titleAf: 'Hoe leerders skool toe kom', labels: ['Walk', 'Car', 'Taxi', 'Bicycle'], labelsAf: ['Stap', 'Motor', 'Taxi', 'Fiets'], icon: '🚗', unit: 'learner' },
-  { title: 'Favourite break time game', titleAf: 'Gunsteling pouse-speletjie', labels: ['Soccer', 'Skipping', 'Marbles', 'Netball'], labelsAf: ['Sokker', 'Toutrek', 'Albasters', 'Netbal'], icon: '⚽', unit: 'learner' },
-  { title: 'Favourite school subject', titleAf: 'Gunsteling skoolvak', labels: ['Maths', 'English', 'Life Skills', 'Afrikaans'], labelsAf: ['Wiskunde', 'Engels', 'Lewensvaardighede', 'Afrikaans'], icon: '📚', unit: 'learner' },
-  { title: 'Favourite sport to watch', titleAf: 'Gunsteling sport om te kyk', labels: ['Rugby', 'Soccer', 'Cricket', 'Netball'], labelsAf: ['Rugby', 'Sokker', 'Krieket', 'Netbal'], icon: '🏉', unit: 'learner' },
-  { title: 'Favourite season', titleAf: 'Gunsteling seisoen', labels: ['Summer', 'Winter', 'Spring', 'Autumn'], labelsAf: ['Somer', 'Winter', 'Lente', 'Herfs'], icon: '☀️', unit: 'learner' },
-  { title: 'How learners spent Saturday', titleAf: 'Hoe leerders Saterdag deurgebring het', labels: ['Sport', 'Reading', 'Screen time', 'Chores'], labelsAf: ['Sport', 'Lees', 'Skermtyd', 'Huistake'], icon: '🎈', unit: 'learner' },
+  { title: 'Favourite fruit at break time', titleAf: 'Gunsteling vrugte tydens pouse', labels: ['Apple', 'Banana', 'Naartjie', 'Grapes'], labelsAf: ['Appel', 'Piesang', 'Naartjie', 'Druiwe'], icons: ['🍎', '🍌', '🍊', '🍇'], icon: '🍎', unit: 'learner' },
+  { title: 'Pets owned by the class', titleAf: 'Troeteldiere wat die klas het', labels: ['Dog', 'Cat', 'Fish', 'No pet'], labelsAf: ['Hond', 'Kat', 'Vis', 'Geen troeteldier'], icons: ['🐶', '🐱', '🐟', '⚪'], icon: '🐶', unit: 'learner' },
+  { title: 'How learners get to school', titleAf: 'Hoe leerders skool toe kom', labels: ['Walk', 'Car', 'Taxi', 'Bicycle'], labelsAf: ['Stap', 'Motor', 'Taxi', 'Fiets'], icons: ['🚶', '🚗', '🚕', '🚲'], icon: '🚗', unit: 'learner' },
+  { title: 'Favourite break time game', titleAf: 'Gunsteling pouse-speletjie', labels: ['Soccer', 'Skipping', 'Marbles', 'Netball'], labelsAf: ['Sokker', 'Toutrek', 'Albasters', 'Netbal'], icons: ['⚽', '🪢', '🔵', '🏐'], icon: '⚽', unit: 'learner' },
+  { title: 'Favourite school subject', titleAf: 'Gunsteling skoolvak', labels: ['Maths', 'English', 'Life Skills', 'Afrikaans'], labelsAf: ['Wiskunde', 'Engels', 'Lewensvaardighede', 'Afrikaans'], icons: ['🔢', '📕', '🟢', '📗'], icon: '📚', unit: 'learner' },
+  { title: 'Favourite sport to watch', titleAf: 'Gunsteling sport om te kyk', labels: ['Rugby', 'Soccer', 'Cricket', 'Netball'], labelsAf: ['Rugby', 'Sokker', 'Krieket', 'Netbal'], icons: ['🏉', '⚽', '🏏', '🏐'], icon: '🏉', unit: 'learner' },
+  { title: 'Favourite season', titleAf: 'Gunsteling seisoen', labels: ['Summer', 'Winter', 'Spring', 'Autumn'], labelsAf: ['Somer', 'Winter', 'Lente', 'Herfs'], icons: ['☀️', '❄️', '🌸', '🍂'], icon: '☀️', unit: 'learner' },
+  { title: 'How learners spent Saturday', titleAf: 'Hoe leerders Saterdag deurgebring het', labels: ['Sport', 'Reading', 'Screen time', 'Chores'], labelsAf: ['Sport', 'Lees', 'Skermtyd', 'Huistake'], icons: ['⚽', '📖', '📱', '🧹'], icon: '🎈', unit: 'learner' },
 ];
 let g4_dbState = { correct: 0, attempted: 0, mode: 'picto', data: null, answer: null };
 function g4_dhLbl(theme, lbl) { const i = theme.labels.indexOf(lbl); return tr(lbl, theme.labelsAf[i]); }
@@ -8291,13 +8291,16 @@ function g4_newDBQuestion() {
   g4_dbState.qType = qType;
   const themeTitle = tr(theme.title, theme.titleAf);
   let vizHTML;
+  // Each category draws its own picture. One picture for the whole survey put
+  // apples above the bananas and the grapes, which is worse than no picture.
   const g4cats = theme.labels.map((lbl, i) => ({
-    label: g4_dhLbl(theme, lbl), icon: theme.icon, count: counts[i], colour: BEACH[i % BEACH.length],
+    label: g4_dhLbl(theme, lbl), icon: (theme.icons || [])[i] || theme.icon,
+    count: counts[i], colour: BEACH[i % BEACH.length],
   }));
   if (g4_dbState.mode === 'picto') {
     vizHTML = mathitChartHTML({
       title: themeTitle, kind: 'picto', cats: g4cats,
-      note: tr(`Each ${theme.icon} stands for 1 ${theme.unit}`, `Elke ${theme.icon} staan vir 1 leerder`),
+      note: tr(`Each picture stands for 1 ${theme.unit}`, 'Elke prentjie staan vir 1 leerder'),
     });
   } else {
     vizHTML = mathitChartHTML({ title: themeTitle, kind: 'bar', cats: g4cats });
@@ -9064,13 +9067,13 @@ function g5_checkNP() {
 // LEVEL 5 - DATA HANDLING: MANY-TO-ONE PICTOGRAPHS AND MODE
 // =====================================================================
 const G5_DH_THEMES = [
-  { title: 'Favourite subject', titleAf: 'Gunsteling vak', labels: ['Maths', 'English', 'Afrikaans', 'Life Skills'], labelsAf: ['Wiskunde', 'Engels', 'Afrikaans', 'Lewensvaardighede'], icon: '📗', unit: 'learner', unitAf: 'leerder', key: 2 },
-  { title: 'Weekend activity', titleAf: 'Naweekaktiwiteit', labels: ['Sport', 'Screen time', 'Reading', 'Chores'], labelsAf: ['Sport', 'Skermtyd', 'Lees', 'Huistake'], icon: '⏱️', unit: 'learner', unitAf: 'leerder', key: 2 },
-  { title: 'Number of siblings', titleAf: 'Getal broers en susters', labels: ['0', '1', '2', '3 or more'], labelsAf: ['0', '1', '2', '3 of meer'], icon: '🧒', unit: 'learner', unitAf: 'leerder', key: 5 },
-  { title: 'Recycling collected this month', titleAf: 'Herwinning ingesamel hierdie maand', labels: ['Paper', 'Plastic', 'Glass', 'Cans'], labelsAf: ['Papier', 'Plastiek', 'Glas', 'Blikke'], icon: '♻️', unit: 'kg', unitAf: 'kg', key: 5 },
-  { title: 'How learners travel to school', titleAf: 'Hoe leerders skool toe reis', labels: ['Walk', 'Car', 'Taxi', 'Bus'], labelsAf: ['Stap', 'Motor', 'Taxi', 'Bus'], icon: '🚌', unit: 'learner', unitAf: 'leerder', key: 2 },
+  { title: 'Favourite subject', titleAf: 'Gunsteling vak', labels: ['Maths', 'English', 'Afrikaans', 'Life Skills'], labelsAf: ['Wiskunde', 'Engels', 'Afrikaans', 'Lewensvaardighede'], icons: ['🔢', '📕', '📗', '🟢'], icon: '📗', unit: 'learner', unitAf: 'leerder', key: 2 },
+  { title: 'Weekend activity', titleAf: 'Naweekaktiwiteit', labels: ['Sport', 'Screen time', 'Reading', 'Chores'], labelsAf: ['Sport', 'Skermtyd', 'Lees', 'Huistake'], icons: ['⚽', '📱', '📖', '🧹'], icon: '⏱️', unit: 'learner', unitAf: 'leerder', key: 2 },
+  { title: 'Number of siblings', titleAf: 'Getal broers en susters', labels: ['0', '1', '2', '3 or more'], labelsAf: ['0', '1', '2', '3 of meer'], icons: ['⚪', '🔵', '🟢', '🟣'], icon: '🧒', unit: 'learner', unitAf: 'leerder', key: 5 },
+  { title: 'Recycling collected this month', titleAf: 'Herwinning ingesamel hierdie maand', labels: ['Paper', 'Plastic', 'Glass', 'Cans'], labelsAf: ['Papier', 'Plastiek', 'Glas', 'Blikke'], icons: ['📄', '🧴', '🍶', '🥫'], icon: '♻️', unit: 'kg', unitAf: 'kg', key: 5 },
+  { title: 'How learners travel to school', titleAf: 'Hoe leerders skool toe reis', labels: ['Walk', 'Car', 'Taxi', 'Bus'], labelsAf: ['Stap', 'Motor', 'Taxi', 'Bus'], icons: ['🚶', '🚗', '🚕', '🚌'], icon: '🚌', unit: 'learner', unitAf: 'leerder', key: 2 },
   { title: 'Books read this term', titleAf: 'Boeke gelees hierdie kwartaal', labels: ['Grade 5A', 'Grade 5B', 'Grade 5C', 'Grade 5D'], labelsAf: ['Graad 5A', 'Graad 5B', 'Graad 5C', 'Graad 5D'], icon: '📖', unit: 'book', unitAf: 'boek', key: 5 },
-  { title: 'Fruit sold at the tuck shop', titleAf: 'Vrugte verkoop by die snoepie', labels: ['Apple', 'Banana', 'Naartjie', 'Grapes'], labelsAf: ['Appel', 'Piesang', 'Naartjie', 'Druiwe'], icon: '🍎', unit: 'item', unitAf: 'item', key: 10 },
+  { title: 'Fruit sold at the tuck shop', titleAf: 'Vrugte verkoop by die snoepie', labels: ['Apple', 'Banana', 'Naartjie', 'Grapes'], labelsAf: ['Appel', 'Piesang', 'Naartjie', 'Druiwe'], icons: ['🍎', '🍌', '🍊', '🍇'], icon: '🍎', unit: 'item', unitAf: 'item', key: 10 },
   { title: 'Rainfall recorded per week', titleAf: 'Reënval aangeteken per week', labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], labelsAf: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], icon: '🌧️', unit: 'mm', unitAf: 'mm', key: 10 },
 ];
 function g5_dhLbl(theme, lbl) { const i = theme.labels.indexOf(lbl); return tr(lbl, theme.labelsAf[i]); }
@@ -9132,11 +9135,20 @@ function g5_newDHQuestion() {
     // step is the key, so the scale up the side counts in 5s or 2s rather than
     // in pictures. Reading that scale is the whole point of a many-to-one
     // pictograph, and it was not on the screen at all before.
+    // Where the categories are things, each gets its own picture and the key
+    // reads "each picture". Where they are groups, Grade 5A to 5D or Week 1 to
+    // 4, one repeated symbol standing for the unit is the correct pictograph,
+    // and the key can name it.
+    const perCat = !!theme.icons;
     const vizHTML = mathitChartHTML({
       title: tr(theme.title, theme.titleAf),
-      note: tr(`Key: each ${theme.icon} = ${key} ${theme.unit}s`, `Sleutel: elke ${theme.icon} = ${key} ${theme.unitAf}s`),
+      note: perCat
+        ? tr(`Key: each picture = ${key} ${theme.unit}s`, `Sleutel: elke prentjie = ${key} ${theme.unitAf}s`)
+        : tr(`Key: each ${theme.icon} = ${key} ${theme.unit}s`, `Sleutel: elke ${theme.icon} = ${key} ${theme.unitAf}s`),
       kind: 'picto', step: key,
-      cats: theme.labels.map((lbl, i) => ({ label: g5_dhLbl(theme, lbl), icon: theme.icon, count: counts[i] })),
+      cats: theme.labels.map((lbl, i) => ({
+        label: g5_dhLbl(theme, lbl), icon: perCat ? theme.icons[i] : theme.icon, count: counts[i],
+      })),
     });
     const options = qType === 'most' || qType === 'least'
       ? shuffle(theme.labels)
@@ -13020,19 +13032,42 @@ function g7_coQuadrantOf(x, y) {
   if (x < 0 && y < 0) return 'Quadrant III';
   return 'Quadrant IV';
 }
+// The grid had no numbers on either axis. Reading a point off it meant
+// counting unlabelled squares out from the middle and hoping, which is not the
+// skill and is not what any workbook looks like. It now has a numbered scale
+// on both axes, the letters x and y, and arrowheads, the way a child will see
+// it in a test.
 function g7_coGridSVG(px, py, showDot) {
-  const scale = 22, cx = 150, cy = 150;
-  let lines = '';
+  const scale = 22, cx = 160, cy = 160, lo = 18, hi = 302;
+  let grid = '', ticks = '';
   for (let i = -6; i <= 6; i++) {
-    lines += `<line x1="${cx + i*scale}" y1="10" x2="${cx + i*scale}" y2="290" stroke="#D9EEF3" stroke-width="1"/>`;
-    lines += `<line x1="10" y1="${cy - i*scale}" x2="290" y2="${cy - i*scale}" stroke="#D9EEF3" stroke-width="1"/>`;
+    grid += `<line x1="${cx + i * scale}" y1="${lo}" x2="${cx + i * scale}" y2="${hi}" stroke="#D9EEF3" stroke-width="1"/>`;
+    grid += `<line x1="${lo}" y1="${cy - i * scale}" x2="${hi}" y2="${cy - i * scale}" stroke="#D9EEF3" stroke-width="1"/>`;
+    if (i === 0) continue;
+    // Numbers sit just outside their own axis, which is where a printed grid
+    // puts them: under the x-axis, and to the left of the y-axis.
+    ticks += `<line x1="${cx + i * scale}" y1="${cy - 3}" x2="${cx + i * scale}" y2="${cy + 3}" stroke="#075985" stroke-width="1.5"/>`;
+    ticks += `<text x="${cx + i * scale}" y="${cy + 15}" text-anchor="middle" font-size="10" font-weight="700" fill="#075985">${i}</text>`;
+    ticks += `<line x1="${cx - 3}" y1="${cy - i * scale}" x2="${cx + 3}" y2="${cy - i * scale}" stroke="#075985" stroke-width="1.5"/>`;
+    ticks += `<text x="${cx - 7}" y="${cy - i * scale + 4}" text-anchor="end" font-size="10" font-weight="700" fill="#075985">${i}</text>`;
   }
-  let dot = '';
-  if (showDot) dot = `<circle cx="${cx + px*scale}" cy="${cy - py*scale}" r="7" fill="var(--coral)"/>`;
-  return `<svg width="300" height="300" viewBox="0 0 300 300">
-    ${lines}
-    <line x1="10" y1="${cy}" x2="290" y2="${cy}" stroke="#075985" stroke-width="2"/>
-    <line x1="${cx}" y1="10" x2="${cx}" y2="290" stroke="#075985" stroke-width="2"/>
+  ticks += `<text x="${cx - 7}" y="${cy + 15}" text-anchor="end" font-size="10" font-weight="700" fill="#075985">0</text>`;
+  ticks += `<text x="${hi + 8}" y="${cy + 4}" font-size="13" font-style="italic" font-weight="800" fill="#075985">x</text>`;
+  ticks += `<text x="${cx + 6}" y="${lo - 4}" font-size="13" font-style="italic" font-weight="800" fill="#075985">y</text>`;
+  const arrows = `
+    <polygon points="${hi},${cy} ${hi - 8},${cy - 4} ${hi - 8},${cy + 4}" fill="#075985"/>
+    <polygon points="${lo},${cy} ${lo + 8},${cy - 4} ${lo + 8},${cy + 4}" fill="#075985"/>
+    <polygon points="${cx},${lo} ${cx - 4},${lo + 8} ${cx + 4},${lo + 8}" fill="#075985"/>
+    <polygon points="${cx},${hi} ${cx - 4},${hi - 8} ${cx + 4},${hi - 8}" fill="#075985"/>`;
+  const dot = showDot
+    ? `<circle cx="${cx + px * scale}" cy="${cy - py * scale}" r="7" fill="var(--coral)" stroke="#fff" stroke-width="2"/>`
+    : '';
+  return `<svg width="330" height="330" viewBox="0 0 330 330" style="max-width:100%; height:auto;">
+    ${grid}
+    <line x1="${lo}" y1="${cy}" x2="${hi}" y2="${cy}" stroke="#075985" stroke-width="2"/>
+    <line x1="${cx}" y1="${lo}" x2="${cx}" y2="${hi}" stroke="#075985" stroke-width="2"/>
+    ${arrows}
+    ${ticks}
     ${dot}
   </svg>`;
 }
@@ -13046,7 +13081,9 @@ function g7_newCOQuestion() {
     const options = shuffle(['Quadrant I', 'Quadrant II', 'Quadrant III', 'Quadrant IV', 'On an axis'].filter(o => o !== g7_coState.answer)).slice(0,3).concat(g7_coState.answer);
     document.getElementById('g7co-question').innerHTML = `
       <div style="text-align:center;">${g7_coGridSVG(x, y, true)}</div>
-      <div class="q-box">The point is at (${x}, ${y}). Which quadrant is it in?</div>
+      <!-- The coordinates used to be printed in the question, which made the
+           grid decoration. Read them off it. -->
+      <div class="q-box">Which quadrant is the marked point in?</div>
       <div class="mcq-opts">${shuffle(options).map(o => `<div class="mcq-opt" onclick="g7_checkCOMCQ(this, '${o}')">${o}</div>`).join('')}</div>
       <button class="secondary small" onclick="g7_newCOQuestion()">New point</button>
     `;
@@ -13322,7 +13359,7 @@ function g8_newRAQuestion() {
     const total = (r1 + r2) * mult;
     const askFirst = Math.random() < 0.5;
     answer = askFirst ? r1 * mult : r2 * mult;
-    text = `Share £${total} in the ratio ${r1}:${r2}. How much is the ${askFirst ? 'first' : 'second'} share?`;
+    text = `Share R${total} in the ratio ${r1}:${r2}. How much is the ${askFirst ? 'first' : 'second'} share?`;
     hint = `Add the ratio parts (${r1} + ${r2} = ${r1+r2}), divide the total by that to find the value of one part, then multiply.`;
   } else {
     const unitCost = randInt(2, 9);
@@ -13330,7 +13367,7 @@ function g8_newRAQuestion() {
     const askQty = randInt(2, 12);
     const totalAtBase = unitCost * baseQty;
     answer = unitCost * askQty;
-    text = `${baseQty} items cost £${totalAtBase}. How much would ${askQty} items cost, at the same rate?`;
+    text = `${baseQty} items cost R${totalAtBase}. How much would ${askQty} items cost, at the same rate?`;
     hint = 'Find the cost of one item first, then multiply by how many you need.';
   }
   g8_raState.answer = answer;
@@ -13358,7 +13395,7 @@ function g8_checkRA() {
     setTimeout(g8_newRAQuestion, 1000);
   } else {
     fb.className = 'feedback bad';
-    fb.textContent = `Not quite. The answer was £${g8_raState.answer}. ${g8_raState.hint}`;
+    fb.textContent = `Not quite. The answer was R${g8_raState.answer}. ${g8_raState.hint}`;
   }
   document.getElementById('g8ra-score').innerHTML = scoreHTML(g8_raState);
 }
@@ -13393,7 +13430,7 @@ function g8_newPCQuestion() {
   const items = ['jacket', 'phone', 'bicycle', 'pair of shoes', 'tablet', 'gaming console', 'jersey', 'backpack', 'pair of headphones', 'skateboard'];
   const item = pick(items);
   const verb = isIncrease ? pick(['increased', 'marked up']) : pick(['reduced', 'discounted']);
-  const scenario = `A ${item} costs £${base}. The price is ${verb} by ${pct}%. What is the new price?`;
+  const scenario = `A ${item} costs R${base}. The price is ${verb} by ${pct}%. What is the new price?`;
   g8_pcState.answer = answer;
   document.getElementById('g8pc-question').innerHTML = `
     <div class="q-box">${scenario}</div>
