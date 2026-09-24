@@ -384,7 +384,48 @@
   .tally-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .tally-row input[type=text] { width: 110px; }
   .tally-row .count { font-weight: 800; color: var(--ocean-dark); min-width: 24px; text-align: center; }
-  .bar-chart { display: flex; align-items: flex-end; gap: 18px; height: 180px; margin: 18px 0 6px; border-bottom: 2px solid var(--border); padding: 0 6px; }
+  /* ---- The shared graph ---- */
+  .mchart { margin: 14px 0 8px; }
+  .mchart-title { text-align: center; font-weight: 800; color: var(--navy-dark); font-size: 1rem; margin-bottom: 8px; }
+  .mchart-note { text-align: center; font-size: 0.8rem; color: var(--text-soft); margin: -4px 0 8px; }
+  .mchart-grid { display: grid; justify-content: center; margin: 0 auto; position: relative; }
+  .mchart-y {
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 8px; font-weight: 800; font-size: 0.75rem; color: var(--navy-dark);
+  }
+  /* Right and bottom only, with the top row and first column adding the other
+     two sides. Drawing all four on every cell doubles every interior line. */
+  .mchart-cell { border-right: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center; }
+  .mchart-cell.mchart-top { border-top: 1.5px solid var(--border); }
+  .mchart-cell.mchart-first { border-left: 1.5px solid var(--border); }
+  .mchart-x { text-align: center; font-weight: 700; font-size: 0.76rem; color: var(--navy-dark); padding: 6px 2px 0; line-height: 1.15; }
+  /* One invisible pad over each column, so a child taps the column rather than
+     having to find a particular picture inside it. */
+  .mchart-hit { cursor: pointer; border-radius: 6px; }
+  .mchart-hit:hover { background: rgba(2,132,199,0.10); }
+  .mchart-hit.correct { background: rgba(21,127,60,0.22); box-shadow: inset 0 0 0 2.5px var(--good); }
+  .mchart-hit.wrong { background: rgba(225,29,72,0.18); box-shadow: inset 0 0 0 2.5px var(--bad); }
+
+  /* Scale and gridlines for the one chart that has to stay proportional. */
+  .mchart-axisrow { display: flex; align-items: flex-start; justify-content: center; }
+  .mchart-scale {
+    display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end;
+    font-size: 0.72rem; font-weight: 800; color: var(--navy-dark);
+    padding-right: 7px; border-right: 2px solid var(--border);
+  }
+  /* Zero height, so each number's middle lands exactly on its gridline
+     instead of the label box pushing it off. */
+  .mchart-scale > div { line-height: 0; }
+  .mchart-lines {
+    position: absolute; left: 0; right: 0; top: 0; pointer-events: none;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .mchart-lines > div { border-top: 1px dashed var(--border); opacity: 0.7; }
+  .bar-labels { display: flex; gap: 18px; padding: 6px 6px 0; }
+  .bar-labels > div { width: 76px; text-align: center; font-size: 0.78rem; font-weight: 700; color: var(--navy-dark); }
+
+  .bar-chart { position: relative; display: flex; align-items: flex-end; gap: 18px; height: 180px; margin: 18px 0 6px; border-bottom: 2px solid var(--border); padding: 0 6px; }
   .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; width: 60px; }
   .bar-col .num { font-weight: 800; color: var(--ocean-dark); font-size: 0.85rem; margin-bottom: 4px; }
   .bar-col .bar { width: 40px; border-radius: 8px 8px 0 0; transition: height 0.2s ease; }
@@ -3573,14 +3614,14 @@ function fp_checkSN(el, val) {
 // FOUNDATION - 17. PICTURE GRAPH (vertical picture bar graph)
 // =====================================================================
 const FP_GRAPH_SETS = [
-  { items: [{ icon: '🍎', label: 'Apples', labelAf: 'Appels' }, { icon: '🍌', label: 'Bananas', labelAf: 'Piesangs' }, { icon: '🍇', label: 'Grapes', labelAf: 'Druiwe' }] },
-  { items: [{ icon: '🐶', label: 'Dogs', labelAf: 'Honde' }, { icon: '🐱', label: 'Cats', labelAf: 'Katte' }, { icon: '🐰', label: 'Rabbits', labelAf: 'Hase' }] },
-  { items: [{ icon: '⚽', label: 'Soccer balls', labelAf: 'Sokkerballe' }, { icon: '🏀', label: 'Basketballs', labelAf: 'Netbalballe' }, { icon: '🎾', label: 'Tennis balls', labelAf: 'Tennisballe' }] },
-  { items: [{ icon: '🚗', label: 'Cars', labelAf: 'Motors' }, { icon: '🚌', label: 'Buses', labelAf: 'Busse' }, { icon: '🚲', label: 'Bicycles', labelAf: 'Fietse' }] },
-  { items: [{ icon: '🦋', label: 'Butterflies', labelAf: 'Skoenlappers' }, { icon: '🐝', label: 'Bees', labelAf: 'Bye' }, { icon: '🐞', label: 'Ladybirds', labelAf: 'Liewenheersbeestjies' }] },
-  { items: [{ icon: '🍦', label: 'Ice creams', labelAf: 'Roomyse' }, { icon: '🧁', label: 'Muffins', labelAf: 'Muffins' }, { icon: '🍩', label: 'Doughnuts', labelAf: 'Doughnuts' }] },
-  { items: [{ icon: '✏️', label: 'Pencils', labelAf: 'Potlode' }, { icon: '📚', label: 'Books', labelAf: 'Boeke' }, { icon: '🎒', label: 'School bags', labelAf: 'Skooltasse' }] },
-  { items: [{ icon: '🐄', label: 'Cows', labelAf: 'Koeie' }, { icon: '🐑', label: 'Sheep', labelAf: 'Skape' }, { icon: '🐓', label: 'Chickens', labelAf: 'Hoenders' }] },
+  { title: 'Fruit in the bowl', titleAf: 'Vrugte in die bak', items: [{ icon: '🍎', label: 'Apples', labelAf: 'Appels' }, { icon: '🍌', label: 'Bananas', labelAf: 'Piesangs' }, { icon: '🍇', label: 'Grapes', labelAf: 'Druiwe' }] },
+  { title: 'Pets in our street', titleAf: 'Troeteldiere in ons straat', items: [{ icon: '🐶', label: 'Dogs', labelAf: 'Honde' }, { icon: '🐱', label: 'Cats', labelAf: 'Katte' }, { icon: '🐰', label: 'Rabbits', labelAf: 'Hase' }] },
+  { title: 'Balls in the sports cupboard', titleAf: 'Balle in die sportkas', items: [{ icon: '⚽', label: 'Soccer balls', labelAf: 'Sokkerballe' }, { icon: '🏀', label: 'Basketballs', labelAf: 'Netbalballe' }, { icon: '🎾', label: 'Tennis balls', labelAf: 'Tennisballe' }] },
+  { title: 'Traffic past the school gate', titleAf: 'Verkeer verby die skoolhek', items: [{ icon: '🚗', label: 'Cars', labelAf: 'Motors' }, { icon: '🚌', label: 'Buses', labelAf: 'Busse' }, { icon: '🚲', label: 'Bicycles', labelAf: 'Fietse' }] },
+  { title: 'Minibeasts in the garden', titleAf: 'Goggas in die tuin', items: [{ icon: '🦋', label: 'Butterflies', labelAf: 'Skoenlappers' }, { icon: '🐝', label: 'Bees', labelAf: 'Bye' }, { icon: '🐞', label: 'Ladybirds', labelAf: 'Liewenheersbeestjies' }] },
+  { title: 'Treats at the school shop', titleAf: 'Lekkernye by die skoolwinkel', items: [{ icon: '🍦', label: 'Ice creams', labelAf: 'Roomyse' }, { icon: '🧁', label: 'Muffins', labelAf: 'Muffins' }, { icon: '🍩', label: 'Doughnuts', labelAf: 'Doughnuts' }] },
+  { title: 'What is in our school bags', titleAf: 'Wat in ons skooltasse is', items: [{ icon: '✏️', label: 'Pencils', labelAf: 'Potlode' }, { icon: '📚', label: 'Books', labelAf: 'Boeke' }, { icon: '🎒', label: 'School bags', labelAf: 'Skooltasse' }] },
+  { title: 'Animals on the farm', titleAf: 'Diere op die plaas', items: [{ icon: '🐄', label: 'Cows', labelAf: 'Koeie' }, { icon: '🐑', label: 'Sheep', labelAf: 'Skape' }, { icon: '🐓', label: 'Chickens', labelAf: 'Hoenders' }] },
 ];
 let fp_pgState = { correct: 0, attempted: 0, items: [], counts: [], answer: null };
 function fp_renderPicGraph() {
@@ -3632,16 +3673,13 @@ function fp_newPGQuestion() {
   }
   fp_pgState.answer = answer;
   const labelFor = (lbl) => tr(lbl, (set.items.find(it => it.label === lbl) || {}).labelAf || lbl);
-  const columns = set.items.map((it, i) => `
-    <div style="display:inline-block; text-align:center; vertical-align:bottom; margin:0 12px 8px;">
-      <div style="display:flex; flex-direction:column-reverse; align-items:center; gap:2px;">
-        ${Array(counts[i]).fill(`<div style="font-size:1.6rem; line-height:1;">${it.icon}</div>`).join('')}
-      </div>
-      <div style="font-size:0.8rem; color:var(--text-soft); margin-top:4px; border-top:2px solid var(--border); padding-top:4px;">${tr(it.label, it.labelAf)}</div>
-    </div>
-  `).join('');
+  const chart = mathitChartHTML({
+    title: tr(set.title, set.titleAf),
+    kind: 'picto',
+    cats: set.items.map((it, i) => ({ label: tr(it.label, it.labelAf), icon: it.icon, count: counts[i] })),
+  });
   document.getElementById('fppg-question').innerHTML = `
-    <div class="q-box" style="text-align:center;">${columns}</div>
+    <div class="q-box" style="text-align:center;">${chart}</div>
     <div class="q-box">${text}</div>
     <div class="mcq-opts">${options.map(o => `<div class="mcq-opt" onclick="fp_checkPG(this, '${o}')">${(askType === 'most' || askType === 'least') ? labelFor(o) : o}</div>`).join('')}</div>
   `;
@@ -4293,6 +4331,122 @@ function g1BlocksHTML(n, icon) {
   let html = '<div class="dot-row" style="max-width:400px;">';
   for (let i = 0; i < n; i++) html += `<span class="dot-item">${icon}</span>`;
   return html + '</div>';
+}
+
+// Surveys a child in this country could actually have run, for the grades that
+// used to graph four random emoji with no title and no question behind them.
+// A graph is a picture of something somebody counted, and it is much easier to
+// read one when you know what was counted.
+const MATHIT_SURVEYS = [
+  { title: 'Favourite fruit', titleAf: 'Gunsteling vrugte', cats: [
+    { label: 'Oranges', labelAf: 'Lemoene', icon: '🍊' }, { label: 'Grapes', labelAf: 'Druiwe', icon: '🍇' },
+    { label: 'Bananas', labelAf: 'Piesangs', icon: '🍌' }, { label: 'Apples', labelAf: 'Appels', icon: '🍎' }] },
+  { title: 'Pets at home', titleAf: 'Troeteldiere by die huis', cats: [
+    { label: 'Dogs', labelAf: 'Honde', icon: '🐶' }, { label: 'Cats', labelAf: 'Katte', icon: '🐱' },
+    { label: 'Fish', labelAf: 'Visse', icon: '🐟' }, { label: 'Birds', labelAf: 'Voëls', icon: '🐦' }] },
+  { title: 'How we get to school', titleAf: 'Hoe ons skool toe kom', cats: [
+    { label: 'Walk', labelAf: 'Stap', icon: '🚶' }, { label: 'Car', labelAf: 'Motor', icon: '🚗' },
+    { label: 'Taxi', labelAf: 'Taxi', icon: '🚕' }, { label: 'Bus', labelAf: 'Bus', icon: '🚌' }] },
+  { title: 'Favourite break time game', titleAf: 'Gunsteling pouse-speletjie', cats: [
+    { label: 'Soccer', labelAf: 'Sokker', icon: '⚽' }, { label: 'Netball', labelAf: 'Netbal', icon: '🏐' },
+    { label: 'Skipping', labelAf: 'Touspring', icon: '🪢' }, { label: 'Marbles', labelAf: 'Albasters', icon: '🔵' }] },
+  { title: 'Weather this month', titleAf: 'Weer hierdie maand', cats: [
+    { label: 'Sunny', labelAf: 'Sonnig', icon: '☀️' }, { label: 'Cloudy', labelAf: 'Bewolk', icon: '☁️' },
+    { label: 'Rainy', labelAf: 'Reënerig', icon: '🌧️' }, { label: 'Windy', labelAf: 'Winderig', icon: '🌬️' }] },
+  { title: 'Snacks in our lunchboxes', titleAf: 'Peuselhappies in ons kosblikke', cats: [
+    { label: 'Fruit', labelAf: 'Vrugte', icon: '🍏' }, { label: 'Sandwich', labelAf: 'Toebroodjie', icon: '🥪' },
+    { label: 'Yoghurt', labelAf: 'Jogurt', icon: '🥛' }, { label: 'Muffin', labelAf: 'Muffin', icon: '🧁' }] },
+  { title: 'Animals we saw on the farm', titleAf: 'Diere wat ons op die plaas gesien het', cats: [
+    { label: 'Cows', labelAf: 'Koeie', icon: '🐄' }, { label: 'Sheep', labelAf: 'Skape', icon: '🐑' },
+    { label: 'Chickens', labelAf: 'Hoenders', icon: '🐓' }, { label: 'Goats', labelAf: 'Bokke', icon: '🐐' }] },
+  { title: 'Favourite colour', titleAf: 'Gunsteling kleur', cats: [
+    { label: 'Red', labelAf: 'Rooi', icon: '🔴' }, { label: 'Blue', labelAf: 'Blou', icon: '🔵' },
+    { label: 'Green', labelAf: 'Groen', icon: '🟢' }, { label: 'Yellow', labelAf: 'Geel', icon: '🟡' }] },
+];
+
+// ---- The one graph every activity draws ----
+// Every data handling activity used to draw its own chart, and they disagreed
+// with each other and with what a child meets in a workbook. Some were rows of
+// icons running left to right, some had no scale at all, most had no title.
+// This is the single shape they all use now: a title, a numbered scale up the
+// left starting at the bottom, and the pictures or bars stacked up from the
+// bottom, which is the layout in the CAPS material.
+//
+//   cats:  [{ label, icon, count, colour }]
+//   step:  what one row is worth. 1 for a one to one graph; the key for a
+//          many to one pictograph, so Grade 5 reads 5, 10, 15 up the side.
+//   kind:  'picto' draws the icon in each filled cell, 'bar' fills it in.
+//   pick:  a function name; when given, each column is tappable and is passed
+//          its own label, which is how the "which row has the most" questions
+//          are answered.
+function mathitChartHTML(o) {
+  const cats = o.cats || [];
+  const step = o.step || 1;
+  if (!cats.length) return '';
+  const top = Math.max(...cats.map(c => c.count), step);
+  const rows = Math.max(3, Math.ceil(top / step));
+  // Enough height to be countable, capped so a tall graph still fits a tablet.
+  const rowH = Math.max(15, Math.min(32, Math.floor(330 / rows)));
+  const colW = Math.max(38, Math.min(70, Math.floor(420 / cats.length)));
+  // Label every row while they are far enough apart to read, otherwise every
+  // other one, which is what keeps a scale to 20 legible.
+  const every = rowH >= 22 ? 1 : 2;
+  // Every cell names its own row and column. It matters: the tappable pads
+  // below are placed explicitly, and CSS grid makes auto-placed items step
+  // around anything explicitly placed, so with auto-placed cells the pads
+  // shoved the whole chart down into a second set of rows.
+  const cells = [];
+  for (let r = rows; r >= 1; r--) {
+    const gridRow = rows - r + 1;
+    const show = (r % every === 0) || r === 1 || r === rows;
+    cells.push(`<div class="mchart-y" style="grid-column:1; grid-row:${gridRow};">${show ? r * step : ''}</div>`);
+    cats.forEach((c, i) => {
+      const filled = c.count >= r * step;
+      const cls = ['mchart-cell'];
+      if (r === rows) cls.push('mchart-top');
+      if (i === 0) cls.push('mchart-first');
+      const bg = filled && o.kind === 'bar' ? `background:var(--${c.colour || 'ocean'});` : '';
+      const ico = filled && o.kind !== 'bar'
+        ? `<span style="font-size:${Math.round(rowH * 0.72)}px; line-height:1;">${c.icon || '⬛'}</span>` : '';
+      cells.push(`<div class="${cls.join(' ')}" style="grid-column:${i + 2}; grid-row:${gridRow}; ${bg}">${ico}</div>`);
+    });
+  }
+  cats.forEach((c, i) => cells.push(`<div class="mchart-x" style="grid-column:${i + 2}; grid-row:${rows + 1};">${esc(c.label)}</div>`));
+  const tap = o.pick
+    ? cats.map((c, i) => `<div class="mchart-hit" style="grid-column:${i + 2}; grid-row:1 / ${rows + 1};" onclick="${o.pick}(this, ${JSON.stringify(c.label).replace(/"/g, '&quot;')})"></div>`).join('')
+    : '';
+  return `
+    <div class="mchart">
+      ${o.title ? `<div class="mchart-title">${esc(o.title)}</div>` : ''}
+      ${o.note ? `<div class="mchart-note">${esc(o.note)}</div>` : ''}
+      <div class="mchart-grid" style="grid-template-columns:auto repeat(${cats.length}, ${colW}px); grid-template-rows:repeat(${rows}, ${rowH}px) auto;">
+        ${cells.join('')}${tap}
+      </div>
+    </div>`;
+}
+
+// A double bar graph cannot be a stack of pictures, and its values run into
+// the hundreds, so it keeps proportional bars. What it was missing is the
+// scale up the left, which is this: round tick values from 0 upwards, and a
+// faint line across the plot at each one so a bar can be read against them.
+function mathitScale(max) {
+  const raw = Math.max(1, max) / 5;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  // Whole numbers only. 2.5 makes a mathematically tidy scale and a silly one
+  // to read: nobody labels a rainfall chart 2.5, 5, 7.5, 10.
+  const step = [1, 2, 5, 10].map(m => m * mag).find(s => s >= raw) || mag * 10;
+  const top = Math.ceil(Math.max(1, max) / step) * step;
+  const ticks = [];
+  for (let v = top; v >= -1e-9; v -= step) ticks.push(Math.round(v * 100) / 100);
+  return { top, ticks };
+}
+function mathitScaleHTML(max, heightPx) {
+  const s = mathitScale(max);
+  return {
+    top: s.top,
+    axis: `<div class="mchart-scale" style="height:${heightPx}px;">${s.ticks.map(v => `<div>${v}</div>`).join('')}</div>`,
+    lines: `<div class="mchart-lines" style="height:${heightPx}px;">${s.ticks.map(() => '<div></div>').join('')}</div>`,
+  };
 }
 
 // ---- Patterns ----
@@ -5928,44 +6082,47 @@ function ce_newDTQuestion() {
       </div>
     `;
   } else if (mode === 'graph') {
-    const icons = shuffle(PATTERN_ICONS).slice(0, 4);
+    const survey = pick(MATHIT_SURVEYS);
     let counts;
-    do { counts = icons.map(() => randInt(1, ceDtState.countMax)); } while (new Set(counts).size < counts.length);
+    do { counts = survey.cats.map(() => randInt(1, ceDtState.countMax)); } while (new Set(counts).size < counts.length);
     const askMost = Math.random() < 0.5;
     const target = askMost ? Math.max(...counts) : Math.min(...counts);
-    ceDtState.answer = icons[counts.indexOf(target)];
-    const rows = icons.map((icon, i) => `<div class="g1-graph-row" onclick="ce_checkDT(this, '${icon}')">${g1BlocksHTML(counts[i], icon)}</div>`).join('');
+    const cats = survey.cats.map((c, i) => ({ label: tr(c.label, c.labelAf), icon: c.icon, count: counts[i] }));
+    ceDtState.answer = cats[counts.indexOf(target)].label;
     qEl.innerHTML = `
-      <div class="q-box">${tr(`Tap the row with the ${askMost ? 'MOST' : 'FEWEST'}.`, `Tik op die ry met die ${askMost ? 'MEESTE' : 'MINSTE'}.`)}</div>
-      <div style="display:flex; flex-direction:column; gap:10px; margin-top:14px;">${rows}</div>
+      <div class="q-box">${tr(`Tap the column with the ${askMost ? 'MOST' : 'FEWEST'}.`, `Tik op die kolom met die ${askMost ? 'MEESTE' : 'MINSTE'}.`)}</div>
+      ${mathitChartHTML({ title: tr(survey.title, survey.titleAf), kind: 'picto', cats, pick: 'ce_checkDT' })}
     `;
   } else { // bars
-    const icons = shuffle(PATTERN_ICONS).slice(0, 4);
+    const survey = pick(MATHIT_SURVEYS);
     let counts;
-    do { counts = icons.map(() => randInt(1, ceDtState.countMax)); } while (new Set(counts).size < counts.length);
-    const rows = icons.map((icon, i) => `<div class="g1-graph-row" style="cursor:default;">${g1BlocksHTML(counts[i], icon)} <b>(${counts[i]})</b></div>`).join('');
+    do { counts = survey.cats.map(() => randInt(1, ceDtState.countMax)); } while (new Set(counts).size < counts.length);
+    const names = survey.cats.map(c => tr(c.label, c.labelAf));
     const qKind = pick(['total', 'diff', 'most', 'least']);
     let text, answer;
     if (qKind === 'total') {
       const [i1, i2] = shuffle([0, 1, 2, 3]).slice(0, 2);
       answer = counts[i1] + counts[i2];
-      text = tr(`How many ${icons[i1]} and ${icons[i2]} are there altogether?`, `Hoeveel ${icons[i1]} en ${icons[i2]} is daar altesaam?`);
+      text = tr(`How many chose ${names[i1]} and ${names[i2]} altogether?`, `Hoeveel het ${names[i1]} en ${names[i2]} altesaam gekies?`);
     } else if (qKind === 'diff') {
       let [i1, i2] = shuffle([0, 1, 2, 3]).slice(0, 2);
       if (counts[i1] < counts[i2]) { const tmp = i1; i1 = i2; i2 = tmp; }
       answer = counts[i1] - counts[i2];
-      text = tr(`How many more ${icons[i1]} are there than ${icons[i2]}?`, `Hoeveel meer ${icons[i1]} as ${icons[i2]} is daar?`);
+      text = tr(`How many more chose ${names[i1]} than ${names[i2]}?`, `Hoeveel meer het ${names[i1]} as ${names[i2]} gekies?`);
     } else if (qKind === 'most') {
       answer = Math.max(...counts);
-      text = tr('How many are in the row with the MOST?', 'Hoeveel is in die ry met die MEESTE?');
+      text = tr('How many are in the tallest column?', 'Hoeveel is in die hoogste kolom?');
     } else {
       answer = Math.min(...counts);
-      text = tr('How many are in the row with the FEWEST?', 'Hoeveel is in die ry met die MINSTE?');
+      text = tr('How many are in the shortest column?', 'Hoeveel is in die kortste kolom?');
     }
     ceDtState.answer = answer;
     const options = g1MCQOptions(answer, 0, ceDtState.countMax * 2 + 2, 4);
     qEl.innerHTML = `
-      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:10px;">${rows}</div>
+      ${mathitChartHTML({
+        title: tr(survey.title, survey.titleAf), kind: 'bar',
+        cats: survey.cats.map((c, i) => ({ label: names[i], icon: c.icon, count: counts[i], colour: BEACH[i % BEACH.length] })),
+      })}
       <div class="q-box">${text}</div>
       <div class="mcq-opts">${options.map(o => `<div class="mcq-opt big" onclick="ce_checkDT(this, ${o})">${o}</div>`).join('')}</div>
     `;
@@ -5973,7 +6130,7 @@ function ce_newDTQuestion() {
 }
 function ce_checkDT(el, val) {
   ceDtState.attempted++;
-  const opts = document.querySelectorAll('#cedt-question .mcq-opt, #cedt-question .g1-graph-row');
+  const opts = document.querySelectorAll('#cedt-question .mcq-opt, #cedt-question .g1-graph-row, #cedt-question .mchart-hit');
   const fb = document.getElementById('cedt-feedback');
   opts.forEach(o => { o.onclick = null; });
   const correct = val == ceDtState.answer;
@@ -8134,28 +8291,16 @@ function g4_newDBQuestion() {
   g4_dbState.qType = qType;
   const themeTitle = tr(theme.title, theme.titleAf);
   let vizHTML;
+  const g4cats = theme.labels.map((lbl, i) => ({
+    label: g4_dhLbl(theme, lbl), icon: theme.icon, count: counts[i], colour: BEACH[i % BEACH.length],
+  }));
   if (g4_dbState.mode === 'picto') {
-    vizHTML = `
-      <p style="font-weight:700; color:var(--ocean-dark); margin-bottom:6px;">${themeTitle} ${tr(`(each ${theme.icon} = 1 ${theme.unit})`, `(elke ${theme.icon} = 1 leerder)`)}</p>
-      ${theme.labels.map((lbl, i) => `
-        <div style="display:flex; align-items:center; gap:10px; margin:4px 0;">
-          <div style="width:100px; font-weight:700; color:var(--ocean-dark);">${g4_dhLbl(theme, lbl)}</div>
-          <div style="letter-spacing:2px;">${Array(counts[i]).fill(theme.icon).join(' ')}</div>
-        </div>
-      `).join('')}
-    `;
+    vizHTML = mathitChartHTML({
+      title: themeTitle, kind: 'picto', cats: g4cats,
+      note: tr(`Each ${theme.icon} stands for 1 ${theme.unit}`, `Elke ${theme.icon} staan vir 1 leerder`),
+    });
   } else {
-    const max = Math.max(5, ...counts) + 1;
-    vizHTML = `
-      <p style="font-weight:700; color:var(--ocean-dark); margin-bottom:6px;">${themeTitle}</p>
-      <div class="bar-chart">
-        ${theme.labels.map((lbl, i) => {
-          const h = Math.round((counts[i] / max) * 150);
-          const c = BEACH[i % BEACH.length];
-          return `<div class="bar-col"><div class="num">${counts[i]}</div><div class="bar" style="height:${h}px; background: var(--${c});"></div><div class="lbl">${g4_dhLbl(theme, lbl)}</div></div>`;
-        }).join('')}
-      </div>
-    `;
+    vizHTML = mathitChartHTML({ title: themeTitle, kind: 'bar', cats: g4cats });
   }
   const options = qType === 'most' || qType === 'least'
     ? shuffle(theme.labels)
@@ -8984,16 +9129,15 @@ function g5_newDHQuestion() {
       answer = String(counts.reduce((s, c) => s + c, 0));
     }
     g5_dhState.answer = answer;
-    const vizHTML = `
-      <p style="font-weight:700; color:var(--ocean-dark); margin-bottom:2px;">${tr(theme.title, theme.titleAf)}</p>
-      <p style="font-size:0.85rem; color:var(--text-soft); margin-top:0; margin-bottom:8px;">${tr(`Key: each ${theme.icon} = ${key} ${theme.unit}s`, `Sleutel: elke ${theme.icon} = ${key} ${theme.unitAf}s`)}</p>
-      ${theme.labels.map((lbl, i) => `
-        <div style="display:flex; align-items:center; gap:10px; margin:4px 0;">
-          <div style="width:130px; font-weight:700; color:var(--ocean-dark);">${g5_dhLbl(theme, lbl)}</div>
-          <div style="letter-spacing:2px;">${Array(counts[i] / key).fill(theme.icon).join(' ')}</div>
-        </div>
-      `).join('')}
-    `;
+    // step is the key, so the scale up the side counts in 5s or 2s rather than
+    // in pictures. Reading that scale is the whole point of a many-to-one
+    // pictograph, and it was not on the screen at all before.
+    const vizHTML = mathitChartHTML({
+      title: tr(theme.title, theme.titleAf),
+      note: tr(`Key: each ${theme.icon} = ${key} ${theme.unit}s`, `Sleutel: elke ${theme.icon} = ${key} ${theme.unitAf}s`),
+      kind: 'picto', step: key,
+      cats: theme.labels.map((lbl, i) => ({ label: g5_dhLbl(theme, lbl), icon: theme.icon, count: counts[i] })),
+    });
     const options = qType === 'most' || qType === 'least'
       ? shuffle(theme.labels)
       : shuffle([...new Set([answer, String(Number(answer) + key), String(Math.max(0, Number(answer) - key)), String(Number(answer) + 2 * key)])]).slice(0, 4);
@@ -9803,7 +9947,7 @@ function g6_renderDataBars() {
       <p class="subtext">${tr('Rename the categories if you like, for example for a different survey, then click plus 1 each time someone picks that answer. The bar chart builds itself live.', 'Hernoem die kategorieë as jy wil, byvoorbeeld vir \'n ander opname, en klik dan plus 1 elke keer as iemand daardie antwoord kies. Die staafgrafiek bou homself regstreeks.')}</p>
       ${tutorHTML('g6_databars')}
       <div id="db-rows"></div>
-      <div class="bar-chart" id="db-chart"></div>
+      <div id="db-chart"></div>
       <button class="secondary" onclick="g6_resetDB()">${tr('Reset all counts', 'Stel alle tellings terug')}</button>
     </div>
   `;
@@ -9828,16 +9972,13 @@ function g6_bumpDB(i, delta) {
 }
 function g6_resetDB() { g6_dbState.counts = g6_dbState.counts.map(() => 0); g6_renderDBRows(); g6_renderDBChart(); }
 function g6_renderDBChart() {
-  const max = Math.max(5, ...g6_dbState.counts) + 1;
-  document.getElementById('db-chart').innerHTML = g6_dbState.labels.map((lbl, i) => {
-    const h = Math.round((g6_dbState.counts[i] / max) * 150);
-    const c = BEACH[i % BEACH.length];
-    return `<div class="bar-col">
-      <div class="num">${g6_dbState.counts[i]}</div>
-      <div class="bar" style="height:${h}px; background: var(--${c});"></div>
-      <div class="lbl">${esc(lbl)}</div>
-    </div>`;
-  }).join('');
+  document.getElementById('db-chart').innerHTML = mathitChartHTML({
+    title: tr('Our survey', 'Ons opname'),
+    kind: 'bar',
+    cats: g6_dbState.labels.map((lbl, i) => ({
+      label: lbl, count: g6_dbState.counts[i], colour: BEACH[i % BEACH.length],
+    })),
+  });
 }
 
 // =====================================================================
@@ -9914,24 +10055,31 @@ function g6_newSTQuestion() {
     }
     g6_stState.answer = String(answer);
     g6_stState.qType = qType;
+    const sc = mathitScaleHTML(Math.max(...countsA, ...countsB), 150);
     const chart = `
-      <p style="font-weight:700; color:var(--ocean-dark); margin-bottom:2px;">${tr(theme.title, theme.titleAf)}</p>
-      <div style="display:flex; gap:16px; font-size:0.82rem; margin-bottom:6px;">
+      <div class="mchart-title">${esc(tr(theme.title, theme.titleAf))}</div>
+      <div style="display:flex; gap:16px; font-size:0.82rem; margin-bottom:6px; justify-content:center;">
         <span><span style="display:inline-block; width:12px; height:12px; background:var(--ocean); border-radius:3px; margin-right:4px;"></span>${tr(theme.seriesA, theme.seriesAAf)}</span>
         <span><span style="display:inline-block; width:12px; height:12px; background:var(--coral); border-radius:3px; margin-right:4px;"></span>${tr(theme.seriesB, theme.seriesBAf)}</span>
       </div>
-      <div class="bar-chart">
-        ${theme.labels.map((lbl, i) => {
-          const hA = Math.round((countsA[i] / max) * 150);
-          const hB = Math.round((countsB[i] / max) * 150);
-          return `<div class="bar-col" style="width:76px;">
-            <div style="display:flex; align-items:flex-end; gap:4px; height:100%;">
-              <div style="display:flex; flex-direction:column; align-items:center;"><div class="num">${countsA[i]}</div><div class="bar" style="width:26px; height:${hA}px; background:var(--ocean);"></div></div>
-              <div style="display:flex; flex-direction:column; align-items:center;"><div class="num">${countsB[i]}</div><div class="bar" style="width:26px; height:${hB}px; background:var(--coral);"></div></div>
-            </div>
-            <div class="lbl">${g6_dblLbl(theme, lbl)}</div>
-          </div>`;
-        }).join('')}
+      <div class="mchart-axisrow">
+        ${sc.axis}
+        <div>
+          <!-- margin-top:0 matters: the shared .bar-chart rule has 18px of it,
+               which pushed the plot down while the scale beside it stayed put,
+               so every gridline sat 18px below its own number. -->
+          <div class="bar-chart" style="height:150px; margin:0;">
+            ${sc.lines}
+            ${theme.labels.map((lbl, i) => `
+              <div class="bar-col" style="width:76px; flex-direction:row; align-items:flex-end; gap:5px;">
+                <div class="bar" style="width:26px; height:${Math.round((countsA[i] / sc.top) * 150)}px; background:var(--ocean);"></div>
+                <div class="bar" style="width:26px; height:${Math.round((countsB[i] / sc.top) * 150)}px; background:var(--coral);"></div>
+              </div>`).join('')}
+          </div>
+          <div class="bar-labels">
+            ${theme.labels.map(lbl => `<div>${g6_dblLbl(theme, lbl)}</div>`).join('')}
+          </div>
+        </div>
       </div>
     `;
     const isLabelAnswer = qType === 'mostcat';
