@@ -72,6 +72,12 @@
     font-family: 'Teachers Pet', 'Patrick Hand', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: var(--grey-bg);
     color: var(--text);
+    /* Tapping a tangram piece twice to turn it twice is, to Safari, a double
+       tap, and it was zooming the page. Worse, the board suppresses touch
+       gestures, so the second double tap that would have zoomed back out never
+       reached the browser and a child was stuck zoomed in. manipulation turns
+       off double tap zoom and leaves pinch and scroll alone. */
+    touch-action: manipulation;
   }
   body::before {
     content: '';
@@ -83,8 +89,11 @@
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
-    opacity: 0.14;
-    filter: saturate(1.3);
+    /* Was 0.14, which left the pencils as a barely visible wash. The page on
+       top of this is cream cards on a cream background, so the pattern can
+       carry a good deal more without competing with anything a child reads. */
+    opacity: 0.38;
+    filter: saturate(1.15);
   }
   h1, h2, h3, .tile h3, button { font-family: 'Teachers Pet', 'Patrick Hand', -apple-system, BlinkMacSystemFont, sans-serif; }
   header {
@@ -184,8 +193,10 @@
   .tile h3 { margin: 0 0 4px; font-size: 1.0rem; color: var(--navy-dark); font-weight: 700; }
   .tile p { margin: 0; font-size: 0.82rem; color: var(--text-soft); }
   .tile .badge { display: inline-block; font-size: 0.68rem; font-weight: 700; color: var(--coral-dark); background: var(--coral-light); border-radius: 8px; padding: 2px 7px; margin-top: 6px; }
+  /* Navy, not coral. Coral on the cream page was too pale to read, and this is
+     the one control a child needs to be able to find on every screen. */
   .backbtn {
-    background: none; border: none; color: var(--coral-dark); font-weight: 700;
+    background: none; border: none; color: var(--navy-dark); font-weight: 800;
     cursor: pointer; font-size: 0.92rem; padding: 4px 0; margin-bottom: 10px;
     display: inline-flex; align-items: center; gap: 4px;
   }
@@ -15784,7 +15795,7 @@ function tg_render(puzzleKey, mode) {
     tx: 0, ty: 0, rot: 0, flip: false, placed: false,
   }));
   tg_packTray(pieces);
-  tgState = { puzzleKey, mode, pieces, selectedId: null, placedCount: 0, _handlersBound: false };
+  tgState = { puzzleKey, mode, pieces, selectedId: null, placedCount: 0, filled: {}, _handlersBound: false };
   app.innerHTML = `
     ${backBtn()}
     <div class="card">
@@ -15834,7 +15845,7 @@ function tg_draw() {
     }
   } else {
     Object.keys(puzzle.targets).forEach(id => {
-      if (tgState.pieces.find(p => p.id === id).placed) return;
+      if (tgState.filled[id]) return;
       const pts = tg_targetWorldPoints(tgState.puzzleKey, id).map(pt => pt.join(',')).join(' ');
       html += `<polygon points="${pts}" fill="none" stroke="var(--border)" stroke-width="0.12" stroke-dasharray="0.4,0.3"></polygon>`;
     });
@@ -15935,16 +15946,59 @@ function tg_bindHandlers(svg) {
   svg.addEventListener('pointerup', endDrag);
   svg.addEventListener('pointercancel', endDrag);
   svg.addEventListener('lostpointercapture', endDrag);
+  // Belt and braces for the same zoom problem. Safari has a long history of
+  // ignoring touch-action on SVG elements specifically, and preventing the
+  // default on touchend is what actually stops it zooming. Nothing in here
+  // listens for click, so suppressing the synthesised one costs nothing.
+  svg.addEventListener('touchend', (evt) => { if (evt.cancelable) evt.preventDefault(); }, { passive: false });
 }
+// How close counts as close enough, in SVG units, worked back from a real
+// distance on the glass. The old value was a flat 0.7 units, which on a
+// landscape iPad is about fourteen pixels: far too fine for a child placing a
+// shape with a finger, and the commonest reason a piece "would not go in".
+function tg_lockTolerance() {
+  const svg = document.getElementById('tg-svg');
+  try {
+    const m = svg.getScreenCTM();
+    const a = svg.createSVGPoint(), c = svg.createSVGPoint();
+    a.x = 0; a.y = 0; c.x = 1; c.y = 0;
+    const px = c.matrixTransform(m).x - a.matrixTransform(m).x;
+    return px > 0.01 ? 34 / px : 1.6;
+  } catch (e) { return 1.6; }
+}
+/**
+ * Drops the piece into any slot it fits, not only into "its own" slot.
+ *
+ * A tangram set has two identical large triangles and two identical small
+ * ones. Before this, each piece would only lock into the one target it was
+ * assigned, so a child who laid a large triangle on a large triangle outline
+ * got nothing at all, which looks exactly like the app being broken. Real
+ * tangram pieces are interchangeable when they are the same shape, and now
+ * these are too.
+ */
 function tg_tryLock(piece) {
-  const target = TANGRAM_PUZZLES[tgState.puzzleKey].targets[piece.id];
+  const puzzle = TANGRAM_PUZZLES[tgState.puzzleKey];
   const curr = tg_transform(piece.local, piece.rot, piece.flip, piece.tx, piece.ty);
-  const targetPts = tg_transform(piece.local, target.rot, target.flip, target.tx, target.ty);
-  if (tg_pointsMatch(curr, targetPts, 0.7)) {
-    piece.tx = target.tx; piece.ty = target.ty; piece.rot = target.rot; piece.flip = target.flip;
+  const tol = tg_lockTolerance();
+  const mid = a => [a.reduce((s, q) => s + q[0], 0) / a.length, a.reduce((s, q) => s + q[1], 0) / a.length];
+  for (const id of Object.keys(puzzle.targets)) {
+    if (tgState.filled[id]) continue;
+    const slotPiece = TANGRAM_PIECES.find(p => p.id === id);
+    const t = puzzle.targets[id];
+    const slot = tg_transform(slotPiece.local, t.rot, t.flip, t.tx, t.ty);
+    if (slot.length !== curr.length) continue;
+    if (!tg_pointsMatch(curr, slot, tol)) continue;
+    // The match was within a tolerance, so nudge it the rest of the way. The
+    // two outlines are congruent and identically turned by this point, so
+    // lining up their centres lines up every corner.
+    const c = mid(curr), s = mid(slot);
+    piece.tx += s[0] - c[0];
+    piece.ty += s[1] - c[1];
     piece.placed = true;
-    tgState.placedCount++;
+    tgState.filled[id] = piece.id;
+    tgState.placedCount = Object.keys(tgState.filled).length;
     if (tgState.selectedId === piece.id) tgState.selectedId = null;
+    break;
   }
   tg_draw();
 }
