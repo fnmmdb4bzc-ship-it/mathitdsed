@@ -1,4 +1,4 @@
-# MathIT is a test 
+# MathIT
 
 A CAPS-aligned maths practice web app for Foundation Phase through Grade 6 (plus UK
 National Curriculum Key Stage 3, Years 7–8), built for Debby Smit Educational Therapy.
@@ -6,13 +6,21 @@ National Curriculum Key Stage 3, Years 7–8), built for Debby Smit Educational 
 Fully bilingual (English / Afrikaans, chosen per student profile) for Foundation Phase
 through Grade 6 and the Manipulatives tab. Levels 7–8 are English-only.
 
-Two deployments, running different things:
+One deployment:
 
-- **https://mathitdset.netlify.app/** — the original, sign-in-free app: `MathIT.html`
-  served on its own, no accounts and no API. It is on a separate Netlify account.
-- **https://mathit-identity.netlify.app/** — this branch: the same app plus student
-  accounts, backed by Netlify Identity and Netlify Database. See
+- **https://mathitdset.netlify.app/** (also reachable at
+  **https://mathit.debbysmit.co.za/**) — `MathIT.html` plus student accounts,
+  backed by Netlify Identity and Netlify Database. See
   [Running it on Netlify](#running-it-on-netlify).
+
+*(This README used to describe a second, sign-in-free deployment at
+`mathit-identity.netlify.app` on a separate Netlify account, with
+`mathitdset.netlify.app` as the standalone, no-accounts version. That's no
+longer accurate: `mathit-identity.netlify.app` now returns a 404, and
+`mathitdset.netlify.app` itself requires sign-in, matching this repo's
+`netlify.toml`/`scripts/build-site.mjs` — checked live on 2026-09-30. If a
+sign-in-free deployment still exists somewhere else, this README doesn't know
+about it.)*
 
 ## What's in this repo
 
@@ -47,9 +55,10 @@ Two deployments, running different things:
   `migrate.mjs` (`npm run migrate`) applies the same migrations by hand against a
   `DATABASE_URL` — for the compose Postgres or a scratch database, since Netlify
   applies them itself on deploy.
-- **`serve.py`** — static dev server that serves `MathIT.html` at `/`. Only
-  useful for the standalone, sign-in-free version of the app — it serves no API,
-  so the accounts build shows "Cannot reach MathIT" under it.
+- **`serve.py`** — static dev server that serves `MathIT.html` at `/`. It serves
+  no API, so the app shows "Cannot reach MathIT" under it — useful only for
+  quickly eyeballing markup/styling changes, not for exercising sign-in or any
+  account-backed feature.
 
 ## Accounts and data
 

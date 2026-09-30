@@ -2173,8 +2173,32 @@ function renderLevelTabs() {
   const stickerBtn = `<div class="level-tab ${onStickers ? 'active' : ''}" onclick="goTo('stickers')">🏅 ${tr('My Stickers', 'My Plakkers')}${n ? ` (${n})` : ''}</div>`;
   document.getElementById('level-tabs').innerHTML = levelBtns + manipBtn + stickerBtn;
 }
-function setLevel(l) { currentLevel = l; renderLevelTabs(); renderHome(); window.scrollTo(0, 0); }
-function goToManipulatives() { mtoolsOpen(); }
+function setLevel(l) {
+  // Same reason as the guard in goTo(): renderLevelTabs() draws this button
+  // bar before mathitInit() knows whether anyone is signed in (it has to, so
+  // the header doesn't flash empty while /api/me is still loading), so the
+  // grade tabs sit there clickable on the signed-out welcome screen. Without
+  // this, clicking one swapped in the full curriculum tile grid, titles and
+  // descriptions included, with nobody signed in at all.
+  if (!mathitServerProfile || mathitServerProfile.status !== 'active') {
+    mathitRenderHeaderGreeting();
+    mathitRenderWelcome();
+    return;
+  }
+  currentLevel = l; renderLevelTabs(); renderHome(); window.scrollTo(0, 0);
+}
+function goToManipulatives() {
+  // Same gap as setLevel() above, but worse: this one opens a fully working
+  // tool (the manipulatives drawer and scratchpad), not just a menu, and it
+  // takes one ordinary click on the sign-in screen's tab bar, no console
+  // needed. Confirmed reachable signed-out before this guard was added.
+  if (!mathitServerProfile || mathitServerProfile.status !== 'active') {
+    mathitRenderHeaderGreeting();
+    mathitRenderWelcome();
+    return;
+  }
+  mtoolsOpen();
+}
 
 function renderHome() {
   renderLevelTabs();
@@ -21512,7 +21536,14 @@ function sp8_genPythagoras() {
   }
   if (kind === 'isright') {
     const right = Math.random() < 0.5;
-    const sides = right ? t : [t[0], t[1], t[2] + pick([1, 2, -1])];
+    // [3,4,5] nudged by +2 becomes sides 3, 4, 7 - and 3 + 4 = 7, which fails
+    // the triangle inequality: that "triangle" is three points in a straight
+    // line, not a shape a right-angle question can sensibly be asked about.
+    // Filtering the offset choice down to ones that still form a real
+    // triangle fixes this for every current and future triple in the list,
+    // rather than special-casing [3,4,5] alone.
+    const validOffsets = [1, 2, -1].filter(o => t[0] + t[1] > t[2] + o);
+    const sides = right ? t : [t[0], t[1], t[2] + pick(validOffsets)];
     const ansT = right ? { en: 'Yes, it is right-angled', af: 'Ja, dit is reghoekig' }
                        : { en: 'No, it is not right-angled', af: 'Nee, dit is nie reghoekig nie' };
     const o = sp_pairedOpts(ansT, ['Yes, it is right-angled', 'No, it is not right-angled',
@@ -22668,6 +22699,20 @@ SP_KEYS.forEach(k => {
 
 // ---------- init ----------
 mathitInit();
+
+// If this tab is ever restored from the browser's back/forward cache (the
+// "bfcache") - for example on a shared device where one child steps away
+// with the Back/Forward buttons rather than using "Switch Student" - the
+// browser hands back the exact JS state and DOM this tab had a moment
+// before, without re-running mathitInit() or re-checking /api/me. Left
+// alone, that could show whoever picks the device up next the previous
+// student's already-signed-in screen for a moment, with no fresh check at
+// all. A full reload here forces the same real sign-in check every other
+// way into the app already goes through, rather than trusting a
+// frozen-in-time state the browser handed back on its own.
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) location.reload();
+});
 </script>
 </body>
 </html>
