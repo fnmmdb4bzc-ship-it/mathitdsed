@@ -434,7 +434,20 @@ $('refreshBtn').addEventListener('click', load);
     await load();
     setInterval(load, 30000);              // keep the online column honest
   } catch (err) {
-    flash(err.message, 'err');
+    // flash() writes into #msg, which lives inside #app - still hidden at
+    // this point in the startup sequence, since none of the throwing calls
+    // above reach the line that unhides it. A student session hiccup, a cold
+    // function, or a transient 500 from /api/me used to land here silently:
+    // the page just sat on the sign-in gate with no visible sign anything
+    // had gone wrong, which is exactly what "I refreshed and nothing
+    // happened" looks like. Showing it in the gate itself, which is visible
+    // whenever this can run, fixes that.
+    $('app').hidden = true;
+    $('gate').hidden = false;
+    $('gate').innerHTML =
+      '<h2>Could not load the admin page</h2>' +
+      '<p class="muted">' + esc(err.message || String(err)) + '</p>' +
+      '<button class="primary" onclick="location.reload()">Try again</button>';
   }
 })();
 </script>
