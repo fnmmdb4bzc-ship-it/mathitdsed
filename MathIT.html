@@ -351,6 +351,19 @@
   .g1-graph-row:hover { background: var(--aqua-light); }
   .g1-graph-row.correct { background: var(--good-bg); border-color: var(--good); }
   .g1-graph-row.wrong { background: var(--bad-bg); border-color: var(--bad); }
+  /* The pictogram builder: one row per category, a row of tap-to-fill boxes
+     standing in for the blank grid a child would draw on paper. Dashed while
+     empty so it reads as "not yet placed" rather than a real cell. */
+  .picto-build-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
+  .picto-build-label { min-width: 120px; font-weight: 700; }
+  .picto-build-slots { display: flex; gap: 4px; flex-wrap: wrap; }
+  .picto-slot {
+    width: 34px; height: 34px; border-radius: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+    border: 2px dashed var(--border); background: #fff; transition: transform 0.1s;
+  }
+  .picto-slot:hover { transform: scale(1.08); }
+  .picto-slot.filled { border-style: solid; border-color: var(--ocean-dark); background: var(--aqua-light); }
   .fracbar { display: flex; gap: 2px; margin: 6px 0; }
   .fracbar .seg { flex: 1; height: 34px; border: 1.5px solid var(--ocean-dark); background: #fff; }
   .fracbar .seg.filled { background: var(--coral); }
@@ -822,6 +835,20 @@
     body.mtools-docked { padding-right: 0; padding-bottom: 52vh; }
     body.mtools-docked .mtools-fab { display: none; }
   }
+  /* Docking beside the activity only earns its keep when there is an
+     activity to see beside it. Opened from the home screen (or the sticker
+     book) there is nothing worth protecting a sliver of, and a narrow strip
+     of tools next to an empty-feeling tile grid reads as a bug rather than a
+     deliberate layout - so that case goes fullscreen instead. Toggled by
+     mtoolsOpen() adding this class alongside (never instead of) mtools-docked. */
+  body.mtools-fullscreen .mtools-overlay {
+    top: 0; left: 0; right: 0; bottom: 0; width: auto; height: auto;
+  }
+  body.mtools-fullscreen .mtools-panel {
+    border-radius: 0; border: none; box-shadow: none;
+  }
+  body.mtools-fullscreen { padding-right: 0 !important; padding-bottom: 0 !important; }
+  body.mtools-fullscreen .mtools-fab { display: none; }
   .mtools-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 2px solid var(--border); }
   .mtools-panel-tabs { display: flex; gap: 8px; }
   .mtools-panel-tab { border: 2px solid var(--border); background: var(--surface-2); color: var(--text); border-radius: 10px; padding: 8px 16px; cursor: pointer; font-size: 1.1rem; font-weight: 700; }
@@ -974,6 +1001,10 @@
   .py-locked { opacity: 0.4; cursor: not-allowed; }
   .py-stockrow { display: flex; gap: 18px; justify-content: center; align-items: center; margin: 14px 0; flex-wrap: wrap; }
   .py-stock-count { font-weight: 700; }
+  /* Pyramid shows plain numbers, not playing cards, so its tiles drop the
+     suit-driven nb-red/nb-black colouring and get a bigger digit in its
+     place, since there is no suit symbol left to share the box with. */
+  .nb-card.py-tile { color: var(--text); font-size: 1.7rem; }
   .hs-middle { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 480px; margin: 16px auto; min-height: 90px; }
   .hs-deck-count { text-align: center; font-weight: 700; margin: 6px 0; }
   .cc-table { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 12px 0; }
@@ -1023,7 +1054,7 @@
   .snl-answers { display: inline-flex; gap: 6px; flex-wrap: wrap; margin-left: 8px; vertical-align: middle; }
   .snl-answers .mcq-opt { padding: 5px 14px; font-size: 1rem; }
 
-  .mathilde-face { vertical-align: -4px; margin-right: 4px; height: auto; }
+  .mathilde-face { vertical-align: -9px; margin-right: 5px; height: auto; }
 
   /* ---------- Focus mode: the activity gets the whole screen ---------- */
   .activity-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
@@ -1092,16 +1123,23 @@
 
     /* Partners to 10, Pyramid and Shop each hang off one tall board that a
        narrower header cannot rescue, so the board itself is scaled down on a
-       short screen. Safe for these three specifically: none of them convert
-       pointer coordinates into game positions, so a visual scale cannot put
-       taps out of register the way it would in the tangram. transform-origin
-       keeps the board centred under its heading as it shrinks. */
-    .pt-board, .py-pyramid, .sh-shelf {
-      transform: scale(0.78);
-      transform-origin: top center;
-      margin-bottom: -18%;      /* reclaim the space the scale leaves behind */
-    }
-    .py-stockrow, .m-tray { transform: scale(0.88); transform-origin: top center; margin-bottom: -8%; }
+       short screen. This used to be transform:scale() plus a negative
+       percentage margin-bottom to "reclaim" the space the scale leaves
+       behind - but a percentage margin-top/bottom is always resolved
+       against the *width* of the containing block, never the element's own
+       height (a CSS rule that applies no matter how obvious the opposite
+       seems), so that reclaimed amount had no real relationship to how much
+       shorter the board actually got. On a wide card (a laptop browser
+       window, say) that produced a much bigger pull-up than the shrink
+       warranted, dragging the next element up on top of this one - visible
+       as Shop Shop's purse tray overlapping its item shelf, and Pyramid's
+       stock row overlapping the pyramid, both reported from a MacBook.
+       zoom (unlike transform) actually shrinks the element's contribution
+       to layout, so nothing needs reclaiming and there is no margin to get
+       wrong. Supported in every current browser (Chrome and Safari for
+       years; Firefox since version 126, mid-2024), so this is safe here. */
+    .pt-board, .py-pyramid, .sh-shelf { zoom: 0.78; }
+    .py-stockrow, .m-tray { zoom: 0.88; }
     .pt-controls { margin: 2px 0; }
 
     /* Shorter screens give the board less, but it is still bounded by height
@@ -1358,6 +1396,7 @@ const TUTOR_NOTES = {
   fp_doublehalve: "Doubling and halving sits alongside building up and breaking down as a core mental strategy for Grades 1 to 3. The two break up modes here extend the same idea to bigger numbers, doubling or halving each part separately before combining, which is a natural bridge toward multiplication and division facts.",
   fp_wordprob: "Word problems test whether a learner can turn a real situation into a calculation, which is a different skill from just being fluent with numbers in isolation. If the maths is fine once the operation is chosen but the wrong operation gets picked, that is a reading and translating issue, not a number issue, so it helps to ask her to explain in her own words what is happening in the story before touching any numbers.",
   fp_column: "A caveat worth knowing: the formal written column method with carrying and borrowing is common classroom practice by Grade 3 in South Africa, but I could not confirm it as an official Foundation Phase requirement in the policy document itself, it reads as more a Grade 4 topic. It is included here labelled as a Grade 3 to 4 bridge rather than core Grade 3 content, worth keeping in mind if you are working strictly to the Grade 3 scope.",
+  fp_symmetry: "The same caveat as the column method above: line symmetry is genuine Grade 4 Term 3 CAPS content (see the Grade 4 Symmetry activity), and I could not confirm it as an official Foundation Phase requirement, so it is here as early, informal exposure rather than core content for this grade. Drawing where the mirror line goes, and drawing the missing matching half, are both a stronger test of whether she can actually picture the mirror fold than just judging a line someone else already drew. A real mirror placed on the shape is still the fastest way for her to check her own answer by hand.",
   g7_notation: "Levels 7 and 8 switch curriculum, they follow the National Curriculum for England (Key Stage 3, roughly Year 7 and Year 8), not the South African curriculum, since that is what was asked for. Algebraic notation is usually a learner's first real encounter with letters standing for numbers, ab meaning a times b trips up almost everyone at first, so this is worth sitting alongside her rather than assuming the convention is obvious.",
   g7_equations: "Solving an equation is really just undoing operations in reverse order, whatever was done last to build the equation gets undone first. Learners who can already balance number bonds mentally often resist writing out each step, but the written steps are what will carry them through harder, multi-step equations later.",
   g7_sequences: "Finding the nth term formula for a linear sequence is a genuinely abstract leap, from a Grade 4 style number pattern where you just find the next number. The key habit worth building is finding the common difference first, that number becomes the coefficient of n in the formula.",
@@ -1388,7 +1427,7 @@ const TUTOR_NOTES = {
   games_flipout: "The timer is what makes this different from an ordinary addition worksheet - she has to keep a running total live in her head as each card lands, which is a genuinely harder skill than adding a finished list, and it's exactly what mental arithmetic under real time pressure (a checkout queue, a game score) actually demands. If she keeps forfeiting on the total, that's a sign to shorten the timer to 30 seconds rather than to stop the game - the goal is a running total she can trust, not a long one.",
   games_snakesladders: "The board is the reward, not the maths, which is exactly why this works: she has to compute the roll before her counter moves, so a full game is thirty or forty repetitions of the same operation without it feeling like a worksheet. Switch to multiplying once adding the dice is automatic. The bounce-back rule at the top is worth pointing out, since needing exactly the right number to land on 100 is a small lesson in itself about how far away she still is.",
   games_ten: "Same bonds-to-10 skill as Partners to 10, but with a bigger board (12 cards instead of 9) and real playing cards instead of number chips, which is a good stretch once she's comfortable with the smaller version - more cards on the table means more distractions to scan past to find the pair that actually works.",
-  games_pyramid: "This is bonds to 10 plus a bit of planning: she has to notice which cards are 'stuck' under others and think ahead about which pair to clear first to unlock more of the pyramid, rather than just grabbing the first ten she spots. If she's stuck, ask her to point out the two cards directly under a locked card she wants - naming what's blocking it is the reasoning step worth practising here, not just the addition.",
+  games_pyramid: "This is bonds to 10 plus a bit of planning: she has to notice which numbers are 'stuck' under others and think ahead about which pair to clear first to unlock more of the pyramid, rather than just grabbing the first ten she spots. If she's stuck, ask her to point out the two numbers directly under a locked one she wants - naming what's blocking it is the reasoning step worth practising here, not just the addition.",
   games_horseshoe: "The middle pile keeps growing across both players' turns, so she has to keep re-scanning a changing set of cards rather than a fixed board, which is closer to real mental-maths conditions (a shopping trolley filling up, a running scoreboard) than a static worksheet. If the pile gets big and she's overwhelmed, suggest she scan systematically left-to-right rather than jumping around - that habit will help her everywhere, not just in this game.",
   games_colorclash: "The maths only shows up occasionally here (on +2 and Wild +4 cards), which is exactly what makes it useful - she has to switch quickly from the pattern-matching of ordinary play into an actual sum under a bit of pressure, then switch back. That context-switching is a real skill, not just addition/subtraction/multiplication recall. If she's rushing the sum and getting it wrong, remind her the card doesn't disappear if she takes an extra second to check her answer before submitting.",
   games_shop: "This is real-world money handling rather than a worksheet sum: she has to physically choose which coins and notes make an amount, not just recognise a total someone else already added up. 'Pay the price' builds the skill of making an exact amount several different ways (a R2 coin and a 50c, or four 50c coins, both work), while 'Give the change' adds the harder step of first working out how much change is even owed before making it. If she's stuck making an exact amount, ask her to start with the biggest coin or note that still fits under the price, rather than reaching for 5c coins first.",
@@ -1501,6 +1540,7 @@ const TUTOR_NOTES_AF = {
   fp_doublehalve: "Verdubbel en halveer staan langs opbou en afbreek as 'n kernstrategie vir Graad 1 tot 3. Die twee afbreek-modusse hier brei dieselfde idee na groter getalle uit, om elke deel apart te verdubbel of te halveer voordat dit gekombineer word, wat 'n natuurlike brug na vermenigvuldigings- en delingsfeite is.",
   fp_wordprob: "Woordprobleme toets of 'n leerder 'n werklike situasie in 'n berekening kan omskep, wat 'n ander vaardigheid is as om net vlot met getalle op hul eie te wees. As die wiskunde reg is sodra die bewerking gekies is, maar die verkeerde bewerking gekies word, is dit 'n lees- en vertalingskwessie, nie 'n getalkwessie nie, so dit help om haar te vra om in haar eie woorde te verduidelik wat in die storie gebeur voordat enige getalle aangeraak word.",
   fp_column: "'n Voorbehoud wat die moeite werd is om te weet: die formele geskrewe kolommetode met opskuif en leen is algemene klaskamerpraktyk teen Graad 3 in Suid-Afrika, maar ek kon dit nie in die beleidsdokument self as 'n amptelike Grondslagfase-vereiste bevestig nie, dit lees eerder soos 'n Graad 4-onderwerp. Dit word hier ingesluit, gemerk as 'n Graad 3-tot-4-brug eerder as kern-Graad 3-inhoud, die moeite werd om te onthou as streng volgens die Graad 3-omvang gewerk word.",
+  fp_symmetry: "Dieselfde voorbehoud as die kolommetode hierbo: lynsimmetrie is werklike Graad 4 Kwartaal 3 CAPS-inhoud (sien die Graad 4 Simmetrie-aktiwiteit), en ek kon dit nie as 'n amptelike Grondslagfase-vereiste bevestig nie, so dit is hier as vroeë, informele blootstelling eerder as kern-inhoud vir hierdie graad. Om te teken waar die spieëllyn loop, en om die ontbrekende passende helfte te teken, is albei 'n sterker toets van of sy werklik die spieëlvou kan visualiseer as om net 'n lyn te beoordeel wat iemand anders reeds getrek het. 'n Regte spieël op die vorm geplaas, is steeds die vinnigste manier vir haar om haar eie antwoord met die hand na te gaan.",
   games_race20: "Elke rol word net by daardie speler se eie lopende totaal getel, daar is geen keuse om te maak nie, so die werklike vaardigheid hier is om beurt na beurt 'n akkurate geestelike telling te hou eerder as om halfpad die tel kwyt te raak. Om die nuwe totaal hardop te sê na elke rol, 'Ek het 11 gehad, plus 4 is 15', is wat dit optel-oefening maak eerder as net dobbelsteen-rol.",
   games_connect4: "Dit dril die optelfeite vir twee dobbelstene, somme van 2 tot 12, onder 'n bietjie speldruk. Omdat albei spelers een bord deel, moet sy ook daarna kyk vir haar eie beste skuif en oplet wanneer Mathilde net een blokkie van wen af is. Om die twee getalle en die som hardop te sê voordat sy tik, hou dit optel-oefening eerder as net blokkie-tik.",
   games_multconnect4: "Dieselfde gedeelde bord as die optelweergawe, maar elke rol vra vir 'n tafelfeit tot 6 x 6. Dit is die moeite werd om gereeld hierheen terug te keer sodra tafels geleer word, aangesien dit feitherroeping in iets met 'n bietjie inset en strategie verander, eerder as 'n kaal dril.",
@@ -1513,7 +1553,7 @@ const TUTOR_NOTES_AF = {
   games_flipout: "Die tydhouer is wat dit anders maak as 'n gewone optel-werkblad, sy moet 'n lopende totaal lewendig in haar kop hou terwyl elke kaart val, wat 'n werklik moeiliker vaardigheid is as om 'n voltooide lys op te tel, en dit is presies wat geestelike rekenkunde onder regte tydsdruk (‘n kassie-tou, 'n speletjietelling) werklik vereis. As sy gereeld die totaal kwyt raak, is dit 'n teken om die tydhouer na 30 sekondes te verkort eerder as om die speletjie te stop, die doel is 'n lopende totaal wat sy kan vertrou, nie 'n lang een nie.",
   games_snakesladders: "Die bord is die beloning, nie die wiskunde nie, en dit is presies waarom dit werk: sy moet die rol bereken voordat haar telstuk beweeg, so 'n volle speletjie is dertig of veertig herhalings van dieselfde bewerking sonder dat dit soos 'n werkblad voel. Skakel oor na vermenigvuldig sodra die optel van die dobbelstene outomaties is. Die terugbons-reël aan die bokant is die moeite werd om uit te wys, aangesien om presies die regte getal nodig te hê om op 100 te land, 'n klein lessie op sy eie is oor hoe ver sy nog is.",
   games_ten: "Dieselfde bande-tot-10-vaardigheid as Maats vir 10, maar met 'n groter bord (12 kaarte in plaas van 9) en regte speelkaarte in plaas van getalskyfies, wat 'n goeie rekoefening is sodra sy gemaklik is met die kleiner weergawe, meer kaarte op die tafel beteken meer afleidings om verby te skandeer om die paar te vind wat werklik werk.",
-  games_pyramid: "Dit is bande tot 10 plus 'n bietjie beplanning: sy moet oplet watter kaarte 'vasgekeer' is onder ander en vooruit dink oor watter paar om eerste te verwyder om meer van die piramide oop te sluit, eerder as om net die eerste tien te gryp wat sy sien. As sy vassit, vra haar om die twee kaarte direk onder 'n geslote kaart wat sy wil hê, uit te wys, om te noem wat dit blokkeer, is die redeneerstap wat hier die moeite werd is om te oefen, nie net die optelling nie.",
+  games_pyramid: "Dit is bande tot 10 plus 'n bietjie beplanning: sy moet oplet watter getalle 'vasgekeer' is onder ander en vooruit dink oor watter paar om eerste te verwyder om meer van die piramide oop te sluit, eerder as om net die eerste tien te gryp wat sy sien. As sy vassit, vra haar om die twee getalle direk onder 'n geslote een wat sy wil hê, uit te wys, om te noem wat dit blokkeer, is die redeneerstap wat hier die moeite werd is om te oefen, nie net die optelling nie.",
   games_horseshoe: "Die middelste hopie groei die heeltyd oor albei spelers se beurte, so sy moet 'n veranderende stel kaarte aanhoudend herskandeer eerder as 'n vaste bord, wat nader aan werklike geestelike-wiskunde-toestande is ('n vol-word-trollie, 'n lopende telbord) as 'n statiese werkblad. As die hopie groot word en sy oorweldig voel, stel voor dat sy sistematies van links na regs skandeer eerder as om rond te spring, daardie gewoonte sal haar oral help, nie net in hierdie speletjie nie.",
   games_colorclash: "Die wiskunde verskyn hier net af en toe (op +2- en Wild +4-kaarte), en dit is presies wat dit nuttig maak, sy moet vinnig oorskakel van die patroon-pas van gewone spel na 'n werklike som onder 'n bietjie druk, en dan weer terugskakel. Daardie konteks-oorskakeling is 'n werklike vaardigheid, nie net optel-, aftrek- of vermenigvuldigingsherroeping nie. As sy die som haastig doen en verkeerd kry, herinner haar daaraan dat die kaart nie verdwyn as sy 'n ekstra sekonde vat om haar antwoord na te gaan voordat sy dit inskryf nie.",
   games_shop: "Dit is werklike geldhantering eerder as 'n werkbladsom: sy moet fisies kies watter munte en note 'n bedrag maak, nie net 'n totaal herken wat iemand anders reeds bymekaargetel het nie. 'Betaal die prys' bou die vaardigheid om 'n presiese bedrag op verskeie maniere te maak ('n R2-muntstuk en 'n 50c, of vier 50c-muntstukke, werk albei), terwyl 'Gee die kleingeld' die moeiliker stap byvoeg om eers uit te werk hoeveel kleingeld eers geskuld word voordat dit gemaak word. As sy vassit om 'n presiese bedrag te maak, vra haar om met die grootste munt of noot te begin wat nog onder die prys pas, eerder as om eers na 5c-muntstukke te reik.",
@@ -1566,18 +1606,20 @@ const SECTIONS_BY_LEVEL = {
     { title: 'Term 2', keys: ['g1_counting_t2', 'g1_addsub_t2', 'g1_skipcount_t2', 'g1_patterns_t2', 'g1_shapes_t2', 'g1_money_t2', 'g1_measure_t2', 'g1_data_t2', 'g1_wordprob_t2'] },
     { title: 'Term 3', keys: ['g1_counting_t3', 'g1_addsub_t3', 'g1_skipcount_t3', 'g1_patterns_t3', 'g1_shapes_t3', 'g1_money_t3', 'g1_measure_t3', 'g1_data_t3', 'g1_wordprob_t3'] },
     { title: 'Term 4', keys: ['g1_counting_t4', 'g1_addsub_t4', 'g1_skipcount_t4', 'g1_patterns_t4', 'g1_shapes_t4', 'g1_money_t4', 'g1_measure_t4', 'g1_data_t4', 'g1_wordprob_t4'] },
-    { title: 'Extra Practice', keys: ['fp_bonds', 'fp_tenframe', 'fp_grid100', 'fp_bridge10', 'fp_pyramid', 'fp_shapes', 'fp_shapenames', 'fp_picgraph'] },
+    { title: 'Extra Practice', keys: ['fp_bonds', 'fp_tenframe', 'fp_grid100', 'fp_bridge10', 'fp_pyramid', 'fp_shapes', 'fp_shapenames', 'fp_picgraph', 'g1_symmetry'] },
   ],
   // Grade 2, built the same way as Grade 1. All 4 terms cover the same
   // content breadth (Space and Shape, Money, Measurement, Data Handling,
   // Word Problems) as Grade 1 - see "GRADE 2 CONTENT BREADTH" further
   // down. Extra Practice row: see the Grade 1 comment above.
   '2': [
-    { title: 'Term 1', keys: ['g2_counting_t1', 'g2_addsub_t1', 'g2_skipcount_t1', 'g2_patterns_t1', 'g2_shapes_t1', 'g2_money_t1', 'g2_measure_t1', 'g2_data_t1', 'g2_wordprob_t1'] },
-    { title: 'Term 2', keys: ['g2_counting_t2', 'g2_addsub_t2', 'g2_skipcount_t2', 'g2_patterns_t2', 'g2_shapes_t2', 'g2_money_t2', 'g2_measure_t2', 'g2_data_t2', 'g2_wordprob_t2'] },
-    { title: 'Term 3', keys: ['g2_counting_t3', 'g2_addsub_t3', 'g2_skipcount_t3', 'g2_patterns_t3', 'g2_shapes_t3', 'g2_money_t3', 'g2_measure_t3', 'g2_data_t3', 'g2_wordprob_t3'] },
-    { title: 'Term 4', keys: ['g2_counting_t4', 'g2_addsub_t4', 'g2_skipcount_t4', 'g2_patterns_t4', 'g2_shapes_t4', 'g2_money_t4', 'g2_measure_t4', 'g2_data_t4', 'g2_wordprob_t4'] },
-    { title: 'Extra Practice', keys: ['fp_bonds', 'fp_renaming', 'fp_grid100', 'fp_breakup', 'fp_bridge10', 'fp_doublehalve', 'fp_pyramid', 'fp_shapenames', 'fp_measure', 'fp_time', 'fp_picgraph'] },
+    { title: 'Term 1', keys: ['g2_counting_t1', 'g2_addsub_t1', 'g2_patterns_t1', 'g2_shapes_t1', 'g2_money_t1', 'g2_measure_t1', 'g2_data_t1', 'g2_wordprob_t1'] },
+    { title: 'Term 2', keys: ['g2_counting_t2', 'g2_addsub_t2', 'g2_patterns_t2', 'g2_shapes_t2', 'g2_money_t2', 'g2_measure_t2', 'g2_data_t2', 'g2_wordprob_t2'] },
+    { title: 'Term 3', keys: ['g2_counting_t3', 'g2_addsub_t3', 'g2_patterns_t3', 'g2_shapes_t3', 'g2_money_t3', 'g2_measure_t3', 'g2_data_t3', 'g2_wordprob_t3'] },
+    { title: 'Term 4', keys: ['g2_counting_t4', 'g2_addsub_t4', 'g2_patterns_t4', 'g2_shapes_t4', 'g2_money_t4', 'g2_measure_t4', 'g2_data_t4', 'g2_wordprob_t4'] },
+    // g2_skipcount moved here from one-per-term: see the SKIPCOUNT_CONFIG
+    // comment by its code (near the Grade 3 version) for why.
+    { title: 'Extra Practice', keys: ['g2_skipcount', 'fp_bonds', 'fp_renaming', 'fp_grid100', 'fp_breakup', 'fp_bridge10', 'fp_doublehalve', 'fp_pyramid', 'fp_shapenames', 'fp_measure', 'fp_time', 'fp_picgraph', 'g2_symmetry'] },
   ],
   // Grade 3, built the same way. Same content breadth as Grade 1/2 - see
   // "GRADE 3 CONTENT BREADTH". Extra Practice row: see the Grade 1 comment
@@ -1585,11 +1627,13 @@ const SECTIONS_BY_LEVEL = {
   // is common classroom practice by Grade 3 but was not confirmed as an
   // official Foundation Phase CAPS requirement).
   '3': [
-    { title: 'Term 1', keys: ['g3_counting_t1', 'g3_addsub_t1', 'g3_skipcount_t1', 'g3_patterns_t1', 'g3_shapes_t1', 'g3_money_t1', 'g3_measure_t1', 'g3_data_t1', 'g3_wordprob_t1'] },
-    { title: 'Term 2', keys: ['g3_counting_t2', 'g3_addsub_t2', 'g3_skipcount_t2', 'g3_patterns_t2', 'g3_shapes_t2', 'g3_money_t2', 'g3_measure_t2', 'g3_data_t2', 'g3_wordprob_t2'] },
-    { title: 'Term 3', keys: ['g3_counting_t3', 'g3_addsub_t3', 'g3_skipcount_t3', 'g3_patterns_t3', 'g3_shapes_t3', 'g3_money_t3', 'g3_measure_t3', 'g3_data_t3', 'g3_wordprob_t3'] },
-    { title: 'Term 4', keys: ['g3_counting_t4', 'g3_addsub_t4', 'g3_skipcount_t4', 'g3_patterns_t4', 'g3_shapes_t4', 'g3_money_t4', 'g3_measure_t4', 'g3_data_t4', 'g3_wordprob_t4'] },
-    { title: 'Extra Practice', keys: ['fp_renaming', 'fp_breakup', 'fp_doublehalve', 'fp_column', 'fp_shapenames', 'fp_measure', 'fp_time'] },
+    { title: 'Term 1', keys: ['g3_counting_t1', 'g3_addsub_t1', 'g3_patterns_t1', 'g3_shapes_t1', 'g3_money_t1', 'g3_measure_t1', 'g3_data_t1', 'g3_wordprob_t1'] },
+    { title: 'Term 2', keys: ['g3_counting_t2', 'g3_addsub_t2', 'g3_patterns_t2', 'g3_shapes_t2', 'g3_money_t2', 'g3_measure_t2', 'g3_data_t2', 'g3_wordprob_t2'] },
+    { title: 'Term 3', keys: ['g3_counting_t3', 'g3_addsub_t3', 'g3_patterns_t3', 'g3_shapes_t3', 'g3_money_t3', 'g3_measure_t3', 'g3_data_t3', 'g3_wordprob_t3'] },
+    { title: 'Term 4', keys: ['g3_counting_t4', 'g3_addsub_t4', 'g3_patterns_t4', 'g3_shapes_t4', 'g3_money_t4', 'g3_measure_t4', 'g3_data_t4', 'g3_wordprob_t4'] },
+    // g3_skipcount moved here from one-per-term: see the SKIPCOUNT_CONFIG
+    // comment by its code for why.
+    { title: 'Extra Practice', keys: ['g3_skipcount', 'fp_renaming', 'fp_breakup', 'fp_doublehalve', 'fp_column', 'fp_shapenames', 'fp_measure', 'fp_time', 'g3_symmetry'] },
   ],
   // Grade 4, restructured from topic-category rows into Term 1-4 rows, to
   // match the Grade 1-3 layout. Term placement follows the DBE Annual
@@ -1699,6 +1743,7 @@ const ACTIVITIES = {
   g1_wordprob_t2: { icon: '📝', title: 'Word Problems', desc: 'Short number stories with answers up to 10. Tap your answer.' },
   g1_wordprob_t3: { icon: '📝', title: 'Word Problems', desc: 'Short number stories with answers up to 15. Tap your answer.' },
   g1_wordprob_t4: { icon: '📝', title: 'Word Problems', desc: 'Short number stories with answers up to 20. Tap your answer.' },
+  g1_symmetry: { icon: '🦋', title: 'Symmetry', desc: 'Draw the line of symmetry, or draw the missing other half of a shape.', badge: 'Early look at Grade 4 content' },
   g2_counting_t1: { icon: '🔢', title: 'Counting and Number Recognition', desc: 'Numbers up to 100: before, after, between, or compare with <, >, =.' },
   g2_counting_t2: { icon: '🔢', title: 'Counting and Number Recognition', desc: 'Numbers up to 140: before, after, between, or compare with <, >, =.' },
   g2_counting_t3: { icon: '🔢', title: 'Counting and Number Recognition', desc: 'Numbers up to 170: before, after, between, or compare with <, >, =.' },
@@ -1707,10 +1752,7 @@ const ACTIVITIES = {
   g2_addsub_t2: { icon: '➕', title: 'Addition and Subtraction', desc: 'Number sentences up to 40 - the missing number could be anywhere.' },
   g2_addsub_t3: { icon: '➕', title: 'Addition and Subtraction', desc: 'Number sentences up to 60 - the missing number could be anywhere.' },
   g2_addsub_t4: { icon: '➕', title: 'Addition and Subtraction', desc: 'Number sentences up to 99 - the missing number could be anywhere.' },
-  g2_skipcount_t1: { icon: '🔟', title: 'Skip Counting in 3s', desc: 'Count on in threes from any multiple of three.' },
-  g2_skipcount_t2: { icon: '🔟', title: 'Skip Counting in 4s', desc: 'Count on in fours from any multiple of four.' },
-  g2_skipcount_t3: { icon: '🔟', title: 'Skip Counting in 20s', desc: 'Count on in twenties from any multiple of twenty.' },
-  g2_skipcount_t4: { icon: '🔟', title: 'Skip Counting in 25s', desc: 'Count on in twenty-fives from any multiple of twenty-five.' },
+  g2_skipcount: { icon: '🔟', title: 'Skip Counting', desc: 'Count on in 2s, 3s, 4s, 5s, 10s, 20s or 25s - pick a number, up to 200.' },
   g2_patterns_t1: { icon: '🔁', title: 'Patterns', desc: 'Picture patterns, spot the mistake, or number patterns up to 20.' },
   g2_patterns_t2: { icon: '🔁', title: 'Patterns', desc: 'Picture patterns, spot the mistake, or number patterns up to 40.' },
   g2_patterns_t3: { icon: '🔁', title: 'Patterns', desc: 'Picture patterns, spot the mistake, or number patterns up to 100.' },
@@ -1724,17 +1766,18 @@ const ACTIVITIES = {
   g2_money_t3: { icon: '💰', title: 'Money', desc: 'Coins and notes up to R20 - totals, comparing, or working out change.' },
   g2_money_t4: { icon: '💰', title: 'Money', desc: 'Coins and notes up to R50 - totals, comparing, or working out change.' },
   g2_measure_t1: { icon: '⚖️', title: 'Measurement', desc: "Length, mass, capacity, and telling time to the half hour." },
-  g2_measure_t2: { icon: '⚖️', title: 'Measurement', desc: "Length, mass, capacity, and telling time to the half hour." },
-  g2_measure_t3: { icon: '⚖️', title: 'Measurement', desc: 'Length, mass, capacity, and telling time to the quarter hour.' },
-  g2_measure_t4: { icon: '⚖️', title: 'Measurement', desc: 'Length, mass, capacity, and telling time to the quarter hour.' },
-  g2_data_t1: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, or work out totals and differences from a bar graph.' },
-  g2_data_t2: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, or work out totals and differences from a bar graph.' },
-  g2_data_t3: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, or work out totals and differences from a bar graph.' },
-  g2_data_t4: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, or work out totals and differences from a bar graph.' },
+  g2_measure_t2: { icon: '⚖️', title: 'Measurement', desc: "Length, mass, capacity, units like cm and kg, and telling time to the half hour." },
+  g2_measure_t3: { icon: '⚖️', title: 'Measurement', desc: 'Length, mass, capacity, units like cm and kg, and telling time to the quarter hour.' },
+  g2_measure_t4: { icon: '⚖️', title: 'Measurement', desc: 'Length, mass, capacity, units like cm and kg, and telling time to the quarter hour.' },
+  g2_data_t1: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, work out totals and differences from a bar graph, or build your own pictogram.' },
+  g2_data_t2: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, work out totals and differences from a bar graph, or build your own pictogram.' },
+  g2_data_t3: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, work out totals and differences from a bar graph, or build your own pictogram.' },
+  g2_data_t4: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, work out totals and differences from a bar graph, or build your own pictogram.' },
   g2_wordprob_t1: { icon: '📝', title: 'Word Problems', desc: 'Number stories up to 20, including simple multiplication.' },
   g2_wordprob_t2: { icon: '📝', title: 'Word Problems', desc: 'Number stories up to 40, including simple multiplication.' },
   g2_wordprob_t3: { icon: '📝', title: 'Word Problems', desc: 'Number stories up to 60, including simple multiplication.' },
   g2_wordprob_t4: { icon: '📝', title: 'Word Problems', desc: 'Number stories up to 99, including simple multiplication.' },
+  g2_symmetry: { icon: '🦋', title: 'Symmetry', desc: 'Draw the line of symmetry, or draw the missing other half of a shape.', badge: 'Early look at Grade 4 content' },
   g3_counting_t1: { icon: '🔢', title: 'Counting and Number Recognition', desc: 'Numbers up to 300: before, after, between, compare, or round to the nearest 10.' },
   g3_counting_t2: { icon: '🔢', title: 'Counting and Number Recognition', desc: 'Numbers up to 500: before, after, between, compare, or round to the nearest 10.' },
   g3_counting_t3: { icon: '🔢', title: 'Counting and Number Recognition', desc: 'Numbers up to 750: before, after, between, compare, or round to the nearest 10.' },
@@ -1743,10 +1786,7 @@ const ACTIVITIES = {
   g3_addsub_t2: { icon: '➕', title: 'Addition and Subtraction', desc: 'Number sentences up to 200, or short word problems.' },
   g3_addsub_t3: { icon: '➕', title: 'Addition and Subtraction', desc: 'Number sentences up to 400, or short word problems.' },
   g3_addsub_t4: { icon: '➕', title: 'Addition and Subtraction', desc: 'Number sentences up to 999, or short word problems.' },
-  g3_skipcount_t1: { icon: '🔟', title: 'Skip Counting in 6s', desc: 'Count on in sixes from any multiple of six.' },
-  g3_skipcount_t2: { icon: '🔟', title: 'Skip Counting in 7s', desc: 'Count on in sevens from any multiple of seven.' },
-  g3_skipcount_t3: { icon: '🔟', title: 'Skip Counting in 50s', desc: 'Count on in fifties from any multiple of fifty.' },
-  g3_skipcount_t4: { icon: '🔟', title: 'Skip Counting in 100s', desc: 'Count on in hundreds from any multiple of a hundred.' },
+  g3_skipcount: { icon: '🔟', title: 'Skip Counting', desc: 'Count on in 2s, 3s, 4s, 5s, 10s, 20s, 25s, 50s, 100s or odd numbers - pick a number, up to 1000.' },
   g3_patterns_t1: { icon: '🔁', title: 'Patterns', desc: 'Picture patterns, spot the mistake, or number patterns up to 50.' },
   g3_patterns_t2: { icon: '🔁', title: 'Patterns', desc: 'Picture patterns, spot the mistake, or number patterns up to 150.' },
   g3_patterns_t3: { icon: '🔁', title: 'Patterns', desc: 'Picture patterns, spot the mistake, or number patterns up to 400.' },
@@ -1759,18 +1799,19 @@ const ACTIVITIES = {
   g3_money_t2: { icon: '💰', title: 'Money', desc: 'Coins and notes up to R50 - totals, comparing, or working out change.' },
   g3_money_t3: { icon: '💰', title: 'Money', desc: 'Coins and notes up to R100 - totals, comparing, or working out change.' },
   g3_money_t4: { icon: '💰', title: 'Money', desc: 'Coins and notes up to R100 - totals, comparing, or working out change.' },
-  g3_measure_t1: { icon: '⚖️', title: 'Measurement', desc: 'Length, mass, capacity, and telling time to the quarter hour.' },
-  g3_measure_t2: { icon: '⚖️', title: 'Measurement', desc: 'Length, mass, capacity, and telling time to the quarter hour.' },
-  g3_measure_t3: { icon: '⚖️', title: 'Measurement', desc: 'Length, mass, capacity, and telling time to the quarter hour.' },
-  g3_measure_t4: { icon: '⚖️', title: 'Measurement', desc: 'Length, mass, capacity, and telling time to the quarter hour.' },
-  g3_data_t1: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, or work out totals and differences from a bar graph.' },
-  g3_data_t2: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, or work out totals and differences from a bar graph.' },
-  g3_data_t3: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, or work out totals and differences from a bar graph.' },
-  g3_data_t4: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, or work out totals and differences from a bar graph.' },
+  g3_measure_t1: { icon: '⚖️', title: 'Measurement', desc: 'Length, mass, capacity, units like mm, cm, m, g, kg, ml and l, and telling time to the quarter hour.' },
+  g3_measure_t2: { icon: '⚖️', title: 'Measurement', desc: 'Length, mass, capacity, units like mm, cm, m, g, kg, ml and l, and telling time to the quarter hour.' },
+  g3_measure_t3: { icon: '⚖️', title: 'Measurement', desc: 'Length, mass, capacity, units like mm, cm, m, g, kg, ml and l, and telling time to the quarter hour.' },
+  g3_measure_t4: { icon: '⚖️', title: 'Measurement', desc: 'Length, mass, capacity, units like mm, cm, m, g, kg, ml and l, and telling time to the quarter hour.' },
+  g3_data_t1: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, work out totals and differences from a bar graph, or build your own pictogram.' },
+  g3_data_t2: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, work out totals and differences from a bar graph, or build your own pictogram.' },
+  g3_data_t3: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, work out totals and differences from a bar graph, or build your own pictogram.' },
+  g3_data_t4: { icon: '📊', title: 'Data Handling', desc: 'Read a graph, work out totals and differences from a bar graph, or build your own pictogram.' },
   g3_wordprob_t1: { icon: '📝', title: 'Word Problems', desc: 'Number stories up to 100, including multiplication and sharing.' },
   g3_wordprob_t2: { icon: '📝', title: 'Word Problems', desc: 'Number stories up to 200, including multiplication and sharing.' },
   g3_wordprob_t3: { icon: '📝', title: 'Word Problems', desc: 'Number stories up to 400, including multiplication and sharing.' },
   g3_wordprob_t4: { icon: '📝', title: 'Word Problems', desc: 'Number stories up to 999, including multiplication and sharing.' },
+  g3_symmetry: { icon: '🦋', title: 'Symmetry', desc: 'Draw the line of symmetry, or draw the missing other half of a shape.', badge: 'Early look at Grade 4 content' },
   g4_placevalue: { icon: '🔢', title: 'Place Value Explorer', desc: 'Find the value of a digit in a 4 digit number.' },
   g4_compare: { icon: '⚖️', title: 'Compare and Order', desc: 'Choose the correct sign, less than, greater than, or equal to.' },
   g4_doublehalf: { icon: '🪞', title: 'Double and Half', desc: 'Double or halve a number, with 3 difficulty levels.' },
@@ -1894,7 +1935,7 @@ const ACTIVITIES = {
   game_flipout: { icon: '⏱️', title: 'Flip Out', desc: "Cards flip one at a time against the clock - keep a running total in your head. Get it right to see if you beat Mathilde's total; get it wrong and you forfeit the round!" },
   game_snakesladders: { icon: '🐍', title: 'Snakes and Ladders', desc: 'Roll two dice and work out the answer to move that many squares. Ladders take you up, snakes send you down. First to exactly 100 wins. Choose adding or multiplying the dice.' },
   game_ten: { icon: '🔟', title: 'TEN!', desc: 'Tap two of the 12 face-up cards that add up to 10. Face cards = 10, Ace = 1. Most pairs when the deck runs out wins!' },
-  game_pyramid: { icon: '🔺', title: 'Pyramid', desc: 'Clear the 15-card pyramid by pairing free (uncovered) cards, or a free card with the stock card, to make 10. Face cards = 10, Ace = 1. Clear it all before the stock runs out!' },
+  game_pyramid: { icon: '🔺', title: 'Pyramid', desc: 'Clear the 15-number pyramid by pairing free (uncovered) numbers, or a free number with the stock number, to make 10. Clear it all before the stock runs out!' },
   game_horseshoe: { icon: '🧲', title: 'Horse Shoe', desc: 'Take turns flipping a card into the middle and claim any two cards there that add up to 10. Face cards = 10, Ace = 1. Most cards when the deck is empty wins!' },
   game_colorclash: { icon: '🎨', title: 'Color Clash', desc: 'Match the top card by color or number and empty your hand first. Skip, Reverse and Wild work as usual - but +2 and Wild +4 cards make you solve a quick sum to draw fewer cards!' },
   game_shop: { icon: '🛍️', title: 'Shop Shop!', desc: 'Run the till! Tap real South African coins and notes to pay the exact price, or work out and hand back the right change. A new item and price every round.' },
@@ -1941,6 +1982,7 @@ const ACTIVITIES_AF = {
   g1_wordprob_t2: { title: 'Woordprobleme', desc: 'Kort getalstories met antwoorde tot 10. Tik jou antwoord.' },
   g1_wordprob_t3: { title: 'Woordprobleme', desc: 'Kort getalstories met antwoorde tot 15. Tik jou antwoord.' },
   g1_wordprob_t4: { title: 'Woordprobleme', desc: 'Kort getalstories met antwoorde tot 20. Tik jou antwoord.' },
+  g1_symmetry: { title: 'Simmetrie', desc: "Trek die simmetrielyn, of teken die ontbrekende ander helfte van 'n vorm.", badgeAf: 'Vroeë blik op Graad 4-inhoud' },
   g2_counting_t1: { title: 'Tel en Getalherkenning', desc: 'Getalle tot 100: voor, na, tussenin, of vergelyk met <, >, =.' },
   g2_counting_t2: { title: 'Tel en Getalherkenning', desc: 'Getalle tot 140: voor, na, tussenin, of vergelyk met <, >, =.' },
   g2_counting_t3: { title: 'Tel en Getalherkenning', desc: 'Getalle tot 170: voor, na, tussenin, of vergelyk met <, >, =.' },
@@ -1949,10 +1991,7 @@ const ACTIVITIES_AF = {
   g2_addsub_t2: { title: 'Optel en Aftrek', desc: 'Getallesinne tot 40 - die ontbrekende getal kan enige plek wees.' },
   g2_addsub_t3: { title: 'Optel en Aftrek', desc: 'Getallesinne tot 60 - die ontbrekende getal kan enige plek wees.' },
   g2_addsub_t4: { title: 'Optel en Aftrek', desc: 'Getallesinne tot 99 - die ontbrekende getal kan enige plek wees.' },
-  g2_skipcount_t1: { title: "Spring-tel in 3's", desc: 'Tel aan in drie-drie vanaf enige veelvoud van drie.' },
-  g2_skipcount_t2: { title: "Spring-tel in 4's", desc: 'Tel aan in vier-vier vanaf enige veelvoud van vier.' },
-  g2_skipcount_t3: { title: "Spring-tel in 20's", desc: 'Tel aan in twintigs vanaf enige veelvoud van twintig.' },
-  g2_skipcount_t4: { title: "Spring-tel in 25's", desc: 'Tel aan in vyf-en-twintigs vanaf enige veelvoud van vyf-en-twintig.' },
+  g2_skipcount: { title: 'Spring-tel', desc: "Tel aan in 2's, 3's, 4's, 5's, 10's, 20's of 25's - kies 'n getal, tot 200." },
   g2_patterns_t1: { title: 'Patrone', desc: 'Prentjiepatrone, vind die fout, of getalpatrone tot 20.' },
   g2_patterns_t2: { title: 'Patrone', desc: 'Prentjiepatrone, vind die fout, of getalpatrone tot 40.' },
   g2_patterns_t3: { title: 'Patrone', desc: 'Prentjiepatrone, vind die fout, of getalpatrone tot 100.' },
@@ -1966,17 +2005,18 @@ const ACTIVITIES_AF = {
   g2_money_t3: { title: 'Geld', desc: 'Munte en note tot R20 - totale, vergelyk, of werk kleingeld uit.' },
   g2_money_t4: { title: 'Geld', desc: 'Munte en note tot R50 - totale, vergelyk, of werk kleingeld uit.' },
   g2_measure_t1: { title: 'Meting', desc: 'Lengte, massa, inhoud, en kloklees tot die half-uur.' },
-  g2_measure_t2: { title: 'Meting', desc: 'Lengte, massa, inhoud, en kloklees tot die half-uur.' },
-  g2_measure_t3: { title: 'Meting', desc: 'Lengte, massa, inhoud, en kloklees tot die kwartuur.' },
-  g2_measure_t4: { title: 'Meting', desc: 'Lengte, massa, inhoud, en kloklees tot die kwartuur.' },
-  g2_data_t1: { title: 'Datahantering', desc: "Lees 'n grafiek, of werk totale en verskille uit 'n staafgrafiek uit." },
-  g2_data_t2: { title: 'Datahantering', desc: "Lees 'n grafiek, of werk totale en verskille uit 'n staafgrafiek uit." },
-  g2_data_t3: { title: 'Datahantering', desc: "Lees 'n grafiek, of werk totale en verskille uit 'n staafgrafiek uit." },
-  g2_data_t4: { title: 'Datahantering', desc: "Lees 'n grafiek, of werk totale en verskille uit 'n staafgrafiek uit." },
+  g2_measure_t2: { title: 'Meting', desc: 'Lengte, massa, inhoud, eenhede soos cm en kg, en kloklees tot die half-uur.' },
+  g2_measure_t3: { title: 'Meting', desc: 'Lengte, massa, inhoud, eenhede soos cm en kg, en kloklees tot die kwartuur.' },
+  g2_measure_t4: { title: 'Meting', desc: 'Lengte, massa, inhoud, eenhede soos cm en kg, en kloklees tot die kwartuur.' },
+  g2_data_t1: { title: 'Datahantering', desc: "Lees 'n grafiek, werk totale en verskille uit 'n staafgrafiek uit, of bou jou eie piktogram." },
+  g2_data_t2: { title: 'Datahantering', desc: "Lees 'n grafiek, werk totale en verskille uit 'n staafgrafiek uit, of bou jou eie piktogram." },
+  g2_data_t3: { title: 'Datahantering', desc: "Lees 'n grafiek, werk totale en verskille uit 'n staafgrafiek uit, of bou jou eie piktogram." },
+  g2_data_t4: { title: 'Datahantering', desc: "Lees 'n grafiek, werk totale en verskille uit 'n staafgrafiek uit, of bou jou eie piktogram." },
   g2_wordprob_t1: { title: 'Woordprobleme', desc: 'Getalstories tot 20, met eenvoudige vermenigvuldiging.' },
   g2_wordprob_t2: { title: 'Woordprobleme', desc: 'Getalstories tot 40, met eenvoudige vermenigvuldiging.' },
   g2_wordprob_t3: { title: 'Woordprobleme', desc: 'Getalstories tot 60, met eenvoudige vermenigvuldiging.' },
   g2_wordprob_t4: { title: 'Woordprobleme', desc: 'Getalstories tot 99, met eenvoudige vermenigvuldiging.' },
+  g2_symmetry: { title: 'Simmetrie', desc: "Trek die simmetrielyn, of teken die ontbrekende ander helfte van 'n vorm.", badgeAf: 'Vroeë blik op Graad 4-inhoud' },
   g3_counting_t1: { title: 'Tel en Getalherkenning', desc: 'Getalle tot 300: voor, na, tussenin, vergelyk, of rond af tot die naaste 10.' },
   g3_counting_t2: { title: 'Tel en Getalherkenning', desc: 'Getalle tot 500: voor, na, tussenin, vergelyk, of rond af tot die naaste 10.' },
   g3_counting_t3: { title: 'Tel en Getalherkenning', desc: 'Getalle tot 750: voor, na, tussenin, vergelyk, of rond af tot die naaste 10.' },
@@ -1985,10 +2025,7 @@ const ACTIVITIES_AF = {
   g3_addsub_t2: { title: 'Optel en Aftrek', desc: "Getallesinne tot 200, of kort woordprobleme." },
   g3_addsub_t3: { title: 'Optel en Aftrek', desc: "Getallesinne tot 400, of kort woordprobleme." },
   g3_addsub_t4: { title: 'Optel en Aftrek', desc: "Getallesinne tot 999, of kort woordprobleme." },
-  g3_skipcount_t1: { title: "Spring-tel in 6's", desc: 'Tel aan in ses-ses vanaf enige veelvoud van ses.' },
-  g3_skipcount_t2: { title: "Spring-tel in 7's", desc: 'Tel aan in sewe-sewe vanaf enige veelvoud van sewe.' },
-  g3_skipcount_t3: { title: "Spring-tel in 50's", desc: 'Tel aan in vyftigs vanaf enige veelvoud van vyftig.' },
-  g3_skipcount_t4: { title: "Spring-tel in 100's", desc: 'Tel aan in honderde vanaf enige veelvoud van honderd.' },
+  g3_skipcount: { title: 'Spring-tel', desc: "Tel aan in 2's, 3's, 4's, 5's, 10's, 20's, 25's, 50's, 100's of onewe getalle - kies 'n getal, tot 1000." },
   g3_patterns_t1: { title: 'Patrone', desc: 'Prentjiepatrone, vind die fout, of getalpatrone tot 50.' },
   g3_patterns_t2: { title: 'Patrone', desc: 'Prentjiepatrone, vind die fout, of getalpatrone tot 150.' },
   g3_patterns_t3: { title: 'Patrone', desc: 'Prentjiepatrone, vind die fout, of getalpatrone tot 400.' },
@@ -2001,18 +2038,19 @@ const ACTIVITIES_AF = {
   g3_money_t2: { title: 'Geld', desc: 'Munte en note tot R50 - totale, vergelyk, of werk kleingeld uit.' },
   g3_money_t3: { title: 'Geld', desc: 'Munte en note tot R100 - totale, vergelyk, of werk kleingeld uit.' },
   g3_money_t4: { title: 'Geld', desc: 'Munte en note tot R100 - totale, vergelyk, of werk kleingeld uit.' },
-  g3_measure_t1: { title: 'Meting', desc: 'Lengte, massa, inhoud, en kloklees tot die kwartuur.' },
-  g3_measure_t2: { title: 'Meting', desc: 'Lengte, massa, inhoud, en kloklees tot die kwartuur.' },
-  g3_measure_t3: { title: 'Meting', desc: 'Lengte, massa, inhoud, en kloklees tot die kwartuur.' },
-  g3_measure_t4: { title: 'Meting', desc: 'Lengte, massa, inhoud, en kloklees tot die kwartuur.' },
-  g3_data_t1: { title: 'Datahantering', desc: "Lees 'n grafiek, of werk totale en verskille uit 'n staafgrafiek uit." },
-  g3_data_t2: { title: 'Datahantering', desc: "Lees 'n grafiek, of werk totale en verskille uit 'n staafgrafiek uit." },
-  g3_data_t3: { title: 'Datahantering', desc: "Lees 'n grafiek, of werk totale en verskille uit 'n staafgrafiek uit." },
-  g3_data_t4: { title: 'Datahantering', desc: "Lees 'n grafiek, of werk totale en verskille uit 'n staafgrafiek uit." },
+  g3_measure_t1: { title: 'Meting', desc: 'Lengte, massa, inhoud, eenhede soos mm, cm, m, g, kg, ml en l, en kloklees tot die kwartuur.' },
+  g3_measure_t2: { title: 'Meting', desc: 'Lengte, massa, inhoud, eenhede soos mm, cm, m, g, kg, ml en l, en kloklees tot die kwartuur.' },
+  g3_measure_t3: { title: 'Meting', desc: 'Lengte, massa, inhoud, eenhede soos mm, cm, m, g, kg, ml en l, en kloklees tot die kwartuur.' },
+  g3_measure_t4: { title: 'Meting', desc: 'Lengte, massa, inhoud, eenhede soos mm, cm, m, g, kg, ml en l, en kloklees tot die kwartuur.' },
+  g3_data_t1: { title: 'Datahantering', desc: "Lees 'n grafiek, werk totale en verskille uit 'n staafgrafiek uit, of bou jou eie piktogram." },
+  g3_data_t2: { title: 'Datahantering', desc: "Lees 'n grafiek, werk totale en verskille uit 'n staafgrafiek uit, of bou jou eie piktogram." },
+  g3_data_t3: { title: 'Datahantering', desc: "Lees 'n grafiek, werk totale en verskille uit 'n staafgrafiek uit, of bou jou eie piktogram." },
+  g3_data_t4: { title: 'Datahantering', desc: "Lees 'n grafiek, werk totale en verskille uit 'n staafgrafiek uit, of bou jou eie piktogram." },
   g3_wordprob_t1: { title: 'Woordprobleme', desc: 'Getalstories tot 100, met vermenigvuldiging en deel.' },
   g3_wordprob_t2: { title: 'Woordprobleme', desc: 'Getalstories tot 200, met vermenigvuldiging en deel.' },
   g3_wordprob_t3: { title: 'Woordprobleme', desc: 'Getalstories tot 400, met vermenigvuldiging en deel.' },
   g3_wordprob_t4: { title: 'Woordprobleme', desc: 'Getalstories tot 999, met vermenigvuldiging en deel.' },
+  g3_symmetry: { title: 'Simmetrie', desc: "Trek die simmetrielyn, of teken die ontbrekende ander helfte van 'n vorm.", badgeAf: 'Vroeë blik op Graad 4-inhoud' },
   fp_shapes: { title: 'Vorms Sorteer', desc: 'Reguit kante of rond? Sorteer alledaagse vorms.' },
   fp_measure: { title: 'Metingsgrondslae', desc: "Vergelyk informeel, of kies 'n gepaste eenheid." },
   fp_bonds: { title: 'Getalbande', desc: 'Vind die ontbrekende deel wat 5, 10, 15 of 20 maak.' },
@@ -2118,7 +2156,7 @@ const ACTIVITIES_AF = {
   game_flipout: { title: 'Draai Uit', desc: "Kaarte draai een-een om teen die tydhouer - hou 'n lopende totaal in jou kop. Kry dit reg om te sien of jy Mathilde se totaal klop; kry dit verkeerd en jy verbeur die ronde!" },
   game_snakesladders: { title: 'Slange en Lere', desc: 'Rol twee dobbelstene en werk die antwoord uit om soveel blokkies te beweeg. Lere neem jou op, slange stuur jou af. Eerste om presies 100 te bereik wen. Kies om die dobbelstene te tel of te vermenigvuldig.' },
   game_ten: { title: 'TIEN!', desc: "Tik op twee van die 12 oop kaarte wat saam 10 maak. Prentkaarte = 10, Aas = 1. Meeste paartjies wanneer die stapel op is, wen!" },
-  game_pyramid: { title: 'Piramide', desc: "Maak die 15-kaart piramide skoon deur oop kaarte met mekaar te vat, of 'n oop kaart met die stapelkaart, om 10 te maak. Prentkaarte = 10, Aas = 1. Maak alles skoon voor die stapel op is!" },
+  game_pyramid: { title: 'Piramide', desc: "Maak die 15-getal piramide skoon deur oop getalle met mekaar te vat, of 'n oop getal met die stapelgetal, om 10 te maak. Maak alles skoon voor die stapel op is!" },
   game_horseshoe: { title: 'Hoefyster', desc: "Neem beurte om 'n kaart in die middel om te draai en eis enige twee kaarte daar op wat saam 10 maak. Prentkaarte = 10, Aas = 1. Meeste kaarte wanneer die stapel leeg is, wen!" },
   game_colorclash: { title: 'Kleurbotsing', desc: "Pas die boonste kaart by kleur of getal en maak jou hand eerste leeg. Slaan-oor, Omkeer en Wild werk soos gewoonlik - maar +2 en Wild +4 kaarte laat jou eers 'n vinnige som oplos om minder kaarte te trek!" },
   game_shop: { title: 'Winkel Winkel!', desc: "Bestuur die kassa! Tik regte Suid-Afrikaanse munte en note om die presiese prys te betaal, of werk die regte kleingeld uit en gee dit terug. 'n Nuwe item en prys elke rondte." },
@@ -2172,6 +2210,20 @@ function renderLevelTabs() {
   const n = mathitStickers.length;
   const stickerBtn = `<div class="level-tab ${onStickers ? 'active' : ''}" onclick="goTo('stickers')">🏅 ${tr('My Stickers', 'My Plakkers')}${n ? ` (${n})` : ''}</div>`;
   document.getElementById('level-tabs').innerHTML = levelBtns + manipBtn + stickerBtn;
+  // Safari/WebKit (iPadOS included) can silently fail to start a CSS
+  // animation on an element that arrives already carrying the animating
+  // class, because the whole bar was just replaced via innerHTML - the
+  // keyframe is declared but the browser never notices it needs to run
+  // until something else forces a style recalculation (a resize, a scroll,
+  // another re-render). That reads as "the holographic tab doesn't always
+  // show, it's delayed" - which is exactly this bug's signature. Toggling
+  // the animation off and back on, with a forced reflow in between, makes
+  // every browser notice it on every render rather than by accident.
+  document.querySelectorAll('#level-tabs .level-tab.active').forEach(el => {
+    el.style.animation = 'none';
+    void el.offsetWidth; // force reflow
+    el.style.animation = '';
+  });
 }
 function setLevel(l) {
   // Same reason as the guard in goTo(): renderLevelTabs() draws this button
@@ -2185,7 +2237,15 @@ function setLevel(l) {
     mathitRenderWelcome();
     return;
   }
-  currentLevel = l; renderLevelTabs(); renderHome(); window.scrollTo(0, 0);
+  currentLevel = l;
+  // Keeps currentActivityKey an honest answer to "is an activity on screen
+  // right now" - goToManipulatives() below relies on that to decide whether
+  // its drawer should dock beside an activity or take the full screen.
+  // Without this, switching grades straight from an activity (rather than
+  // going Back first) left currentActivityKey pointing at the activity just
+  // left, even though the home tile grid is what is actually showing.
+  currentActivityKey = 'home';
+  renderLevelTabs(); renderHome(); window.scrollTo(0, 0);
 }
 function goToManipulatives() {
   // Same gap as setLevel() above, but worse: this one opens a fully working
@@ -2817,7 +2877,7 @@ function mathildeName() { return 'Mathilde MathIT'; }
 function mathildeFace(px) {
   const m = document.querySelector('.header-title-row .mascot');
   const src = m && m.getAttribute('src');
-  return src ? `<img class="mathilde-face" src="${src}" alt="" aria-hidden="true" style="width:${px||20}px;">` : '';
+  return src ? `<img class="mathilde-face" src="${src}" alt="" aria-hidden="true" style="width:${px||34}px;">` : '';
 }
 function mathildeLabel(px) { return mathildeFace(px) + mathildeName(); }
 function backBtn() {
@@ -2952,12 +3012,12 @@ function goTo(key) {
     g1_data_t3: g1_renderData_t3, g1_data_t4: g1_renderData_t4,
     g1_wordprob_t1: g1_renderWordProb_t1, g1_wordprob_t2: g1_renderWordProb_t2,
     g1_wordprob_t3: g1_renderWordProb_t3, g1_wordprob_t4: g1_renderWordProb_t4,
+    g1_symmetry: g1_renderSymmetry,
     g2_counting_t1: g2_renderCounting_t1, g2_counting_t2: g2_renderCounting_t2,
     g2_counting_t3: g2_renderCounting_t3, g2_counting_t4: g2_renderCounting_t4,
     g2_addsub_t1: g2_renderAddSub_t1, g2_addsub_t2: g2_renderAddSub_t2,
     g2_addsub_t3: g2_renderAddSub_t3, g2_addsub_t4: g2_renderAddSub_t4,
-    g2_skipcount_t1: g2_renderSkipCount_t1, g2_skipcount_t2: g2_renderSkipCount_t2,
-    g2_skipcount_t3: g2_renderSkipCount_t3, g2_skipcount_t4: g2_renderSkipCount_t4,
+    g2_skipcount: g2_renderSkipCount,
     g2_patterns_t1: g2_renderPatterns_t1, g2_patterns_t2: g2_renderPatterns_t2,
     g2_patterns_t3: g2_renderPatterns_t3, g2_patterns_t4: g2_renderPatterns_t4,
     g2_shapes_t1: g2_renderShapes_t1, g2_shapes_t2: g2_renderShapes_t2,
@@ -2970,12 +3030,12 @@ function goTo(key) {
     g2_data_t3: g2_renderData_t3, g2_data_t4: g2_renderData_t4,
     g2_wordprob_t1: g2_renderWordProb_t1, g2_wordprob_t2: g2_renderWordProb_t2,
     g2_wordprob_t3: g2_renderWordProb_t3, g2_wordprob_t4: g2_renderWordProb_t4,
+    g2_symmetry: g2_renderSymmetry,
     g3_counting_t1: g3_renderCounting_t1, g3_counting_t2: g3_renderCounting_t2,
     g3_counting_t3: g3_renderCounting_t3, g3_counting_t4: g3_renderCounting_t4,
     g3_addsub_t1: g3_renderAddSub_t1, g3_addsub_t2: g3_renderAddSub_t2,
     g3_addsub_t3: g3_renderAddSub_t3, g3_addsub_t4: g3_renderAddSub_t4,
-    g3_skipcount_t1: g3_renderSkipCount_t1, g3_skipcount_t2: g3_renderSkipCount_t2,
-    g3_skipcount_t3: g3_renderSkipCount_t3, g3_skipcount_t4: g3_renderSkipCount_t4,
+    g3_skipcount: g3_renderSkipCount,
     g3_patterns_t1: g3_renderPatterns_t1, g3_patterns_t2: g3_renderPatterns_t2,
     g3_patterns_t3: g3_renderPatterns_t3, g3_patterns_t4: g3_renderPatterns_t4,
     g3_shapes_t1: g3_renderShapes_t1, g3_shapes_t2: g3_renderShapes_t2,
@@ -2988,6 +3048,7 @@ function goTo(key) {
     g3_data_t3: g3_renderData_t3, g3_data_t4: g3_renderData_t4,
     g3_wordprob_t1: g3_renderWordProb_t1, g3_wordprob_t2: g3_renderWordProb_t2,
     g3_wordprob_t3: g3_renderWordProb_t3, g3_wordprob_t4: g3_renderWordProb_t4,
+    g3_symmetry: g3_renderSymmetry,
     fp_shapes: fp_renderShapes,
     fp_bonds: fp_renderBonds, fp_tenframe: fp_renderTenFrame, fp_renaming: fp_renderRenaming,
     fp_grid100: fp_renderHundredGrid, fp_time: fp_renderTellTime, fp_pyramid: fp_renderPyramid,
@@ -5445,64 +5506,12 @@ function g2_renderAddSub_t4() { g2RenderAddSub(99, 4); }
 
 // ---- Skip Counting (continues past Grade 1's 2s/5s/10s into 3s/4s) ----
 let g2ScState = { correct: 0, attempted: 0, answer: null, step: 3 };
-function g2RenderSkipCount(step, term) {
-  g2ScState = { correct: 0, attempted: 0, answer: null, step };
-  app.innerHTML = `
-    ${backBtn()}
-    <div class="card">
-      <h2 class="activity-title">🔟 ${tr(`Skip Counting in ${step}s: Term ${term}`, `Spring-tel in ${step}s: Kwartaal ${term}`)}</h2>
-      <p class="subtext">${tr(`Grade 2, Term ${term}: count on in ${step}s. Tap the next number.`, `Graad 2, Kwartaal ${term}: tel aan in ${step}s. Tik op die volgende getal.`)}</p>
-      ${tutorHTML('fp_skipcount')}
-      <div id="g2sc-score">${scoreHTML(g2ScState)}</div>
-      <div id="g2sc-question"></div>
-      <div id="g2sc-feedback" class="feedback"></div>
-    </div>
-  `;
-  g2NewSCQuestion();
-}
-function g2NewSCQuestion() {
-  const step = g2ScState.step;
-  const startMultiple = randInt(0, 10);
-  const start = startMultiple * step;
-  const seq = [0, 1, 2, 3].map(i => start + i * step);
-  g2ScState.answer = start + 4 * step;
-  const boxes = seq.map(n => `<div class="seq-box">${n}</div>`).join('') + `<div class="seq-box blank">?</div>`;
-  const options = g1MCQOptions(g2ScState.answer, 0, start + 8 * step, 4);
-  document.getElementById('g2sc-question').innerHTML = `
-    <div class="seq-row">${boxes}</div>
-    <div class="mcq-opts" id="g2sc-opts">
-      ${options.map(o => `<div class="mcq-opt big" onclick="g2CheckSC(${o})">${o}</div>`).join('')}
-    </div>
-  `;
-  document.getElementById('g2sc-feedback').className = 'feedback';
-}
-function g2CheckSC(picked) {
-  g2ScState.attempted++;
-  const fb = document.getElementById('g2sc-feedback');
-  const opts = [...document.querySelectorAll('#g2sc-opts .mcq-opt')];
-  opts.forEach(o => { o.onclick = null; });
-  if (picked === g2ScState.answer) {
-    g2ScState.correct++;
-    fb.className = 'feedback good';
-    fb.textContent = tr('Correct! Next one.', 'Reg! Volgende een.');
-    opts.forEach(o => { if (Number(o.textContent) === picked) o.classList.add('correct'); });
-    mathitLater(g2NewSCQuestion, 900);
-  } else {
-    fb.className = 'feedback bad';
-    fb.textContent = tr(`Not quite. The answer was ${g2ScState.answer}.`, `Nie heeltemal reg nie. Die antwoord was ${g2ScState.answer}.`);
-    opts.forEach(o => {
-      const n = Number(o.textContent);
-      if (n === picked) o.classList.add('wrong');
-      if (n === g2ScState.answer) o.classList.add('correct');
-    });
-    mathitLater(g2NewSCQuestion, 1400);
-  }
-  document.getElementById('g2sc-score').innerHTML = scoreHTML(g2ScState);
-}
-function g2_renderSkipCount_t1() { g2RenderSkipCount(3, 1); }
-function g2_renderSkipCount_t2() { g2RenderSkipCount(4, 2); }
-function g2_renderSkipCount_t3() { g2RenderSkipCount(20, 3); }
-function g2_renderSkipCount_t4() { g2RenderSkipCount(25, 4); }
+// Consolidated per the tutor's instruction: one Skip Counting activity per
+// grade with a step-size picker, rather than one fixed number tied to one
+// term. See the SKIPCOUNT_CONFIG comment further down (by the Grade 3
+// version) for the full reasoning and the shared implementation both grades
+// use.
+function g2_renderSkipCount() { scRender(2); }
 
 // ---- Patterns (adds a "number pattern" mode on top of the two picture
 // modes shared with Grade 1 - reading and continuing a numeric sequence is
@@ -5879,67 +5888,123 @@ function g3_renderAddSub_t2() { g3RenderAddSub(200, 2); }
 function g3_renderAddSub_t3() { g3RenderAddSub(400, 3); }
 function g3_renderAddSub_t4() { g3RenderAddSub(999, 4); }
 
-// ---- Skip Counting (continues past Grade 2's 3s/4s/20s/25s into 6s/7s,
-// then the big landmarks of 50s and 100s) ----
-let g3ScState = { correct: 0, attempted: 0, answer: null, step: 6 };
-function g3RenderSkipCount(step, term) {
-  g3ScState = { correct: 0, attempted: 0, answer: null, step };
+// ---- Skip Counting (Grade 2 and Grade 3) ----
+//
+// One activity per grade with a step-size picker, rather than one fixed
+// number tied to one term. The old design (kept for Grade 1, which nobody
+// asked to change) gave each grade exactly 4 slots, one per term - fine
+// when a grade only needs 4 numbers, but Grade 3 needs ten, which does not
+// divide into 4 terms without inventing a term-by-term split nobody asked
+// for. The tutor's own instruction was explicit: no terms, one activity per
+// grade, every number always available. The two configs below are exactly
+// the numbers and the number-range ceiling given, nothing guessed:
+// Grade 2 keeps its original four (3, 4, 20, 25) with 2, 5 and 10 added on
+// top, staying under 200; Grade 3 is the full ten-number list given,
+// excluding 6 and 7, staying under 1000.
+const SKIPCOUNT_CONFIG = {
+  2: { steps: [2, 3, 4, 5, 10, 20, 25], max: 200 },
+  3: { steps: [2, 3, 4, 5, 10, 20, 25, 50, 100, 'odd'], max: 1000 },
+};
+
+let scState = {};   // one running score per grade, so switching grades keeps each grade's own tally
+let scStep  = {};   // the step currently picked, per grade
+
+function scLabel(step) {
+  return step === 'odd' ? tr('Odd numbers', 'Onewe getalle') : `${step}${tr('s', "'s")}`;
+}
+
+// "Odd numbers" is really step-2 counting starting from an odd number
+// instead of an even one, so it reuses every bit of the machinery below
+// rather than needing a branch of its own further on.
+function scSequence(step, max) {
+  const realStep = step === 'odd' ? 2 : step;
+  // Four numbers show on screen plus the blank (start .. start + 4*step),
+  // and the answer options range needs headroom past that too, so the
+  // highest number ever involved is start + 8*step. Capping the starting
+  // multiple so that stays at or under the grade's ceiling is what keeps
+  // every number on screen sensible whichever step is picked - a big step
+  // like 100 simply gets fewer, still-valid starting points than a small
+  // one like 2 does, rather than ever spilling past the ceiling.
+  const highestMultiple = Math.max(0, Math.floor(max / realStep) - 8);
+  const start = randInt(0, highestMultiple) * realStep;
+  return { start: (step === 'odd' && start % 2 === 0) ? start + 1 : start, realStep };
+}
+
+function scStepsHTML(grade) {
+  return SKIPCOUNT_CONFIG[grade].steps.map(s => {
+    const arg = typeof s === 'string' ? `'${s}'` : s;
+    return `<button class="curr-btn ${s === scStep[grade] ? 'active' : ''}" onclick="scPickStep(${grade}, ${arg})">${scLabel(s)}</button>`;
+  }).join('');
+}
+
+function scRender(grade) {
+  const cfg = SKIPCOUNT_CONFIG[grade];
+  if (!scStep[grade]) scStep[grade] = cfg.steps[0];
+  scState[grade] = { correct: 0, attempted: 0, answer: null };
   app.innerHTML = `
     ${backBtn()}
     <div class="card">
-      <h2 class="activity-title">🔟 ${tr(`Skip Counting in ${step}s: Term ${term}`, `Spring-tel in ${step}s: Kwartaal ${term}`)}</h2>
-      <p class="subtext">${tr(`Grade 3, Term ${term}: count on in ${step}s. Tap the next number.`, `Graad 3, Kwartaal ${term}: tel aan in ${step}s. Tik op die volgende getal.`)}</p>
+      <h2 class="activity-title">🔟 ${tr('Skip Counting', 'Spring-tel')}</h2>
+      <p class="subtext">${tr(`Grade ${grade}: pick a number below, then tap the next number in the pattern.`, `Graad ${grade}: kies 'n getal hieronder, tik dan op die volgende getal in die patroon.`)}</p>
       ${tutorHTML('fp_skipcount')}
-      <div id="g3sc-score">${scoreHTML(g3ScState)}</div>
-      <div id="g3sc-question"></div>
-      <div id="g3sc-feedback" class="feedback"></div>
+      <div class="curr-switch" id="sc-steps-${grade}">${scStepsHTML(grade)}</div>
+      <div id="sc-score-${grade}">${scoreHTML(scState[grade])}</div>
+      <div id="sc-question-${grade}"></div>
+      <div id="sc-feedback-${grade}" class="feedback"></div>
     </div>
   `;
-  g3NewSCQuestion();
+  scNewQuestion(grade);
 }
-function g3NewSCQuestion() {
-  const step = g3ScState.step;
-  const startMultiple = randInt(0, 10);
-  const start = startMultiple * step;
-  const seq = [0, 1, 2, 3].map(i => start + i * step);
-  g3ScState.answer = start + 4 * step;
+
+function scPickStep(grade, step) {
+  scStep[grade] = step;
+  document.getElementById(`sc-steps-${grade}`).innerHTML = scStepsHTML(grade);
+  scNewQuestion(grade);
+}
+
+function scNewQuestion(grade) {
+  const cfg = SKIPCOUNT_CONFIG[grade];
+  const { start, realStep } = scSequence(scStep[grade], cfg.max);
+  const seq = [0, 1, 2, 3].map(i => start + i * realStep);
+  const answer = start + 4 * realStep;
+  scState[grade].answer = answer;
   const boxes = seq.map(n => `<div class="seq-box">${n}</div>`).join('') + `<div class="seq-box blank">?</div>`;
-  const options = g1MCQOptions(g3ScState.answer, 0, start + 8 * step, 4);
-  document.getElementById('g3sc-question').innerHTML = `
+  const options = g1MCQOptions(answer, 0, cfg.max, 4);
+  document.getElementById(`sc-question-${grade}`).innerHTML = `
     <div class="seq-row">${boxes}</div>
-    <div class="mcq-opts" id="g3sc-opts">
-      ${options.map(o => `<div class="mcq-opt big" onclick="g3CheckSC(${o})">${o}</div>`).join('')}
+    <div class="mcq-opts" id="sc-opts-${grade}">
+      ${options.map(o => `<div class="mcq-opt big" onclick="scCheck(${grade}, ${o})">${o}</div>`).join('')}
     </div>
   `;
-  document.getElementById('g3sc-feedback').className = 'feedback';
+  document.getElementById(`sc-feedback-${grade}`).className = 'feedback';
 }
-function g3CheckSC(picked) {
-  g3ScState.attempted++;
-  const fb = document.getElementById('g3sc-feedback');
-  const opts = [...document.querySelectorAll('#g3sc-opts .mcq-opt')];
+
+function scCheck(grade, picked) {
+  const state = scState[grade];
+  state.attempted++;
+  const fb = document.getElementById(`sc-feedback-${grade}`);
+  const opts = [...document.querySelectorAll(`#sc-opts-${grade} .mcq-opt`)];
   opts.forEach(o => { o.onclick = null; });
-  if (picked === g3ScState.answer) {
-    g3ScState.correct++;
+  if (picked === state.answer) {
+    state.correct++;
     fb.className = 'feedback good';
     fb.textContent = tr('Correct! Next one.', 'Reg! Volgende een.');
     opts.forEach(o => { if (Number(o.textContent) === picked) o.classList.add('correct'); });
-    mathitLater(g3NewSCQuestion, 900);
+    mathitLater(() => scNewQuestion(grade), 900);
   } else {
     fb.className = 'feedback bad';
-    fb.textContent = tr(`Not quite. The answer was ${g3ScState.answer}.`, `Nie heeltemal reg nie. Die antwoord was ${g3ScState.answer}.`);
+    fb.textContent = tr(`Not quite. The answer was ${state.answer}.`, `Nie heeltemal reg nie. Die antwoord was ${state.answer}.`);
     opts.forEach(o => {
       const n = Number(o.textContent);
       if (n === picked) o.classList.add('wrong');
-      if (n === g3ScState.answer) o.classList.add('correct');
+      if (n === state.answer) o.classList.add('correct');
     });
-    mathitLater(g3NewSCQuestion, 1400);
+    mathitLater(() => scNewQuestion(grade), 1400);
   }
-  document.getElementById('g3sc-score').innerHTML = scoreHTML(g3ScState);
+  document.getElementById(`sc-score-${grade}`).innerHTML = scoreHTML(state);
 }
-function g3_renderSkipCount_t1() { g3RenderSkipCount(6, 1); }
-function g3_renderSkipCount_t2() { g3RenderSkipCount(7, 2); }
-function g3_renderSkipCount_t3() { g3RenderSkipCount(50, 3); }
-function g3_renderSkipCount_t4() { g3RenderSkipCount(100, 4); }
+
+function g3_renderSkipCount() { scRender(3); }
 
 // ---- Patterns (same three modes as Grade 2 - picture next, picture
 // mistake, number pattern - reusing the shared procedural generators so
@@ -6346,6 +6411,61 @@ const CE_CAPACITY_PAIRS = [
   { a: '🫖', b: '🍵' }, { a: '🍼', b: '🥄' }, { a: '🌊', b: '💧' }, { a: '🥫', b: '🍷' },
   { a: '🚛', b: '🧴' }, { a: '🍺', b: '🥃' },
 ];
+
+// ---- Units of measurement (which real unit fits the thing being measured -
+// Grade 2 Term 2 onward, all of Grade 3). Separate from the 'units' mode
+// above, which is Grade 1's informal "count the blocks" exercise and has
+// nothing to do with mm/cm/m/g/kg/ml/l. ----
+const CE_UNIT_CATEGORY = {
+  mm: 'length', cm: 'length', m: 'length',
+  mg: 'mass', g: 'mass', kg: 'mass',
+  ml: 'capacity', l: 'capacity',
+};
+const CE_UNIT_ITEMS = [
+  { unit: 'mm', en: 'how thick a coin is', af: "hoe dik 'n muntstuk is" },
+  { unit: 'mm', en: 'the length of an ant', af: "die lengte van 'n mier" },
+  { unit: 'mm', en: 'how thick your fingernail is', af: 'hoe dik jou vingernael is' },
+  { unit: 'mm', en: 'the length of a grain of rice', af: "die lengte van 'n ryskorrel" },
+  { unit: 'cm', en: 'the length of a pencil', af: "die lengte van 'n potlood" },
+  { unit: 'cm', en: 'the width of your hand', af: 'die wydte van jou hand' },
+  { unit: 'cm', en: 'the height of a coffee mug', af: "die hoogte van 'n koffiebeker" },
+  { unit: 'cm', en: 'the length of a crayon', af: "die lengte van 'n kryt" },
+  { unit: 'm', en: 'the height of a door', af: "die hoogte van 'n deur" },
+  { unit: 'm', en: 'the length of a classroom', af: "die lengte van 'n klaskamer" },
+  { unit: 'm', en: 'the height of a tree', af: "die hoogte van 'n boom" },
+  { unit: 'm', en: 'the length of a car', af: "die lengte van 'n motor" },
+  { unit: 'mg', en: 'the mass of a grain of sand', af: "die massa van 'n sandkorrel" },
+  { unit: 'mg', en: 'the mass of an eyelash', af: "die massa van 'n ooghaar" },
+  { unit: 'mg', en: 'the mass of a pinch of salt', af: "die massa van 'n knippie sout" },
+  { unit: 'mg', en: 'the mass of a single ant', af: "die massa van 'n enkele mier" },
+  { unit: 'g', en: 'the mass of a pencil', af: "die massa van 'n potlood" },
+  { unit: 'g', en: 'the mass of an apple', af: "die massa van 'n appel" },
+  { unit: 'g', en: 'the mass of a slice of bread', af: "die massa van 'n snytjie brood" },
+  { unit: 'g', en: 'the mass of a cellphone', af: "die massa van 'n selfoon" },
+  { unit: 'kg', en: 'the mass of a bag of potatoes', af: "die massa van 'n sak aartappels" },
+  { unit: 'kg', en: 'the mass of a schoolbag', af: "die massa van 'n skoolsak" },
+  { unit: 'kg', en: 'the mass of a dog', af: "die massa van 'n hond" },
+  { unit: 'kg', en: 'the mass of a bag of sugar', af: "die massa van 'n sak suiker" },
+  { unit: 'ml', en: 'a teaspoon of medicine', af: "'n teelepel medisyne" },
+  { unit: 'ml', en: 'a small bottle of perfume', af: "'n klein bottel parfuum" },
+  { unit: 'ml', en: 'the water in an eye dropper', af: "die water in 'n oogdruppelaar" },
+  { unit: 'ml', en: 'a tablespoon of cooking oil', af: "'n eetlepel kookolie" },
+  { unit: 'l', en: 'a bottle of milk', af: "'n bottel melk" },
+  { unit: 'l', en: 'a bucket of water', af: "'n emmer water" },
+  { unit: 'l', en: 'a bottle of cooldrink', af: "'n bottel koeldrank" },
+  { unit: 'l', en: 'a bathtub full of water', af: "'n bad vol water" },
+];
+/** The two wrong options for a "which unit?" question: other units from the
+ * same category first (so the question is mostly about judging scale - is
+ * this a cm thing or an m thing - rather than category), padded out with a
+ * unit from a different category only when its own category doesn't have
+ * two others (capacity only has ml and l). */
+function ceUnitDistractors(correctUnit) {
+  const cat = CE_UNIT_CATEGORY[correctUnit];
+  const sameCat = shuffle(Object.keys(CE_UNIT_CATEGORY).filter(u => CE_UNIT_CATEGORY[u] === cat && u !== correctUnit));
+  const otherCat = shuffle(Object.keys(CE_UNIT_CATEGORY).filter(u => CE_UNIT_CATEGORY[u] !== cat));
+  return [...sameCat, ...otherCat].slice(0, 2);
+}
 function ce_timeOptions(h, m, granularity) {
   const minutePool = granularity === 'hour' ? [0] : granularity === 'half' ? [0, 30] : [0, 15, 30, 45];
   const opts = new Set([fp_timeLabel(h, m)]);
@@ -6362,6 +6482,7 @@ function ce_renderMeasure(cfg) {
   const modeLabels = {
     length: tr('Length', 'Lengte'), mass: tr('Mass', 'Massa'), capacity: tr('Capacity', 'Kapasiteit'),
     units: tr('Counting blocks', 'Tel blokkies'), time: tr('Time', 'Tyd'),
+    whichunit: tr('Units', 'Eenhede'),
   };
   app.innerHTML = `
     ${backBtn()}
@@ -6430,6 +6551,14 @@ function ce_newMSQuestion() {
       ${g1BlocksHTML(count)}
       <div class="mcq-opts">${options.map(o => `<div class="mcq-opt big" onclick="ce_checkMS(this, ${o})">${o}</div>`).join('')}</div>
     `;
+  } else if (mode === 'whichunit') {
+    const item = pick(CE_UNIT_ITEMS);
+    ceMsState.answer = item.unit;
+    const options = shuffle([item.unit, ...ceUnitDistractors(item.unit)]);
+    qEl.innerHTML = `
+      <div class="q-box">${tr(`Which unit would you use to measure ${item.en}?`, `Watter eenheid sou jy gebruik om ${item.af} te meet?`)}</div>
+      <div class="mcq-opts">${options.map(o => `<div class="mcq-opt big" onclick="ce_checkMS(this, '${o}')">${o}</div>`).join('')}</div>
+    `;
   } else { // time
     const minutePool = ceMsState.timeGranularity === 'hour' ? [0] : ceMsState.timeGranularity === 'half' ? [0, 30] : [0, 15, 30, 45];
     const h = randInt(1, 12), m = pick(minutePool);
@@ -6483,6 +6612,7 @@ function ce_renderData(cfg) {
     sort: tr('Sort the pictures', 'Sorteer die prentjies'),
     graph: tr('Most and fewest', 'Meeste en minste'),
     bars: tr('Read the bar graph', 'Lees die staafgrafiek'),
+    pictogram: tr('Build a pictogram', "Bou 'n piktogram"),
   };
   app.innerHTML = `
     ${backBtn()}
@@ -6534,7 +6664,7 @@ function ce_newDTQuestion() {
       <div class="q-box">${tr(`Tap the column with the ${askMost ? 'MOST' : 'FEWEST'}.`, `Tik op die kolom met die ${askMost ? 'MEESTE' : 'MINSTE'}.`)}</div>
       ${mathitChartHTML({ title: tr(survey.title, survey.titleAf), kind: 'picto', cats, pick: 'ce_checkDT' })}
     `;
-  } else { // bars
+  } else if (mode === 'bars') {
     const survey = pick(MATHIT_SURVEYS);
     let counts;
     do { counts = survey.cats.map(() => randInt(1, ceDtState.countMax)); } while (new Set(counts).size < counts.length);
@@ -6567,6 +6697,76 @@ function ce_newDTQuestion() {
       <div class="q-box">${text}</div>
       <div class="mcq-opts">${options.map(o => `<div class="mcq-opt big" onclick="ce_checkDT(this, ${o})">${o}</div>`).join('')}</div>
     `;
+  } else { // pictogram - build one from given data, rather than just reading it
+    const survey = pick(MATHIT_SURVEYS);
+    // Kept well below the activity's main countMax: tapping out a pictogram
+    // one box at a time stops being a data-handling exercise and starts
+    // being a chore once the numbers get much past ten, whatever grade this
+    // is. One picture always stands for one - a many-to-one key is a Grade 5
+    // idea (see g5_databars), not this.
+    const maxCount = Math.min(ceDtState.countMax, 10);
+    const minCount = Math.min(3, maxCount);
+    let counts;
+    do { counts = survey.cats.map(() => randInt(minCount, maxCount)); } while (new Set(counts).size < counts.length);
+    const cats = survey.cats.map((c, i) => ({ label: tr(c.label, c.labelAf), icon: c.icon, count: counts[i] }));
+    ceDtState.pictoData = cats;
+    ceDtState.pictoPlaced = cats.map(() => 0);
+    ceDtState.pictoSlots = Math.max(...counts) + 2;
+    qEl.innerHTML = `
+      <div class="q-box">${tr('Build the pictogram for this data. One picture = 1. Tap the boxes to add pictures, then check your work.', "Bou die piktogram vir hierdie data. Een prentjie = 1. Tik op die blokkies om prentjies by te voeg, en gaan dan jou werk na.")}</div>
+      <div style="margin:10px 0; padding:10px 14px; background:var(--aqua-light); border-radius:10px;">
+        <strong>${tr(survey.title, survey.titleAf)}</strong><br>
+        ${cats.map(c => `${c.icon} ${c.label}: <strong>${c.count}</strong>`).join(' &nbsp;&nbsp; ')}
+      </div>
+      <div id="cedt-picto-grid">${ce_pictoGridHTML()}</div>
+      <div class="mcq-opts" style="justify-content:center; margin-top:14px;">
+        <div class="mcq-opt big" onclick="ce_pictoCheck()">${tr('Check my pictogram', 'Gaan my piktogram na')}</div>
+      </div>
+    `;
+  }
+}
+function ce_pictoGridHTML() {
+  return ceDtState.pictoData.map((c, i) => {
+    const placed = ceDtState.pictoPlaced[i];
+    let slots = '';
+    for (let s = 0; s < ceDtState.pictoSlots; s++) {
+      slots += `<div class="picto-slot${s < placed ? ' filled' : ''}" onclick="ce_pictoTap(${i}, ${s})">${s < placed ? c.icon : ''}</div>`;
+    }
+    return `<div class="picto-build-row"><div class="picto-build-label">${c.icon} ${c.label}</div><div class="picto-build-slots">${slots}</div></div>`;
+  }).join('');
+}
+/**
+ * Tapping an empty box fills it and every box before it (so a child doesn't
+ * have to tap one-by-one from the start every time); tapping a filled box
+ * removes it and everything after it, which is the natural "take this one
+ * back" gesture. Either way the row ends up at exactly the tapped position.
+ */
+function ce_pictoTap(i, slotIndex) {
+  const placed = ceDtState.pictoPlaced[i];
+  ceDtState.pictoPlaced[i] = slotIndex < placed ? slotIndex : slotIndex + 1;
+  document.getElementById('cedt-picto-grid').innerHTML = ce_pictoGridHTML();
+}
+/**
+ * Unlike every other Data Handling mode, one tap is not the whole answer
+ * here - building a pictogram is several taps across several rows. So this
+ * only advances to a new question when the whole thing is right; a wrong
+ * check leaves the child's work in place to fix, rather than throwing it
+ * away and showing a brand new dataset.
+ */
+function ce_pictoCheck() {
+  ceDtState.attempted++;
+  const fb = document.getElementById('cedt-feedback');
+  const allMatch = ceDtState.pictoData.every((c, i) => ceDtState.pictoPlaced[i] === c.count);
+  if (allMatch) {
+    ceDtState.correct++;
+    document.getElementById('cedt-score').innerHTML = scoreHTML(ceDtState);
+    fb.className = 'feedback good';
+    fb.textContent = tr('Correct! Next one.', 'Reg! Volgende een.');
+    mathitLater(ce_newDTQuestion, 1300);
+  } else {
+    document.getElementById('cedt-score').innerHTML = scoreHTML(ceDtState);
+    fb.className = 'feedback bad';
+    fb.textContent = tr("Not quite right yet - check the numbers above and try again.", 'Nog nie heeltemal reg nie - gaan die syfers hierbo na en probeer weer.');
   }
 }
 function ce_checkDT(el, val) {
@@ -6586,6 +6786,322 @@ function ce_checkDT(el, val) {
   }
   document.getElementById('cedt-score').innerHTML = scoreHTML(ceDtState);
   mathitLater(ce_newDTQuestion, correct ? 1100 : 1600);
+}
+
+// ---- Symmetry (Foundation Phase early exposure - see fp_symmetry tutor
+// note and each activity's "Early look at Grade 4 content" badge: line
+// symmetry is Grade 4 CAPS content, this is deliberately-earlier practice,
+// not a claim that it's official Grade 1-3 curriculum). Two modes: drag a
+// straight line onto a whole shape where its mirror line would be (reusing
+// the Grade 4 g4_renderSymmetry shape list and tolerance, already verified
+// and shipped there), or draw the missing mirror half of a shape freehand. ----
+function ceSyReflectX(p) { return [300 - p[0], p[1]]; }
+function ceSyDistToSegment(p, a, b) {
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const len2 = dx * dx + dy * dy;
+  let t = len2 === 0 ? 0 : ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+}
+function ceSyPointInPolygon(p, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    const hit = ((yi > p[1]) !== (yj > p[1])) && (p[0] < (xj - xi) * (p[1] - yi) / (yj - yi) + xi);
+    if (hit) inside = !inside;
+  }
+  return inside;
+}
+function ceSyDistToPolygonBoundary(p, poly) {
+  let min = Infinity;
+  for (let i = 0; i < poly.length; i++) min = Math.min(min, ceSyDistToSegment(p, poly[i], poly[(i + 1) % poly.length]));
+  return min;
+}
+function ceSyPointNearPolygon(p, poly, tol) {
+  return ceSyPointInPolygon(p, poly) || ceSyDistToPolygonBoundary(p, poly) <= tol;
+}
+/** n points evenly spaced (by arc length) around a closed polygon's boundary. */
+function ceSyPerimeterSample(poly, n) {
+  const edges = [];
+  let total = 0;
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    edges.push({ a, b, len });
+    total += len;
+  }
+  const pts = [];
+  for (let k = 0; k < n; k++) {
+    let target = (k / n) * total;
+    for (const e of edges) {
+      if (target <= e.len) { const t = e.len === 0 ? 0 : target / e.len; pts.push([e.a[0] + t * (e.b[0] - e.a[0]), e.a[1] + t * (e.b[1] - e.a[1])]); break; }
+      target -= e.len;
+    }
+  }
+  return pts;
+}
+// Each shape is authored as ONE half's outline only (half[0] and the last
+// point both sit exactly on the vertical axis x=150), so the full shape and
+// the target mirror half are both produced by reflection rather than drawn
+// twice by hand - the same "verify, don't hand-guess" standard as the
+// tangram geometry elsewhere in this file. Checked by
+// scripts/verify/symmetry.mjs: every reflected point of the reconstructed
+// full shape lands on another point of that shape, and both halves are
+// simple (non-self-intersecting) polygons with a sensible area.
+const CE_SYMMETRY_HALVES = [
+  { name: 'house', half: [[150, 40], [70, 110], [70, 220], [150, 220]] },
+  { name: 'diamond', half: [[150, 30], [80, 150], [150, 270]] },
+  { name: 'arrow-up', half: [[150, 30], [90, 120], [120, 120], [120, 230], [150, 230]] },
+  { name: 'shield', half: [[150, 30], [70, 30], [70, 140], [150, 260]] },
+  { name: 'heart', half: [[150, 80], [115, 30], [70, 30], [45, 75], [60, 130], [150, 230]] },
+  { name: 'tree', half: [[150, 30], [100, 130], [130, 130], [90, 210], [140, 210], [140, 260], [150, 260]] },
+];
+const CE_SY_HALF_POOLS = {
+  1: ['house', 'diamond'],
+  2: ['house', 'diamond', 'arrow-up', 'shield'],
+  3: ['house', 'diamond', 'arrow-up', 'shield', 'heart', 'tree'],
+};
+// Reuses the Grade 4 shape list (g4_SYMMETRY_SHAPES, defined further down
+// this file in the Grade 4 Symmetry section) rather than a second
+// hand-authored set - those shapes are already verified and already live in
+// production, and a shape doesn't stop being symmetric because a younger
+// grade is drawing the line on it. Named explicitly rather than derived
+// from g4_SYMMETRY_SHAPES.map(...) here, because that array's own `const`
+// declaration runs later in the file - reading it at this point, before its
+// declaration executes, would throw (temporal dead zone) and silently abort
+// every top-level declaration after it in this script block.
+const CE_SY_LINE_POOLS = {
+  1: ['house', 'arrow-up', 'shield', 'diamond-kite'],
+  2: ['house', 'arrow-up', 'shield', 'diamond-kite', 'butterfly', 'star', 'tree', 'sideways-house'],
+  3: ['house', 'arrow-up', 'shield', 'butterfly', 'star', 'arrow-right', 'sideways-house', 'chevron-left',
+      'diamond-kite', 'tree', 'vase', 'hourglass', 'sideways-tree', 'sideways-kite'],
+};
+let ceSyState = { grade: 1, correct: 0, attempted: 0, mode: 'line', modes: [], shape: null, checked: false, drag: null, strokes: [], currentStroke: null };
+function ce_renderSymmetry(cfg) {
+  ceSyState = { grade: cfg.grade, correct: 0, attempted: 0, mode: cfg.modes[0], modes: cfg.modes, shape: null, checked: false, drag: null, strokes: [], currentStroke: null };
+  const modeLabels = {
+    line: tr('Draw the line', 'Trek die lyn'),
+    half: tr('Draw the other half', 'Teken die ander helfte'),
+  };
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🦋 ${tr('Symmetry', 'Simmetrie')}</h2>
+      ${levelNote(ACTIVITIES['g' + cfg.grade + '_symmetry'])}
+      <p class="subtext">${tr('Use your finger or a mouse to draw on the shape.', "Gebruik jou vinger of 'n muis om op die vorm te teken.")}</p>
+      ${tutorHTML('fp_symmetry')}
+      <div class="mcq-opts">
+        ${cfg.modes.map(m => `<div class="mcq-opt" id="sy-lvl-${m}" onclick="ce_setSYMode('${m}')">${modeLabels[m]}</div>`).join('')}
+      </div>
+      <div id="sy-score">${scoreHTML(ceSyState)}</div>
+      <div id="sy-question"></div>
+      <div id="sy-feedback" class="feedback"></div>
+      <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="secondary small" onclick="ce_clearSY()">${tr('Clear', 'Vee uit')}</button>
+        <button class="action" onclick="ce_checkSY()">${tr('Check my drawing', 'Gaan my tekening na')}</button>
+      </div>
+    </div>
+  `;
+  ce_markSYMode();
+  ce_newSYQuestion();
+}
+function ce_setSYMode(m) { ceSyState.mode = m; ce_markSYMode(); ce_newSYQuestion(); }
+function ce_markSYMode() {
+  ceSyState.modes.forEach(m => document.getElementById('sy-lvl-' + m).classList.toggle('correct', ceSyState.mode === m));
+}
+function ce_svgPoint(svg, evt) {
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+  return { x: loc.x, y: loc.y };
+}
+function ce_newSYQuestion() {
+  document.getElementById('sy-feedback').className = 'feedback';
+  document.getElementById('sy-feedback').textContent = '';
+  ceSyState.checked = false;
+  ceSyState.drag = null;
+  ceSyState.strokes = [];
+  ceSyState.currentStroke = null;
+  const qEl = document.getElementById('sy-question');
+  const colors = ['ocean', 'aqua', 'coral', 'sand'];
+  const fill = `var(--${colors[randInt(0, colors.length - 1)]})`;
+  if (ceSyState.mode === 'line') {
+    const pickedName = pick(CE_SY_LINE_POOLS[ceSyState.grade]);
+    const shape = g4_SYMMETRY_SHAPES.find(s => s.name === pickedName);
+    ceSyState.shape = shape;
+    qEl.innerHTML = `
+      <div class="q-box">${tr('Drag your finger across the shape to draw its line of symmetry.', "Sleep jou vinger oor die vorm om sy simmetrielyn te trek.")}</div>
+      <div style="text-align:center; touch-action: none;">
+        <svg id="sy-svg" viewBox="0 0 300 300" width="300" height="300" style="max-width:100%; background:#fff; border-radius:14px; border:1.5px solid var(--border); touch-action:none; cursor:crosshair;">
+          <polygon points="${shape.points}" fill="${fill}" stroke="var(--ocean-dark)" stroke-width="2"></polygon>
+          <line id="sy-drawn-line" x1="0" y1="0" x2="0" y2="0" stroke="#075985" stroke-width="4" stroke-linecap="round" style="display:none;"></line>
+          <line id="sy-true-line" x1="${shape.axisA[0]}" y1="${shape.axisA[1]}" x2="${shape.axisB[0]}" y2="${shape.axisB[1]}" stroke="#2E7D32" stroke-width="3" stroke-dasharray="8,6" style="display:none;"></line>
+        </svg>
+      </div>
+    `;
+    ce_attachSYLineHandlers();
+  } else { // half
+    const pickedHalfName = pick(CE_SY_HALF_POOLS[ceSyState.grade]);
+    const shape = CE_SYMMETRY_HALVES.find(s => s.name === pickedHalfName);
+    ceSyState.shape = shape;
+    qEl.innerHTML = `
+      <div class="q-box">${tr('This shape is cut in half by the dashed green line. Draw the missing other half so the two sides match.', "Hierdie vorm is in twee gesny deur die stippel groen lyn. Teken die ontbrekende ander helfte sodat die twee kante pas.")}</div>
+      <div style="text-align:center; touch-action: none;">
+        <svg id="sy-svg" viewBox="0 0 300 300" width="300" height="300" style="max-width:100%; background:#fff; border-radius:14px; border:1.5px solid var(--border); touch-action:none; cursor:crosshair;">
+          <polygon points="${shape.half.map(p => p.join(',')).join(' ')}" fill="${fill}" stroke="var(--ocean-dark)" stroke-width="2"></polygon>
+          <line x1="150" y1="15" x2="150" y2="285" stroke="#2E7D32" stroke-width="3" stroke-dasharray="8,6"></line>
+          <g id="sy-strokes"></g>
+          <polygon id="sy-reveal" points="" fill="none" stroke="#2E7D32" stroke-width="3" stroke-dasharray="6,5" style="display:none;"></polygon>
+        </svg>
+      </div>
+    `;
+    ce_attachSYHalfHandlers();
+  }
+}
+function ce_attachSYLineHandlers() {
+  const svg = document.getElementById('sy-svg');
+  const drawnLine = document.getElementById('sy-drawn-line');
+  if (!svg) return;
+  svg.onpointerdown = (evt) => {
+    if (ceSyState.checked) return;
+    evt.preventDefault();
+    svg.setPointerCapture(evt.pointerId);
+    const p = ce_svgPoint(svg, evt);
+    ceSyState.drag = { startX: p.x, startY: p.y, endX: p.x, endY: p.y };
+    drawnLine.style.display = 'block';
+    drawnLine.setAttribute('x1', p.x); drawnLine.setAttribute('y1', p.y);
+    drawnLine.setAttribute('x2', p.x); drawnLine.setAttribute('y2', p.y);
+  };
+  svg.onpointermove = (evt) => {
+    if (!ceSyState.drag || ceSyState.checked) return;
+    evt.preventDefault();
+    const p = ce_svgPoint(svg, evt);
+    ceSyState.drag.endX = p.x; ceSyState.drag.endY = p.y;
+    drawnLine.setAttribute('x2', p.x); drawnLine.setAttribute('y2', p.y);
+  };
+  svg.onpointerup = (evt) => { if (ceSyState.drag) evt.preventDefault(); };
+  svg.onpointercancel = svg.onpointerup;
+}
+function ce_syPathD(pts) { return pts.length ? 'M ' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L ') : ''; }
+function ce_renderSYStrokes() {
+  const g = document.getElementById('sy-strokes');
+  if (!g) return;
+  g.innerHTML = ceSyState.strokes.map(s =>
+    `<path d="${ce_syPathD(s)}" fill="none" stroke="#075985" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path>`
+  ).join('');
+}
+function ce_attachSYHalfHandlers() {
+  const svg = document.getElementById('sy-svg');
+  if (!svg) return;
+  svg.onpointerdown = (evt) => {
+    if (ceSyState.checked) return;
+    evt.preventDefault();
+    svg.setPointerCapture(evt.pointerId);
+    const p = ce_svgPoint(svg, evt);
+    ceSyState.currentStroke = [[p.x, p.y]];
+    ceSyState.strokes.push(ceSyState.currentStroke);
+    ce_renderSYStrokes();
+  };
+  svg.onpointermove = (evt) => {
+    if (!ceSyState.currentStroke || ceSyState.checked) return;
+    evt.preventDefault();
+    const p = ce_svgPoint(svg, evt);
+    ceSyState.currentStroke.push([p.x, p.y]);
+    ce_renderSYStrokes();
+  };
+  svg.onpointerup = () => { ceSyState.currentStroke = null; };
+  svg.onpointercancel = svg.onpointerup;
+}
+function ce_clearSY() {
+  if (ceSyState.checked) return;
+  if (ceSyState.mode === 'line') {
+    ceSyState.drag = null;
+    const l = document.getElementById('sy-drawn-line');
+    if (l) l.style.display = 'none';
+  } else {
+    ceSyState.strokes = [];
+    ceSyState.currentStroke = null;
+    ce_renderSYStrokes();
+  }
+  const fb = document.getElementById('sy-feedback');
+  fb.className = 'feedback';
+  fb.textContent = '';
+}
+function ce_checkSY() {
+  if (ceSyState.mode === 'line') ce_checkSYLine(); else ce_checkSYHalf();
+}
+function ce_checkSYLine() {
+  const fb = document.getElementById('sy-feedback');
+  const drag = ceSyState.drag;
+  if (ceSyState.checked) return;
+  if (!drag) {
+    fb.className = 'feedback bad';
+    fb.textContent = tr('Draw a line across the shape first, then tap "Check my drawing".', 'Trek eers \'n lyn oor die vorm, en tik dan op "Gaan my tekening na".');
+    return;
+  }
+  const dx = drag.endX - drag.startX, dy = drag.endY - drag.startY;
+  if (Math.hypot(dx, dy) < 60) {
+    fb.className = 'feedback bad';
+    fb.textContent = tr('That line is too short. Drag right across the whole shape.', 'Daardie lyn is te kort. Sleep reg oor die hele vorm.');
+    return;
+  }
+  ceSyState.attempted++;
+  ceSyState.checked = true;
+  const shape = ceSyState.shape;
+  const angle = Math.abs(Math.atan2(dy, dx) * 180 / Math.PI);
+  const angleFromVertical = Math.min(Math.abs(angle - 90), Math.abs(angle - 270));
+  const angleFromHorizontal = Math.min(angle, Math.abs(angle - 180), Math.abs(angle - 360));
+  const ANGLE_TOL = 18, POS_TOL = 26;
+  let ok = false;
+  if (shape.axis === 'v' && angleFromVertical <= ANGLE_TOL) {
+    const dTop = Math.min(Math.hypot(drag.startX - shape.axisA[0], drag.startY - shape.axisA[1]), Math.hypot(drag.endX - shape.axisA[0], drag.endY - shape.axisA[1]));
+    const dBot = Math.min(Math.hypot(drag.startX - shape.axisB[0], drag.startY - shape.axisB[1]), Math.hypot(drag.endX - shape.axisB[0], drag.endY - shape.axisB[1]));
+    ok = dTop <= POS_TOL + 20 && dBot <= POS_TOL + 20 && Math.abs((drag.startX + drag.endX) / 2 - shape.axisA[0]) <= POS_TOL;
+  } else if (shape.axis === 'h' && angleFromHorizontal <= ANGLE_TOL) {
+    ok = Math.abs((drag.startY + drag.endY) / 2 - shape.axisA[1]) <= POS_TOL;
+  }
+  const trueLine = document.getElementById('sy-true-line');
+  if (ok) {
+    ceSyState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = tr('Correct! That line splits the shape into two matching mirror halves.', 'Reg! Daardie lyn verdeel die vorm in twee identiese spieëlhelftes.');
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = tr('Not quite, look at the dashed green line, that is the true line of symmetry. Try to picture folding the shape along it.', 'Nie heeltemal reg nie, kyk na die stippel groen lyn, dit is die ware simmetrielyn. Probeer jou voorstel hoe die vorm daarlangs vou.');
+  }
+  if (trueLine) trueLine.style.display = 'block';
+  document.getElementById('sy-score').innerHTML = scoreHTML(ceSyState);
+  mathitLater(ce_newSYQuestion, ok ? 1400 : 2600);
+}
+function ce_checkSYHalf() {
+  const fb = document.getElementById('sy-feedback');
+  if (ceSyState.checked) return;
+  const allPts = ceSyState.strokes.flat();
+  if (allPts.length < 5) {
+    fb.className = 'feedback bad';
+    fb.textContent = tr('Draw the matching half first, then tap "Check my drawing".', 'Teken eers die passende helfte, en tik dan op "Gaan my tekening na".');
+    return;
+  }
+  ceSyState.attempted++;
+  ceSyState.checked = true;
+  const target = ceSyState.shape.half.map(ceSyReflectX);
+  const TOL = 26;
+  const boundary = ceSyPerimeterSample(target, 40);
+  const coverageFrac = boundary.filter(bp => allPts.some(p => Math.hypot(p[0] - bp[0], p[1] - bp[1]) <= TOL)).length / boundary.length;
+  const containFrac = allPts.filter(p => ceSyPointNearPolygon(p, target, TOL)).length / allPts.length;
+  const ok = coverageFrac >= 0.65 && containFrac >= 0.65;
+  if (ok) {
+    ceSyState.correct++;
+    fb.className = 'feedback good';
+    fb.textContent = tr('Correct! That matches the mirror image.', "Reg! Dit pas by die spieëlbeeld.");
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = tr('Not quite, look at the dashed green outline, that is the matching half. Try to picture folding the shape along the line.', "Nie heeltemal reg nie, kyk na die stippel groen buitelyn, dit is die passende helfte. Probeer jou voorstel hoe die vorm langs die lyn vou.");
+    const reveal = document.getElementById('sy-reveal');
+    if (reveal) { reveal.setAttribute('points', target.map(p => p.join(',')).join(' ')); reveal.style.display = 'block'; }
+  }
+  document.getElementById('sy-score').innerHTML = scoreHTML(ceSyState);
+  mathitLater(ce_newSYQuestion, ok ? 1400 : 2900);
 }
 
 // ---- Word Problems (mixes addition, subtraction, comparison, and - once
@@ -6947,14 +7463,15 @@ function g2_renderMoney_t3() { ce_renderMoney({ grade: 2, term: 3, modes: ['tota
 function g2_renderMoney_t4() { ce_renderMoney({ grade: 2, term: 4, modes: ['total', 'compare', 'change'], coinPool: FP_COINS_SMALL, notePool: FP_NOTES.slice(0, 3), maxItems: 4 }); }
 
 function g2_renderMeasure_t1() { ce_renderMeasure({ grade: 2, term: 1, modes: ['length', 'mass', 'capacity', 'time'], timeGranularity: 'half' }); }
-function g2_renderMeasure_t2() { ce_renderMeasure({ grade: 2, term: 2, modes: ['length', 'mass', 'capacity', 'time'], timeGranularity: 'half' }); }
-function g2_renderMeasure_t3() { ce_renderMeasure({ grade: 2, term: 3, modes: ['length', 'mass', 'capacity', 'time'], timeGranularity: 'quarter' }); }
-function g2_renderMeasure_t4() { ce_renderMeasure({ grade: 2, term: 4, modes: ['length', 'mass', 'capacity', 'time'], timeGranularity: 'quarter' }); }
+// Units of measurement (mm/cm/m/ml/l/mg/g/kg) are introduced from Term 2.
+function g2_renderMeasure_t2() { ce_renderMeasure({ grade: 2, term: 2, modes: ['length', 'mass', 'capacity', 'whichunit', 'time'], timeGranularity: 'half' }); }
+function g2_renderMeasure_t3() { ce_renderMeasure({ grade: 2, term: 3, modes: ['length', 'mass', 'capacity', 'whichunit', 'time'], timeGranularity: 'quarter' }); }
+function g2_renderMeasure_t4() { ce_renderMeasure({ grade: 2, term: 4, modes: ['length', 'mass', 'capacity', 'whichunit', 'time'], timeGranularity: 'quarter' }); }
 
-function g2_renderData_t1() { ce_renderData({ grade: 2, term: 1, modes: ['graph', 'bars'], countMax: 8 }); }
-function g2_renderData_t2() { ce_renderData({ grade: 2, term: 2, modes: ['graph', 'bars'], countMax: 10 }); }
-function g2_renderData_t3() { ce_renderData({ grade: 2, term: 3, modes: ['graph', 'bars'], countMax: 12 }); }
-function g2_renderData_t4() { ce_renderData({ grade: 2, term: 4, modes: ['graph', 'bars'], countMax: 15 }); }
+function g2_renderData_t1() { ce_renderData({ grade: 2, term: 1, modes: ['graph', 'bars', 'pictogram'], countMax: 8 }); }
+function g2_renderData_t2() { ce_renderData({ grade: 2, term: 2, modes: ['graph', 'bars', 'pictogram'], countMax: 10 }); }
+function g2_renderData_t3() { ce_renderData({ grade: 2, term: 3, modes: ['graph', 'bars', 'pictogram'], countMax: 12 }); }
+function g2_renderData_t4() { ce_renderData({ grade: 2, term: 4, modes: ['graph', 'bars', 'pictogram'], countMax: 15 }); }
 
 function g2_renderWordProb_t1() { ce_renderWordProb({ grade: 2, term: 1, max: 20, allowMultiply: true }); }
 function g2_renderWordProb_t2() { ce_renderWordProb({ grade: 2, term: 2, max: 40, allowMultiply: true }); }
@@ -6980,20 +7497,25 @@ function g3_renderMoney_t2() { ce_renderMoney({ grade: 3, term: 2, modes: ['tota
 function g3_renderMoney_t3() { ce_renderMoney({ grade: 3, term: 3, modes: ['total', 'compare', 'change'], coinPool: FP_COINS_BIG, notePool: FP_NOTES, maxItems: 5 }); }
 function g3_renderMoney_t4() { ce_renderMoney({ grade: 3, term: 4, modes: ['total', 'compare', 'change'], coinPool: FP_COINS_BIG, notePool: FP_NOTES, maxItems: 5 }); }
 
-function g3_renderMeasure_t1() { ce_renderMeasure({ grade: 3, term: 1, modes: ['length', 'mass', 'capacity', 'time'], timeGranularity: 'quarter' }); }
-function g3_renderMeasure_t2() { ce_renderMeasure({ grade: 3, term: 2, modes: ['length', 'mass', 'capacity', 'time'], timeGranularity: 'quarter' }); }
-function g3_renderMeasure_t3() { ce_renderMeasure({ grade: 3, term: 3, modes: ['length', 'mass', 'capacity', 'time'], timeGranularity: 'quarter' }); }
-function g3_renderMeasure_t4() { ce_renderMeasure({ grade: 3, term: 4, modes: ['length', 'mass', 'capacity', 'time'], timeGranularity: 'quarter' }); }
+function g3_renderMeasure_t1() { ce_renderMeasure({ grade: 3, term: 1, modes: ['length', 'mass', 'capacity', 'whichunit', 'time'], timeGranularity: 'quarter' }); }
+function g3_renderMeasure_t2() { ce_renderMeasure({ grade: 3, term: 2, modes: ['length', 'mass', 'capacity', 'whichunit', 'time'], timeGranularity: 'quarter' }); }
+function g3_renderMeasure_t3() { ce_renderMeasure({ grade: 3, term: 3, modes: ['length', 'mass', 'capacity', 'whichunit', 'time'], timeGranularity: 'quarter' }); }
+function g3_renderMeasure_t4() { ce_renderMeasure({ grade: 3, term: 4, modes: ['length', 'mass', 'capacity', 'whichunit', 'time'], timeGranularity: 'quarter' }); }
 
-function g3_renderData_t1() { ce_renderData({ grade: 3, term: 1, modes: ['graph', 'bars'], countMax: 15 }); }
-function g3_renderData_t2() { ce_renderData({ grade: 3, term: 2, modes: ['graph', 'bars'], countMax: 18 }); }
-function g3_renderData_t3() { ce_renderData({ grade: 3, term: 3, modes: ['graph', 'bars'], countMax: 20 }); }
-function g3_renderData_t4() { ce_renderData({ grade: 3, term: 4, modes: ['graph', 'bars'], countMax: 20 }); }
+function g3_renderData_t1() { ce_renderData({ grade: 3, term: 1, modes: ['graph', 'bars', 'pictogram'], countMax: 15 }); }
+function g3_renderData_t2() { ce_renderData({ grade: 3, term: 2, modes: ['graph', 'bars', 'pictogram'], countMax: 18 }); }
+function g3_renderData_t3() { ce_renderData({ grade: 3, term: 3, modes: ['graph', 'bars', 'pictogram'], countMax: 20 }); }
+function g3_renderData_t4() { ce_renderData({ grade: 3, term: 4, modes: ['graph', 'bars', 'pictogram'], countMax: 20 }); }
 
 function g3_renderWordProb_t1() { ce_renderWordProb({ grade: 3, term: 1, max: 100, allowMultiply: true, allowDivide: true }); }
 function g3_renderWordProb_t2() { ce_renderWordProb({ grade: 3, term: 2, max: 200, allowMultiply: true, allowDivide: true }); }
 function g3_renderWordProb_t3() { ce_renderWordProb({ grade: 3, term: 3, max: 400, allowMultiply: true, allowDivide: true }); }
 function g3_renderWordProb_t4() { ce_renderWordProb({ grade: 3, term: 4, max: 999, allowMultiply: true, allowDivide: true }); }
+
+// Symmetry, Extra Practice only - see the note above ce_renderSymmetry.
+function g1_renderSymmetry() { ce_renderSymmetry({ grade: 1, modes: ['line', 'half'] }); }
+function g2_renderSymmetry() { ce_renderSymmetry({ grade: 2, modes: ['line', 'half'] }); }
+function g3_renderSymmetry() { ce_renderSymmetry({ grade: 3, modes: ['line', 'half'] }); }
 
 // =====================================================================
 // 1. PLACE VALUE EXPLORER (4 digit numbers)
@@ -11038,6 +11560,13 @@ function mtoolsOpen() {
   document.getElementById('mtools-overlay').hidden = false;
   // Body padding is what keeps the activity out from under the drawer.
   document.body.classList.add('mtools-docked');
+  // Docking makes sense beside an activity; opened from the home screen or
+  // the sticker book there is nothing to dock beside, so it goes fullscreen
+  // instead (see the body.mtools-fullscreen CSS). Decided once, here, at the
+  // moment of opening - not kept in sync afterward - so it matches exactly
+  // what "tap Tools while not in an activity" is asking for.
+  const inActivity = currentActivityKey !== 'home' && currentActivityKey !== 'stickers';
+  document.body.classList.toggle('mtools-fullscreen', !inActivity);
   document.getElementById('manip-nav').innerHTML = MANIP_TOOLS.map(t => `<div class="m-tab" onclick="manipGoTo('${t.id}')">${t.icon} ${tr(t.title, t.titleAf)}</div>`).join('');
   manipGoTo(manipCurrent || 'money');
   const manipLabel = document.querySelector('#mtools-tab-manip .mtools-tab-label');
@@ -11053,6 +11582,7 @@ function mtoolsOpen() {
 function mtoolsClose() {
   document.getElementById('mtools-overlay').hidden = true;
   document.body.classList.remove('mtools-docked');
+  document.body.classList.remove('mtools-fullscreen');
   window.dispatchEvent(new Event('resize'));
 }
 function mtoolsSwitchTab(tab) {
@@ -14330,7 +14860,7 @@ function r20_render() {
       ${tutorHTML('games_race20')}
       <div class="gc-scoreboard">
         <span class="gc-p-score">${tr('You', 'Jy')}: <span id="r20-score-p">0</span></span>
-        <span class="gc-c-score">${mathildeLabel(18)}: <span id="r20-score-c">0</span></span>
+        <span class="gc-c-score">${mathildeLabel(34)}: <span id="r20-score-c">0</span></span>
       </div>
       <div class="gc-status" id="r20-status"></div>
       <div class="r20-tracks">
@@ -14497,7 +15027,7 @@ function gc_renderGridGame(cfg) {
       ${tutorHTML(cfg.tutorKey)}
       <div class="gc-scoreboard">
         <span class="gc-p-score">${tr('You', 'Jy')}: <span id="gc-score-p">0</span></span>
-        <span class="gc-c-score">${mathildeLabel(18)}: <span id="gc-score-c">0</span></span>
+        <span class="gc-c-score">${mathildeLabel(34)}: <span id="gc-score-c">0</span></span>
       </div>
       <div class="gc-status" id="gc-status"></div>
       <div class="gc-dice-row" id="gc-dice-row"></div>
@@ -16733,7 +17263,7 @@ function dm_render() {
       ${tutorHTML('games_dominoes')}
       <div class="gc-scoreboard">
         <span class="gc-p-score">${tr('You', 'Jy')}: <span id="dm-score-p">${dmState.scores.p}</span></span>
-        <span class="gc-c-score">${mathildeLabel(18)}: <span id="dm-score-c">${dmState.scores.c}</span></span>
+        <span class="gc-c-score">${mathildeLabel(34)}: <span id="dm-score-c">${dmState.scores.c}</span></span>
       </div>
       <div class="gc-status" id="dm-status"></div>
       <div class="dm-hand-label">${tr('Chain', 'Ketting')} · ${tr('boneyard', 'trekhoop')}: <span id="dm-boneyard-count"></span></div>
@@ -17075,7 +17605,7 @@ function pt_render(mode) {
       ${tutorHTML('games_partners10')}
       <div class="gc-scoreboard">
         <span class="gc-p-score">${tr('You', 'Jy')}: <span id="pt-score-p">0</span></span>
-        <span class="gc-c-score">${mathildeLabel(18)}: <span id="pt-score-c">0</span></span>
+        <span class="gc-c-score">${mathildeLabel(34)}: <span id="pt-score-c">0</span></span>
       </div>
       ${mode === 'combo' ? `<div class="gc-status" id="pt-target"></div>` : ''}
       <div class="gc-status" id="pt-status"></div>
@@ -17735,7 +18265,7 @@ function snl_render() {
       </div>
       <div class="gc-scoreboard">
         <span class="gc-p-score">${tr('You', 'Jy')}: <span id="snl-score-p">0</span></span>
-        <span class="gc-c-score">${mathildeLabel(18)}: <span id="snl-score-c">0</span></span>
+        <span class="gc-c-score">${mathildeLabel(34)}: <span id="snl-score-c">0</span></span>
       </div>
       <div class="gc-status" id="snl-status"></div>
       <div class="gc-dice-row" id="snl-dice-row"></div>
@@ -17912,7 +18442,7 @@ function tn_render() {
       ${tutorHTML('games_ten')}
       <div class="gc-scoreboard">
         <span class="gc-p-score">${tr('You', 'Jy')}: <span id="tn-score-p">0</span></span>
-        <span class="gc-c-score">${mathildeLabel(18)}: <span id="tn-score-c">0</span></span>
+        <span class="gc-c-score">${mathildeLabel(34)}: <span id="tn-score-c">0</span></span>
       </div>
       <div class="gc-status" id="tn-status"></div>
       <div class="tn-board" id="tn-board"></div>
@@ -18047,6 +18577,16 @@ function tn_computerStep() {
 // the moves run out. The sheet also documents bonds-to-11/12/13 variants
 // using different face-card values; this build implements the base
 // bonds-to-10 version and leaves those variants for a future pass.
+//
+// The deck itself is still drawn from nb_fullDeck() (same 1-10 value mix as
+// a real deck: four of each 1-9, sixteen tens from the 10s and the face
+// cards), so the stock size and the odds of a move never change. Only the
+// face each tile shows is Pyramid-specific: py_cardFaceHTML() below prints
+// the plain value instead of the shared cardFaceHTML()'s rank letter and
+// suit symbol, per Debby's "must not be cards, must be plain numbers" - the
+// shared cardFaceHTML()/nb-red/nb-black suit colouring stays untouched for
+// Number Battle, TEN! and Horse Shoe, which still use real cards.
+function py_cardFaceHTML(card) { return `${card.value}`; }
 const PY_ROW_START = [0, 1, 3, 6, 10];
 function py_rc(idx) {
   for (let r = 4; r >= 0; r--) {
@@ -18088,7 +18628,7 @@ function py_render() {
     ${backBtn()}
     <div class="card">
       <h2 class="activity-title">🔺 ${tr('Pyramid', 'Piramide')}</h2>
-      <p class="subtext">${tr("Only uncovered cards in the pyramid are free to use - clear the two cards below one to unlock it. Pair a free card with another free card, or with the face-up stock card, to make 10 and clear both. Face cards = 10, Ace = 1. Clear the whole pyramid before the stock runs out!", "Slegs oop kaarte in die piramide is beskikbaar - maak eers die twee kaarte daaronder skoon om dit oop te maak. Vat 'n oop kaart saam met 'n ander oop kaart, of met die oop stapelkaart, om 10 te maak en albei skoon te maak. Prentkaarte = 10, Aas = 1. Maak die hele piramide skoon voor die stapel op is!")}</p>
+      <p class="subtext">${tr("Only uncovered numbers in the pyramid are free to use - clear the two numbers below one to unlock it. Pair a free number with another free number, or with the number on top of the stock, to make 10 and clear both. Clear the whole pyramid before the stock runs out!", "Slegs oop getalle in die piramide is beskikbaar - maak eers die twee getalle daaronder skoon om dit oop te maak. Vat 'n oop getal saam met 'n ander oop getal, of met die getal bo-op die stapel, om 10 te maak en albei skoon te maak. Maak die hele piramide skoon voor die stapel op is!")}</p>
       ${tutorHTML('games_pyramid')}
       <div class="gc-status" id="py-status">${tr(`Cleared: 0 / 15`, `Skoongemaak: 0 / 15`)}</div>
       <div class="py-pyramid" id="py-pyramid"></div>
@@ -18113,12 +18653,12 @@ function py_paint() {
       const c = pyState.pyramid[idx];
       if (c === null) { html += `<div class="nb-card bcard-empty"></div>`; continue; }
       const free = py_isFree(idx);
-      const cls = ['nb-card', c.color];
+      const cls = ['nb-card', 'py-tile'];
       const isSel = pyState.selected && pyState.selected.kind === 'p' && pyState.selected.idx === idx;
       if (!free) cls.push('py-locked');
       else if (playing) cls.push('bcard-clickable');
       if (isSel) cls.push('bcard-selected');
-      html += `<div class="${cls.join(' ')}"${(free && playing) ? ` onclick="py_selectToken('p', ${idx})"` : ''}>${cardFaceHTML(c)}</div>`;
+      html += `<div class="${cls.join(' ')}"${(free && playing) ? ` onclick="py_selectToken('p', ${idx})"` : ''}>${py_cardFaceHTML(c)}</div>`;
     }
     html += '</div>';
   }
@@ -18126,16 +18666,15 @@ function py_paint() {
 
   const stockEl = document.getElementById('py-stockrow');
   if (stockEl) {
-    const activeCls = ['nb-card'];
+    const activeCls = ['nb-card', 'py-tile'];
     if (pyState.active) {
-      activeCls.push(pyState.active.color);
       if (playing) activeCls.push('bcard-clickable');
       if (pyState.selected && pyState.selected.kind === 'a') activeCls.push('bcard-selected');
     } else {
       activeCls.push('bcard-empty');
     }
     const activeHTML = pyState.active
-      ? `<div class="${activeCls.join(' ')}"${playing ? ` onclick="py_selectToken('a', 0)"` : ''}>${cardFaceHTML(pyState.active)}</div>`
+      ? `<div class="${activeCls.join(' ')}"${playing ? ` onclick="py_selectToken('a', 0)"` : ''}>${py_cardFaceHTML(pyState.active)}</div>`
       : `<div class="${activeCls.join(' ')}"></div>`;
     stockEl.innerHTML = `
       <span class="py-stock-count">${tr('Stock', 'Stapel')}: ${pyState.stock.length}</span>
@@ -18231,7 +18770,7 @@ function hs_render() {
       ${tutorHTML('games_horseshoe')}
       <div class="gc-scoreboard">
         <span class="gc-p-score">${tr('You', 'Jy')}: <span id="hs-score-p">0</span></span>
-        <span class="gc-c-score">${mathildeLabel(18)}: <span id="hs-score-c">0</span></span>
+        <span class="gc-c-score">${mathildeLabel(34)}: <span id="hs-score-c">0</span></span>
       </div>
       <div class="hs-deck-count" id="hs-deck-count"></div>
       <div class="gc-status" id="hs-status"></div>
