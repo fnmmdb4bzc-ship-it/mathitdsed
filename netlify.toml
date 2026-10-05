@@ -41,6 +41,11 @@
     Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
+  for = "/preview.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
   for = "/*"
   [headers.values]
     # SAMEORIGIN rather than DENY: index.html frames fractopia.html from this
