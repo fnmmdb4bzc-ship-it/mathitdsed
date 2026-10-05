@@ -18,6 +18,11 @@ const FILES = [
   // the same way index.html does it, so adding it widens the published surface
   // by exactly one file: no stylesheet and no font file travel with it.
   ['fractopia.html',       'dist/fractopia.html'],
+  // A standalone marketing preview, deliberately a separate file rather than
+  // a mode inside MathIT.html, so nothing here can ever affect the real app.
+  // It is NOT kept in sync automatically - see the comment near the top of
+  // preview.html.
+  ['preview.html',         'dist/preview.html'],
 ];
 
 await rm('dist', { recursive: true, force: true });
