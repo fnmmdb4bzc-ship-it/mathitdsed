@@ -285,6 +285,24 @@
     background: var(--surface-2); color: var(--text);
   }
   input[type=text]:focus, input[type=number]:focus { outline: 2px solid var(--coral); border-color: var(--coral); }
+  /* The browser's native up/down spinner on a number input eats roughly
+     18-20px off the right side of the box, which is invisible in the CSS
+     (clientWidth doesn't account for it) but very visible to a child typing
+     a 3-digit answer into a narrow box - the last digit lands behind the
+     spinner and gets clipped. Nothing in this app is meant to be used by
+     clicking those arrows (every answer is typed or tapped from a choice),
+     so removing them everywhere reclaims that width across every narrow
+     number input at once instead of widening each one by hand. */
+  input[type=number] { -moz-appearance: textfield; }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  /* The manipulatives' narrow number inputs (Ten Frames, Abacus, Doubling
+     and Halving, Hundred Chart) keep the same 1rem font and 12px side
+     padding as every other input above, but override width down to
+     80-90px - too little room for both, so placeholders like "e.g. 47"
+     were clipped. Smaller padding and font-size, kept narrow, fixes that
+     without changing anything about the full-width inputs. */
+  input.num-narrow { padding: 9px 6px; font-size: 0.92rem; text-align: center; }
   .feedback {
     margin-top: 14px; padding: 12px 14px; border-radius: 12px; font-weight: 700;
     display: none; font-size: 0.95rem;
@@ -608,6 +626,10 @@
   .m-frac-bar { display: flex; flex: 1; height: 42px; border-radius: 8px; overflow: hidden; border: 2px solid var(--border); }
   .m-frac-seg { flex: 1; border-right: 2px solid var(--border); cursor: pointer; background: #fff; transition: 0.1s; }
   .m-frac-seg:last-child { border-right: none; }
+  /* Each row's shaded colour is set inline per-denominator (see
+     MANIP_CIRCLE_COLORS/manipFracTilesRender), so every row - and its
+     matching circular fraction piece - is a consistent, distinct colour.
+     This is just the fallback if that inline style is ever missing. */
   .m-frac-seg.shaded { background: var(--coral); }
 
   .m-circle-mat { position: relative; min-height: 480px; border: 2px dashed var(--border); border-radius: 12px; background: #fafcff; overflow: hidden; }
@@ -8145,7 +8167,7 @@ function g4_newAFQuestion() {
   else { n1 = randInt(1, den - 1); n2 = randInt(1, n1); num = n1 - n2; }
   g4_afState.num = num; g4_afState.den = den;
   document.getElementById('af-question').innerHTML = `
-    <div class="q-box">${n1}/${den} ${isAdd ? '+' : '-'} ${n2}/${den} = <input type="text" id="af-in" placeholder="${tr(`for example 5/${den}`, `byvoorbeeld 5/${den}`)}" style="width:90px;" /></div>
+    <div class="q-box">${n1}/${den} ${isAdd ? '+' : '-'} ${n2}/${den} = <input type="text" id="af-in" placeholder="${tr(`e.g. 5/${den}`, `bv. 5/${den}`)}" style="width:110px;" /></div>
     <button class="action" onclick="g4_checkAF()">${tr('Check', 'Kontroleer')}</button>
     <button class="secondary" onclick="g4_newAFQuestion()">${tr('Skip', 'Slaan oor')}</button>
   `;
@@ -8819,7 +8841,7 @@ function g4_newGRQuestion() {
   document.getElementById('gr-question').innerHTML = `
     <div>${html}</div>
     <div class="q-box">${tr(`What is the grid reference of ${item}?`, `Wat is die roosterverwysing van ${item}?`)}</div>
-    <input type="text" id="gr-in" placeholder="${tr('for example C3', 'byvoorbeeld C3')}" autofocus />
+    <input type="text" id="gr-in" placeholder="${tr('e.g. C3', 'bv. C3')}" style="width:90px;" autofocus />
     <button class="action" onclick="g4_checkGR()">${tr('Check', 'Kontroleer')}</button>
     <button class="secondary" onclick="g4_newGRQuestion()">${tr('New position', 'Nuwe posisie')}</button>
   `;
@@ -9580,7 +9602,7 @@ function g5_newFMQuestion() {
   g5_fmState.wholeAns = Math.floor(totalImp / den);
   g5_fmState.fracAns = totalImp % den;
   document.getElementById('g5fm-question').innerHTML = `
-    <div class="q-box">${g5_mixedText(w1, n1, den)} ${isAdd ? '+' : '-'} ${g5_mixedText(w2, n2, den)} = <input type="text" id="g5fm-in" placeholder="${tr(`for example 1 2/${den}`, `byvoorbeeld 1 2/${den}`)}" style="width:120px;" /></div>
+    <div class="q-box">${g5_mixedText(w1, n1, den)} ${isAdd ? '+' : '-'} ${g5_mixedText(w2, n2, den)} = <input type="text" id="g5fm-in" placeholder="${tr(`e.g. 1 2/${den}`, `bv. 1 2/${den}`)}" style="width:120px;" /></div>
     <button class="action" onclick="g5_checkFM()">${tr('Check', 'Kontroleer')}</button>
     <button class="secondary" onclick="g5_newFMQuestion()">${tr('Skip', 'Slaan oor')}</button>
   `;
@@ -10481,8 +10503,13 @@ function g6_newFFQuestion() {
   g6_ffState.nums = [a, b, c];
   document.getElementById('ff-question').innerHTML = `
     <div class="q-box">${tr('Numbers:', 'Getalle:')} ${a}, ${b}, ${c}</div>
-    <div style="display:flex; flex-direction:column; gap:8px; max-width:280px;">
-      ${[1,2,3,4].map(i => `<input type="text" id="ff-fact${i}" placeholder="${tr(`fact ${i}, for example ${g6_ffState.type==='add' ? '3+4=7' : '3x4=12'}`, `feit ${i}, byvoorbeeld ${g6_ffState.type==='add' ? '3+4=7' : '3x4=12'}`)}" />`).join('')}
+    <div style="display:flex; flex-direction:column; gap:8px; max-width:320px;">
+      ${[1,2,3,4].map(i => `
+        <label style="display:flex; align-items:center; gap:8px;">
+          <span style="min-width:48px; font-weight:700; color:var(--text-soft);">${tr(`Fact ${i}:`, `Feit ${i}:`)}</span>
+          <input type="text" id="ff-fact${i}" placeholder="${tr(`e.g. ${g6_ffState.type==='add' ? '3+4=7' : '3x4=12'}`, `bv. ${g6_ffState.type==='add' ? '3+4=7' : '3x4=12'}`)}" style="flex:1;" />
+        </label>
+      `).join('')}
     </div>
     <button class="action" onclick="g6_checkFF()">${tr('Check', 'Kontroleer')}</button>
     <button class="secondary" onclick="g6_newFFQuestion()">${tr('New numbers', 'Nuwe getalle')}</button>
@@ -10649,7 +10676,7 @@ function g6_newFOQuestion() {
   else { if (n2 > n1) [n1, n2] = [n2, n1]; num = n1 - n2; }
   g6_foState.num = num; g6_foState.den = den;
   document.getElementById('fo-question').innerHTML = `
-    <div class="q-box">${n1}/${den} ${isAdd ? '+' : '-'} ${n2}/${den} = <input type="text" id="fo-in" placeholder="${tr(`for example 5/${den}`, `byvoorbeeld 5/${den}`)}" style="width:90px;" /></div>
+    <div class="q-box">${n1}/${den} ${isAdd ? '+' : '-'} ${n2}/${den} = <input type="text" id="fo-in" placeholder="${tr(`e.g. 5/${den}`, `bv. 5/${den}`)}" style="width:110px;" /></div>
     <button class="action" onclick="g6_checkFO()">${tr('Check', 'Kontroleer')}</button>
     <button class="secondary" onclick="g6_newFOQuestion()">${tr('Skip', 'Slaan oor')}</button>
   `;
@@ -11860,7 +11887,7 @@ const MANIP_DENOMS = [
   { value: 2000, label: 'R20', type: 'note', color: '#8a5b2e', animal: '' },
   { value: 5000, label: 'R50', type: 'note', color: '#d64545', animal: '' },
   { value: 10000, label: 'R100', type: 'note', color: '#075985', animal: '' },
-  { value: 20000, label: 'R200', type: 'note', color: '#a06a1e', animal: '' },
+  { value: 20000, label: 'R200', type: 'note', color: '#F97316', animal: '' },
 ];
 let manipMoneyTray = [];
 let manipMoneyTargetCents = 0;
@@ -12344,7 +12371,7 @@ function manipInitTenFrames() {
             <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
           </select>
         </label>
-        <input type="number" id="mtf-fill-number" min="0" max="50" placeholder="${tr('e.g. 13', 'bv. 13')}" style="width:90px;" />
+        <input type="number" id="mtf-fill-number" min="0" max="50" placeholder="${tr('e.g. 13', 'bv. 13')}" class="num-narrow" style="width:90px;" />
         <button class="action" onclick="manipTFFill()">${tr('Fill', 'Vul')}</button>
         <button class="secondary" onclick="manipTFClear()">${tr('Clear All', 'Maak Alles Skoon')}</button>
         <span>${tr('Total shown:', 'Totaal gewys:')} <strong id="mtf-total">0</strong></span>
@@ -12434,10 +12461,14 @@ function manipFracTilesRender() {
   document.getElementById('mfrac-rows').innerHTML = MANIP_FRAC_DENOMS.map(n => {
     manipFracTileState[n] = manipFracTileState[n] || new Array(n).fill(false);
     const shadedCount = manipFracTileState[n].filter(Boolean).length;
+    // Same colour per denominator as the circular fraction pieces below
+    // (MANIP_CIRCLE_COLORS), so a shaded 1/2 bar and a 1/2 circle piece
+    // read as "the same fraction" at a glance, not just two unrelated reds.
+    const color = MANIP_CIRCLE_COLORS[n] || 'var(--coral)';
     return `
       <div class="m-frac-row">
         <div class="label">${n === 1 ? '1' : '1/' + n}</div>
-        <div class="m-frac-bar">${manipFracTileState[n].map((shaded, i) => `<div class="m-frac-seg ${shaded ? 'shaded' : ''}" onclick="manipFracTileToggle(${n},${i})"></div>`).join('')}</div>
+        <div class="m-frac-bar">${manipFracTileState[n].map((shaded, i) => `<div class="m-frac-seg ${shaded ? 'shaded' : ''}" style="${shaded ? `background:${color};` : ''}" onclick="manipFracTileToggle(${n},${i})"></div>`).join('')}</div>
         <div style="width:70px;">${tr(`Shaded: ${shadedCount}/${n}`, `Geskakeer: ${shadedCount}/${n}`)}</div>
       </div>
     `;
@@ -12628,7 +12659,7 @@ function manipInitAbacus() {
       <h3 style="margin-top:0;">${tr('Abacus (100-Bead Counting Frame)', 'Abakus (100-kraal Telraam)')}</h3>
       <p class="m-help">${tr('10 rods, 10 beads each. Click a bead to move it (and the beads before it) across the rod, great for counting to 100 and grouping in tens and fives.', '10 stawe, elk met 10 krale. Klik \'n kraal om dit (en die krale voor dit) oor die staaf te skuif, uitstekend om tot 100 te tel en in tiene en vywe te groepeer.')}</p>
       <div class="m-row">
-        <input type="number" id="mab-set-number" min="0" max="100" placeholder="${tr('e.g. 47', 'bv. 47')}" style="width:90px;" />
+        <input type="number" id="mab-set-number" min="0" max="100" placeholder="${tr('e.g. 47', 'bv. 47')}" class="num-narrow" style="width:90px;" />
         <button class="action" onclick="manipAbSet()">${tr('Set Number', 'Stel Getal')}</button>
         <button class="secondary" onclick="manipAbClear()">${tr('Clear', 'Maak Skoon')}</button>
         <span>${tr('Total:', 'Totaal:')} <span class="m-total" id="mab-total">0</span></span>
@@ -12916,7 +12947,7 @@ function manipInitDoubling() {
       <h3 style="margin-top:0;">${tr('Doubling and Halving', 'Verdubbel en Halveer')}</h3>
       <p class="m-help">${tr('Set a number, then double it or halve it and watch the dots split into two equal groups.', 'Stel \'n getal, verdubbel of halveer dit dan, en kyk hoe die stippe in twee gelyke groepe verdeel.')}</p>
       <div class="m-row">
-        <input type="number" id="mdh-set-number" min="0" max="200" placeholder="${tr('e.g. 6', 'bv. 6')}" style="width:90px;" />
+        <input type="number" id="mdh-set-number" min="0" max="200" placeholder="${tr('e.g. 6', 'bv. 6')}" class="num-narrow" style="width:90px;" />
         <button class="action" onclick="manipDHSet()">${tr('Set Number', 'Stel Getal')}</button>
         <button class="secondary" onclick="manipDHDouble()">${tr('Double', 'Verdubbel')}</button>
         <button class="secondary" onclick="manipDHHalve()">${tr('Halve', 'Halveer')}</button>
@@ -13176,7 +13207,7 @@ function manipInitHundredChart() {
       <h3 style="margin-top:0;">${tr('Hundred Chart', 'Honderdkaart')}</h3>
       <p class="m-help">${tr('Click cells to mark them, or highlight every multiple of a number to spot the pattern.', 'Klik selle om hulle te merk, of lig elke veelvoud van \'n getal uit om die patroon te sien.')}</p>
       <div class="m-row">
-        <input type="number" id="mhc-n" min="2" max="20" placeholder="${tr('e.g. 3', 'bv. 3')}" style="width:80px;" />
+        <input type="number" id="mhc-n" min="2" max="20" placeholder="${tr('e.g. 3', 'bv. 3')}" class="num-narrow" style="width:80px;" />
         <button class="action" onclick="manipHCHighlightMultiples()">${tr('Highlight multiples', 'Lig veelvoude uit')}</button>
         <button class="secondary small" onclick="manipHCClear()">${tr('Clear', 'Maak Skoon')}</button>
       </div>
@@ -15141,6 +15172,16 @@ function gc_pickStrategic(candidates, owner) {
 }
 function gc_computerPick() {
   if (!gcState || !document.getElementById('gc-status')) return;
+  // Mathilde used to always know the roll's value exactly, so the only
+  // variation was strategic placement, never an actual miss. Give her the
+  // same roughly 1-in-6 chance of misreading the roll and finding nowhere
+  // to place this turn - an approximate design choice, not a measured rate.
+  if (Math.random() < 1 / 6) {
+    const statusEl = document.getElementById('gc-status');
+    if (statusEl) statusEl.textContent = tr("Mathilde got the roll wrong this time, so she can't place a piece.", "Mathilde het die rol verkeerd gehad hierdie keer, so sy kan nie 'n stuk plaas nie.");
+    mathitLater(gc_endTurn, 1400);
+    return;
+  }
   const candidates = gcState.cells.map((c, i) => (!c.owner && c.value === gcState.rolled ? i : -1)).filter(i => i !== -1);
   const choice = gc_pickStrategic(candidates, 'c') ?? gc_pickStrategic(candidates, 'p') ?? candidates[Math.floor(Math.random() * candidates.length)];
   gcState.cells[choice].owner = 'c';
@@ -17747,6 +17788,17 @@ function pt_computerStep() {
     if (ptState.status !== 'playing' || ptState.turn !== 'c') return;
     pt_ensurePlayable();
     const bond = pt_findBond(ptState.board, ptState.target);
+    // Mathilde used to never miss a pair that was actually on the board -
+    // she'd find every bond with a perfect "never misses what's visible"
+    // eye. Give her the same roughly 1-in-5 chance of overlooking one that
+    // a real player's own eye sometimes misses - an approximate design
+    // choice, not a measured rate.
+    if (bond && Math.random() < 0.2) {
+      const fb = document.getElementById('pt-feedback');
+      if (fb) { fb.className = 'feedback info'; fb.textContent = tr("Mathilde didn't spot a pair this turn.", "Mathilde het nie 'n paar hierdie beurt gesien nie."); }
+      pt_switchTurn('p');
+      return;
+    }
     if (!bond) {
       pt_switchTurn('p');
       return;
@@ -18165,6 +18217,19 @@ function fo_timeUp() {
   foState.phase = 'guessing';
   if (foTimerHandle) { clearInterval(foTimerHandle); foTimerHandle = null; }
   if (foFlipHandle) { clearInterval(foFlipHandle); foFlipHandle = null; }
+  // Mathilde used to never have to report her own total, so she could never
+  // be "wrong" about it. Now she has to total her own hidden cards too, with
+  // a slip-chance that grows with how many cards she had to track - an
+  // approximate design choice to give her the same kind of risk the player
+  // faces, not a measured error rate.
+  const errorRate = Math.min(0.35, foState.computerCards.length * 0.01);
+  if (Math.random() < errorRate) {
+    const slipCard = foState.computerCards[randInt(0, foState.computerCards.length - 1)];
+    const off = Math.random() < 0.5 ? slipCard.value : -slipCard.value;
+    foState.computerGuess = Math.max(0, foState.computerTotal + off);
+  } else {
+    foState.computerGuess = foState.computerTotal;
+  }
   const timerEl = document.getElementById('fo-timer');
   if (timerEl) timerEl.textContent = tr("Time's up!", 'Tyd is op!');
   document.getElementById('fo-body').insertAdjacentHTML('beforeend', `
@@ -18182,14 +18247,21 @@ function fo_submitGuess() {
   if (!foState || foState.phase !== 'guessing') return;
   const raw = document.getElementById('fo-in').value;
   const guess = parseInt(raw, 10);
-  const correct = guess === foState.playerTotal;
+  const playerCorrect = guess === foState.playerTotal;
+  const computerCorrect = foState.computerGuess === foState.computerTotal;
   foState.phase = 'over';
   foState.status = 'over';
   const fb = document.getElementById('fo-feedback');
   let msg;
-  if (!correct) {
+  if (!playerCorrect && !computerCorrect) {
+    fb.className = 'feedback info';
+    msg = tr(`You both got your own total wrong! Your cards added up to ${foState.playerTotal} (you said ${isNaN(guess) ? '-' : guess}), and Mathilde's added up to ${foState.computerTotal} (she said ${foState.computerGuess}) - nobody wins this round.`, `Julle het beide jou eie totaal verkeerd gehad! Jou kaarte het op ${foState.playerTotal} getel (jy het ${isNaN(guess) ? '-' : guess} gesê), en Mathilde se kaarte het op ${foState.computerTotal} getel (sy het ${foState.computerGuess} gesê) - niemand wen hierdie ronde nie.`);
+  } else if (!playerCorrect) {
     fb.className = 'feedback bad';
-    msg = tr(`Wrong total - you forfeit this round! Your cards actually added up to ${foState.playerTotal}. Mathilde had ${foState.computerTotal}.`, `Verkeerde totaal - jy verbeur hierdie ronde! Jou kaarte het eintlik op ${foState.playerTotal} getel. Mathilde het ${foState.computerTotal} gehad.`);
+    msg = tr(`Wrong total - you forfeit this round! Your cards actually added up to ${foState.playerTotal}. Mathilde correctly had ${foState.computerTotal}.`, `Verkeerde totaal - jy verbeur hierdie ronde! Jou kaarte het eintlik op ${foState.playerTotal} getel. Mathilde het reg ${foState.computerTotal} gehad.`);
+  } else if (!computerCorrect) {
+    fb.className = 'feedback good';
+    msg = tr(`Correct! And Mathilde got her own total wrong (she said ${foState.computerGuess}, it was really ${foState.computerTotal}) - she forfeits, you win!`, `Reg! En Mathilde het haar eie totaal verkeerd gehad (sy het ${foState.computerGuess} gesê, dit was eintlik ${foState.computerTotal}) - sy verbeur, jy wen!`);
   } else if (foState.playerTotal > foState.computerTotal) {
     fb.className = 'feedback good';
     msg = tr(`Correct, and your total of ${foState.playerTotal} beats Mathilde's ${foState.computerTotal} - you win!`, `Reg, en jou totaal van ${foState.playerTotal} klop Mathilde se ${foState.computerTotal} - jy wen!`);
@@ -18354,11 +18426,31 @@ function snl_answer(choice) {
 function snl_computerTurn() {
   if (!snlState || snlState.status === 'over') return;
   const a = randInt(1, 6), b = randInt(1, 6);
-  const steps = snlState.op === 'add' ? a + b : a * b;
+  const correct = snlState.op === 'add' ? a + b : a * b;
   const sign = snlState.op === 'add' ? '+' : '×';
+  // Mathilde used to never have her own dice sum checked, so she could never
+  // lose a turn the way the player does on a wrong MCQ answer. Give her the
+  // same roughly 1-in-5 chance of a near-miss (this rate is a design choice
+  // to match the player's own risk, not a measured one) so a wrong "answer"
+  // costs her the turn too, same as it costs the player.
+  const missed = Math.random() < 0.2;
+  const shown = missed ? (Math.random() < 0.5 ? correct + 1 : Math.max(1, correct - 1)) : correct;
   const row = document.getElementById('snl-dice-row');
-  if (row) row.innerHTML = `<span class="snl-die">${a}</span><span class="snl-sign">${sign}</span><span class="snl-die">${b}</span><span class="snl-eq">= ${steps}</span>`;
-  mathitLater(() => snl_move('c', steps), 700);
+  if (row) row.innerHTML = `<span class="snl-die">${a}</span><span class="snl-sign">${sign}</span><span class="snl-die">${b}</span><span class="snl-eq">= ${shown}</span>`;
+  if (missed) {
+    const fb = document.getElementById('snl-feedback');
+    if (fb) {
+      fb.className = 'feedback info';
+      fb.textContent = snlState.op === 'add'
+        ? tr(`Mathilde thought ${a} + ${b} was ${shown} - that's wrong (it's ${correct}), so she stays put this turn.`, `Mathilde het gedink ${a} + ${b} is ${shown} - dit is verkeerd (dit is ${correct}), so sy bly hierdie beurt waar sy is.`)
+        : tr(`Mathilde thought ${a} × ${b} was ${shown} - that's wrong (it's ${correct}), so she stays put this turn.`, `Mathilde het gedink ${a} × ${b} is ${shown} - dit is verkeerd (dit is ${correct}), so sy bly hierdie beurt waar sy is.`);
+    }
+    snlState.turn = 'p';
+    snlState.status = 'rolling';
+    mathitLater(snl_startTurn, 1500);
+    return;
+  }
+  mathitLater(() => snl_move('c', correct), 700);
 }
 function snl_move(who, steps) {
   const fb = document.getElementById('snl-feedback');
@@ -18544,6 +18636,16 @@ function tn_computerStep() {
     if (tnState.status !== 'playing' || tnState.turn !== 'c') return;
     tn_ensurePlayable();
     const bond = tn_findBond(tnState.board);
+    // Mathilde used to never miss a bond that was actually on the board.
+    // Give her the same roughly 1-in-5 chance of overlooking one that a
+    // real player's own eye sometimes misses - an approximate design
+    // choice, not a measured rate.
+    if (bond && Math.random() < 0.2) {
+      const fb = document.getElementById('tn-feedback');
+      if (fb) { fb.className = 'feedback info'; fb.textContent = tr("Mathilde didn't spot a pair this turn.", "Mathilde het nie 'n paar hierdie beurt gesien nie."); }
+      tn_switchTurn('p');
+      return;
+    }
     if (!bond) { tn_switchTurn('p'); return; }
     const [i, j] = bond;
     tnState.computerPreview = [i, j];
@@ -18860,6 +18962,17 @@ function hs_computerStep() {
   mathitLater(() => {
     if (!hsState || hsState.status !== 'playing' || hsState.turn !== 'c') return;
     const bond = hs_findBond(hsState.middle);
+    // Mathilde used to never miss a pair that was actually in the middle.
+    // Give her the same roughly 1-in-5 chance of overlooking one that a
+    // real player's own eye sometimes misses - an approximate design
+    // choice, not a measured rate.
+    if (bond && Math.random() < 0.2) {
+      const fb = document.getElementById('hs-feedback');
+      if (fb) { fb.className = 'feedback info'; fb.textContent = tr("Mathilde didn't spot a pair this turn.", "Mathilde het nie 'n paar hierdie beurt gesien nie."); }
+      hsState.turn = 'p';
+      hs_startTurn();
+      return;
+    }
     if (!bond) {
       hsState.turn = 'p';
       hs_startTurn();
@@ -18948,8 +19061,27 @@ function cc_makeHardQuestion() {
   const a = randInt(10, 20), b = randInt(1, 9);
   return { text: `${a} - ${b}`, answer: a - b };
 }
-function cc_computerAnswers(kind) {
-  return Math.random() < (kind === 'draw2' ? 0.8 : 0.6);
+// Mathilde now actually "solves" the challenge question instead of a flat
+// coin-flip that was totally decoupled from it (she used to succeed 80%/60%
+// of the time no matter what the sum actually was). Her error chance scales
+// with how hard THIS specific question is - bigger operands, more borrowing
+// - the same way a child's real mistakes cluster on the harder sums. These
+// rates are an approximate design choice, not a measured stat: the goal is
+// just "the numbers in front of her matter," not an exact difficulty model.
+function cc_computerSolves(question) {
+  const { text, answer } = question;
+  let errorRate;
+  if (text.includes('×')) {
+    const [a, b] = text.split('×').map(s => parseInt(s.trim(), 10));
+    errorRate = Math.min(0.5, (a * b) / 100);
+  } else if (text.includes('-')) {
+    const [a, b] = text.split('-').map(s => parseInt(s.trim(), 10));
+    errorRate = Math.min(0.45, b / 20 + ((a - b) < 5 ? 0.15 : 0));
+  } else {
+    const [a, b] = text.split('+').map(s => parseInt(s.trim(), 10));
+    errorRate = Math.min(0.3, (a + b) / 60);
+  }
+  return Math.random() >= errorRate;
 }
 function cc_computerPickColor() {
   const counts = { red: 0, yellow: 0, green: 0, blue: 0 };
@@ -19085,7 +19217,7 @@ function cc_startChallenge(kind, target, playedBy) {
   ccState.challenge = { kind, target, playedBy, question: q };
   cc_paint();
   if (target === 'c') {
-    mathitLater(() => cc_resolveChallenge(cc_computerAnswers(kind)), 1100);
+    mathitLater(() => cc_resolveChallenge(cc_computerSolves(q)), 1100);
   }
 }
 function cc_submitChallengeAnswer() {
