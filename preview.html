@@ -1412,6 +1412,8 @@ const TUTOR_NOTES = {
   g5_probability: "Grade 5 introduces reading frequency results from repeated trials, not just naming outcomes. Actually flipping a coin or rolling a die 20 times and tallying the results herself makes the why doesn't it come up exactly half the time question land properly.",
   fp_shapes: "Sorting by straight versus curved sides is the Foundation Phase entry point into geometry, well before formal names like quadrilateral are needed. Real household objects, a ball, a box, a plate, are more useful here than pictures alone.",
   fp_measure: "At this stage, comparison language, longer, shorter, heavier, lighter, matters more than any number or unit. Formal units like centimetres and kilograms are introduced later and should sit on top of solid comparison skills, not replace them.",
+  fp_shapes_g23: "From Grade 2, shape work moves past simple picture-matching: she now has to recall and read the actual shape names (sphere, cube, cylinder, cone, and in Grade 3 also rectangular prism and pyramid) rather than just spot an identical picture. If she can match pictures confidently but freezes on the words, that gap is exactly what this is testing for.",
+  fp_measure_g23: "From Grade 2 the focus shifts from comparison language to actually reading a scaled instrument, a ruler. Grade 2 reads to the nearest whole centimetre; Grade 3 adds millimetres on top, so the line between two tick marks genuinely matters now, not just the nearest labelled number.",
   fp_bonds: "Number bonds, knowing all the pairs that make a target number, are one of the single most important foundations for mental maths later on. A child who knows bonds to 10 instantly can use that knowledge to solve much bigger problems without counting on their fingers.",
   fp_tenframe: "The ten frame is a visual model, not just a game screen. It builds an instant sense of quantity, called subitising, and lays the groundwork for understanding place value once numbers pass 10. Physical counters on a printed ten frame work just as well as clicking here.",
   fp_renaming: "Renaming, also called partitioning, a number into tens and units, or hundreds tens and units, is what makes column addition and subtraction make sense later. Without this, regrouping and borrowing are just memorised steps with no meaning behind them.",
@@ -1556,6 +1558,8 @@ const TUTOR_NOTES_AF = {
   g5_probability: "Graad 5 stel bekend om frekwensie-resultate van herhaalde proewe te lees, nie net om uitkomste te noem nie. Om werklik 'n muntstuk te gooi of 'n dobbelsteen 20 keer te rol en self die resultate te tel, laat die vraag waarom kom dit nie presies die helfte van die tyd voor nie, reg land.",
   fp_shapes: "Om te sorteer volgens reguit teenoor geboë sye, is die Grondslagfase-intreepunt tot meetkunde, lank voordat formele name soos vierhoek nodig is. Regte huishoudelike voorwerpe, 'n bal, 'n boks, 'n bord, is hier nuttiger as prente alleen.",
   fp_measure: "Op hierdie stadium is vergelykingstaal, langer, korter, swaarder, ligter, belangriker as enige getal of eenheid. Formele eenhede soos sentimeter en kilogram word later bekendgestel en moet bo-op stewige vergelykingsvaardighede sit, nie dit vervang nie.",
+  fp_shapes_g23: "Van Graad 2 af beweeg vormwerk verby eenvoudige prentjie-passing: sy moet nou die werklike vormname onthou en lees (sfeer, kubus, silinder, keël, en in Graad 3 ook reghoekige prisma en piramide), eerder as om net 'n identiese prentjie raak te sien. As sy prentjies met selfvertroue kan pas maar vassit by die woorde, is dit presies die gaping wat hierdie toets.",
+  fp_measure_g23: "Van Graad 2 af verskuif die fokus van vergelykingstaal na die werklike lees van 'n liniaal met 'n skaal. Graad 2 lees tot die naaste heel sentimeter; Graad 3 voeg millimeters by, so die streep tussen twee merke tel nou werklik, nie net die naaste genommerde merk nie.",
   fp_bonds: "Getalbande, om al die pare te ken wat 'n teikengetal maak, is een van die belangrikste boustene vir latere geestelike wiskunde. 'n Kind wat bande tot 10 onmiddellik ken, kan daardie kennis gebruik om baie groter probleme op te los sonder om op haar vingers te tel.",
   fp_tenframe: "Die tienraam is 'n visuele model, nie net 'n speletjie-skerm nie. Dit bou 'n onmiddellike gevoel vir hoeveelheid, subitisering genoem, en lê die grondslag vir plekwaardebegrip sodra getalle verby 10 gaan. Fisiese telstukke op 'n gedrukte tienraam werk net so goed soos om hier te klik.",
   fp_renaming: "Hernoeming, ook partisionering genoem, van 'n getal in tiene en eenhede, of honderde tiene en eenhede, is wat later kolomoptelling en -aftrekking sin laat maak. Sonder dit is opskuif en leen net aangeleerde stappe sonder betekenis daaragter.",
@@ -1786,10 +1790,10 @@ const ACTIVITIES = {
   g2_patterns_t2: { icon: '🔁', title: 'Patterns', desc: 'Picture patterns, spot the mistake, or number patterns up to 40.' },
   g2_patterns_t3: { icon: '🔁', title: 'Patterns', desc: 'Picture patterns, spot the mistake, or number patterns up to 100.' },
   g2_patterns_t4: { icon: '🔁', title: 'Patterns', desc: 'Picture patterns, spot the mistake, or number patterns up to 150.' },
-  g2_shapes_t1: { icon: '🔺', title: 'Space and Shape', desc: 'Match shapes, symmetry, or count sides and corners.' },
-  g2_shapes_t2: { icon: '🔺', title: 'Space and Shape', desc: 'Match shapes, symmetry, or count sides and corners. More shapes added.' },
-  g2_shapes_t3: { icon: '🔺', title: 'Space and Shape', desc: 'Match shapes, symmetry, or count sides and corners. Even more shapes added.' },
-  g2_shapes_t4: { icon: '🔺', title: 'Space and Shape', desc: 'Match shapes, symmetry, or count sides and corners. All shapes unlocked.' },
+  g2_shapes_t1: { icon: '🔺', title: 'Space and Shape', desc: 'Name flat and solid shapes, or count sides and corners.' },
+  g2_shapes_t2: { icon: '🔺', title: 'Space and Shape', desc: 'Name flat and solid shapes, or count sides and corners. More shapes added.' },
+  g2_shapes_t3: { icon: '🔺', title: 'Space and Shape', desc: 'Name flat and solid shapes, or count sides and corners. Even more shapes added.' },
+  g2_shapes_t4: { icon: '🔺', title: 'Space and Shape', desc: 'Name flat and solid shapes, or count sides and corners. All shapes unlocked.' },
   g2_money_t1: { icon: '💰', title: 'Money', desc: 'Coins up to R2 - totals, comparing, or working out change.' },
   g2_money_t2: { icon: '💰', title: 'Money', desc: 'Coins and the R10 note - totals, comparing, or working out change.' },
   g2_money_t3: { icon: '💰', title: 'Money', desc: 'Coins and notes up to R20 - totals, comparing, or working out change.' },
@@ -1820,10 +1824,10 @@ const ACTIVITIES = {
   g3_patterns_t2: { icon: '🔁', title: 'Patterns', desc: 'Picture patterns, spot the mistake, or number patterns up to 150.' },
   g3_patterns_t3: { icon: '🔁', title: 'Patterns', desc: 'Picture patterns, spot the mistake, or number patterns up to 400.' },
   g3_patterns_t4: { icon: '🔁', title: 'Patterns', desc: 'Picture patterns, spot the mistake, or number patterns up to 700.' },
-  g3_shapes_t1: { icon: '🔺', title: 'Space and Shape', desc: 'Sides and corners, position in a line, match flat shapes, or symmetry. All shapes unlocked.' },
-  g3_shapes_t2: { icon: '🔺', title: 'Space and Shape', desc: 'Sides and corners, position in a line, match solid objects, or symmetry.' },
-  g3_shapes_t3: { icon: '🔺', title: 'Space and Shape', desc: 'Sides and corners, position in a line, or symmetry.' },
-  g3_shapes_t4: { icon: '🔺', title: 'Space and Shape', desc: 'A mix of every mode met so far - sides and corners, position, matching, and symmetry.' },
+  g3_shapes_t1: { icon: '🔺', title: 'Space and Shape', desc: 'Sides and corners, position in a line, or name flat shapes. All shapes unlocked.' },
+  g3_shapes_t2: { icon: '🔺', title: 'Space and Shape', desc: 'Sides and corners, position in a line, or name solid shapes - now including rectangular prisms and pyramids.' },
+  g3_shapes_t3: { icon: '🔺', title: 'Space and Shape', desc: 'Sides and corners, position in a line, or name flat and solid shapes.' },
+  g3_shapes_t4: { icon: '🔺', title: 'Space and Shape', desc: 'A mix of every mode met so far - sides and corners, position, and naming flat and solid shapes.' },
   g3_money_t1: { icon: '💰', title: 'Money', desc: 'Coins and notes up to R20 - totals, comparing, or working out change.' },
   g3_money_t2: { icon: '💰', title: 'Money', desc: 'Coins and notes up to R50 - totals, comparing, or working out change.' },
   g3_money_t3: { icon: '💰', title: 'Money', desc: 'Coins and notes up to R100 - totals, comparing, or working out change.' },
@@ -2025,10 +2029,10 @@ const ACTIVITIES_AF = {
   g2_patterns_t2: { title: 'Patrone', desc: 'Prentjiepatrone, vind die fout, of getalpatrone tot 40.' },
   g2_patterns_t3: { title: 'Patrone', desc: 'Prentjiepatrone, vind die fout, of getalpatrone tot 100.' },
   g2_patterns_t4: { title: 'Patrone', desc: 'Prentjiepatrone, vind die fout, of getalpatrone tot 150.' },
-  g2_shapes_t1: { title: 'Ruimte en Vorm', desc: 'Pas vorms, simmetrie, of tel sye en hoeke.' },
-  g2_shapes_t2: { title: 'Ruimte en Vorm', desc: 'Pas vorms, simmetrie, of tel sye en hoeke. Meer vorms bygevoeg.' },
-  g2_shapes_t3: { title: 'Ruimte en Vorm', desc: 'Pas vorms, simmetrie, of tel sye en hoeke. Nog meer vorms bygevoeg.' },
-  g2_shapes_t4: { title: 'Ruimte en Vorm', desc: 'Pas vorms, simmetrie, of tel sye en hoeke. Alle vorms oopgesluit.' },
+  g2_shapes_t1: { title: 'Ruimte en Vorm', desc: 'Noem plat en vaste vorms, of tel sye en hoeke.' },
+  g2_shapes_t2: { title: 'Ruimte en Vorm', desc: 'Noem plat en vaste vorms, of tel sye en hoeke. Meer vorms bygevoeg.' },
+  g2_shapes_t3: { title: 'Ruimte en Vorm', desc: 'Noem plat en vaste vorms, of tel sye en hoeke. Nog meer vorms bygevoeg.' },
+  g2_shapes_t4: { title: 'Ruimte en Vorm', desc: 'Noem plat en vaste vorms, of tel sye en hoeke. Alle vorms oopgesluit.' },
   g2_money_t1: { title: 'Geld', desc: 'Munte tot R2 - totale, vergelyk, of werk kleingeld uit.' },
   g2_money_t2: { title: 'Geld', desc: 'Munte en die R10-noot - totale, vergelyk, of werk kleingeld uit.' },
   g2_money_t3: { title: 'Geld', desc: 'Munte en note tot R20 - totale, vergelyk, of werk kleingeld uit.' },
@@ -2059,10 +2063,10 @@ const ACTIVITIES_AF = {
   g3_patterns_t2: { title: 'Patrone', desc: 'Prentjiepatrone, vind die fout, of getalpatrone tot 150.' },
   g3_patterns_t3: { title: 'Patrone', desc: 'Prentjiepatrone, vind die fout, of getalpatrone tot 400.' },
   g3_patterns_t4: { title: 'Patrone', desc: 'Prentjiepatrone, vind die fout, of getalpatrone tot 700.' },
-  g3_shapes_t1: { title: 'Ruimte en Vorm', desc: "Kante en hoeke, posisie in 'n ry, pas plat vorms, of simmetrie. Alle vorms oopgesluit." },
-  g3_shapes_t2: { title: 'Ruimte en Vorm', desc: "Kante en hoeke, posisie in 'n ry, pas vaste voorwerpe, of simmetrie." },
-  g3_shapes_t3: { title: 'Ruimte en Vorm', desc: "Kante en hoeke, posisie in 'n ry, of simmetrie." },
-  g3_shapes_t4: { title: 'Ruimte en Vorm', desc: "'n Mengsel van elke modus tot dusver - sye en hoeke, posisie, pas vorms, en simmetrie." },
+  g3_shapes_t1: { title: 'Ruimte en Vorm', desc: "Kante en hoeke, posisie in 'n ry, of noem plat vorms. Alle vorms oopgesluit." },
+  g3_shapes_t2: { title: 'Ruimte en Vorm', desc: "Kante en hoeke, posisie in 'n ry, of noem vaste vorms - nou met reghoekige prismas en piramides ook." },
+  g3_shapes_t3: { title: 'Ruimte en Vorm', desc: "Kante en hoeke, posisie in 'n ry, of noem plat en vaste vorms." },
+  g3_shapes_t4: { title: 'Ruimte en Vorm', desc: "'n Mengsel van elke modus tot dusver - sye en hoeke, posisie, en noem plat en vaste vorms." },
   g3_money_t1: { title: 'Geld', desc: 'Munte en note tot R20 - totale, vergelyk, of werk kleingeld uit.' },
   g3_money_t2: { title: 'Geld', desc: 'Munte en note tot R50 - totale, vergelyk, of werk kleingeld uit.' },
   g3_money_t3: { title: 'Geld', desc: 'Munte en note tot R100 - totale, vergelyk, of werk kleingeld uit.' },
@@ -3274,19 +3278,57 @@ const FP_SHAPES = [
 // these games, just icon-to-icon matching, so several icons can safely
 // share the same underlying shape family (sphere/cube/cylinder/cone) to
 // widen the pool without teaching anything beyond CAPS Grade 1-3 solids.
+// Grade 2/3 also use this list for a second, harder task - naming the
+// underlying solid rather than just matching pictures - so each entry
+// carries its own geometric family name (EN+AF) rather than that being
+// parsed back out of the parenthesised object name, which only exists for
+// G1's own flavour text.
 const FP_3D_OBJECTS = [
-  { name: 'Ball (sphere)', nameAf: 'Bal (sfeer)', icon: '⚽' },
-  { name: 'Orange (sphere)', nameAf: 'Lemoen (sfeer)', icon: '🍊' },
-  { name: 'Globe (sphere)', nameAf: 'Wêreldbol (sfeer)', icon: '🌍' },
-  { name: 'Box (cube)', nameAf: 'Boks (kubus)', icon: '📦' },
-  { name: 'Dice (cube)', nameAf: 'Dobbelsteen (kubus)', icon: '🎲' },
-  { name: 'Ice cube (cube)', nameAf: 'Ysblokkie (kubus)', icon: '🧊' },
-  { name: 'Cylinder (tin can)', nameAf: 'Silinder (blik)', icon: '🥫' },
-  { name: 'Candle (cylinder)', nameAf: 'Kers (silinder)', icon: '🕯️' },
-  { name: 'Drum (cylinder)', nameAf: 'Tamboer (silinder)', icon: '🥁' },
-  { name: 'Cone (ice cream cone)', nameAf: 'Keël (roomysoontjie)', icon: '🍦' },
-  { name: 'Tent (cone)', nameAf: 'Tent (keël)', icon: '⛺' },
-  { name: 'Closed umbrella (cone)', nameAf: 'Toe sambreel (keël)', icon: '🌂' },
+  { name: 'Ball (sphere)', nameAf: 'Bal (sfeer)', icon: '⚽', family: 'Sphere', familyAf: 'Sfeer' },
+  { name: 'Orange (sphere)', nameAf: 'Lemoen (sfeer)', icon: '🍊', family: 'Sphere', familyAf: 'Sfeer' },
+  { name: 'Globe (sphere)', nameAf: 'Wêreldbol (sfeer)', icon: '🌍', family: 'Sphere', familyAf: 'Sfeer' },
+  // "Box (cube)" / 📦 was dropped: a parcel emoji usually renders as a
+  // clearly non-cube cuboid (wider/taller than it is deep), which taught
+  // the opposite of what the entry's own name claimed. Dice and an ice
+  // cube are both genuinely cube-shaped, so the family still has two solid
+  // real-world examples without that mismatch.
+  { name: 'Dice (cube)', nameAf: 'Dobbelsteen (kubus)', icon: '🎲', family: 'Cube', familyAf: 'Kubus' },
+  { name: 'Ice cube (cube)', nameAf: 'Ysblokkie (kubus)', icon: '🧊', family: 'Cube', familyAf: 'Kubus' },
+  { name: 'Cylinder (tin can)', nameAf: 'Silinder (blik)', icon: '🥫', family: 'Cylinder', familyAf: 'Silinder' },
+  { name: 'Candle (cylinder)', nameAf: 'Kers (silinder)', icon: '🕯️', family: 'Cylinder', familyAf: 'Silinder' },
+  { name: 'Drum (cylinder)', nameAf: 'Tamboer (silinder)', icon: '🥁', family: 'Cylinder', familyAf: 'Silinder' },
+  { name: 'Cone (ice cream cone)', nameAf: 'Keël (roomysoontjie)', icon: '🍦', family: 'Cone', familyAf: 'Keël' },
+  { name: 'Tent (cone)', nameAf: 'Tent (keël)', icon: '⛺', family: 'Cone', familyAf: 'Keël' },
+  { name: 'Closed umbrella (cone)', nameAf: 'Toe sambreel (keël)', icon: '🌂', family: 'Cone', familyAf: 'Keël' },
+];
+/** Small isometric-style line icons for the two Grade-3-only solids that
+ * have no accurate, unambiguous emoji to stand in for them: there is no
+ * pyramid emoji at all, and every "box"-style emoji reads as a cube rather
+ * than a distinctly non-cube rectangular prism (see the FP_3D_OBJECTS note
+ * above). Drawn flat (no per-theme color logic needed - see artifact note)
+ * using the app's own palette so they sit visually with the rest of the
+ * activity rather than looking like a stock icon dropped in. */
+function ce_solidIconSVG(kind) {
+  const stroke = 'var(--text)', fill = 'var(--coral)';
+  if (kind === 'rectPrism') {
+    // Deliberately flattened/elongated (like a brick lying down), not
+    // cube-proportioned, so it reads as unmistakably NOT a cube.
+    return `<svg width="64" height="58" viewBox="0 0 100 90">
+      <polygon points="14,40 74,40 74,70 14,70" fill="${fill}" fill-opacity="0.85" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round" />
+      <polygon points="14,40 30,26 90,26 74,40" fill="${fill}" fill-opacity="0.55" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round" />
+      <polygon points="74,40 90,26 90,56 74,70" fill="${fill}" fill-opacity="0.7" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round" />
+    </svg>`;
+  }
+  return `<svg width="64" height="58" viewBox="0 0 100 90">
+    <polygon points="18,62 50,78 82,62 50,46" fill="${fill}" fill-opacity="0.55" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round" />
+    <polygon points="18,62 50,46 50,8" fill="${fill}" fill-opacity="0.85" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round" />
+    <polygon points="50,46 82,62 50,8" fill="${fill}" fill-opacity="0.7" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round" />
+  </svg>`;
+}
+const FP_3D_OBJECTS_G3_EXTRA = [
+  { name: 'Cereal box (rectangular prism)', nameAf: "Graankos-boks ('n reghoekige prisma)", icon: ce_solidIconSVG('rectPrism'), family: 'Rectangular prism', familyAf: 'Reghoekige prisma' },
+  { name: 'Brick (rectangular prism)', nameAf: "Baksteen ('n reghoekige prisma)", icon: ce_solidIconSVG('rectPrism'), family: 'Rectangular prism', familyAf: 'Reghoekige prisma' },
+  { name: 'Pyramid', nameAf: 'Piramide', icon: ce_solidIconSVG('pyramid'), family: 'Pyramid', familyAf: 'Piramide' },
 ];
 const FP_SHAPE_KIND_AF = { straight: 'reguit', curved: 'geboë' };
 let fp_shState = { shape: null, correct: 0, attempted: 0 };
@@ -6277,6 +6319,9 @@ function g3_renderPatterns_t4() { g3RenderPatterns(4, 700, [10, 20, 25, 50, 100]
 
 // ---- Space and Shape ----
 const CE_SHAPES_3D = FP_3D_OBJECTS;
+// Grade 3 only widens the solids pool with rectangular prism and pyramid -
+// per Debby's call, Grade 1/2 stay with just sphere/cube/cylinder/cone.
+const CE_SHAPES_3D_G3 = FP_3D_OBJECTS.concat(FP_3D_OBJECTS_G3_EXTRA);
 const CE_SYMMETRY_ITEMS = [
   { icon: '🦋', symmetric: true }, { icon: '⭐', symmetric: true }, { icon: '❤️', symmetric: true },
   { icon: '⚪', symmetric: true }, { icon: '🎯', symmetric: true }, { icon: '⬛', symmetric: true },
@@ -6300,7 +6345,7 @@ function ce_renderShapes(cfg) {
     <div class="card">
       <h2 class="activity-title">🔺 ${tr(`Space and Shape: Term ${cfg.term}`, `Ruimte en Vorm: Kwartaal ${cfg.term}`)}</h2>
       <p class="subtext">${tr('Tap the picture that matches, or answer the question about the shape.', 'Tik die prentjie wat pas, of antwoord die vraag oor die vorm.')}</p>
-      ${tutorHTML('fp_shapes')}
+      ${tutorHTML(cfg.grade === 1 ? 'fp_shapes' : 'fp_shapes_g23')}
       <div class="mcq-opts">
         ${cfg.modes.map(m => `<div class="mcq-opt" id="cesh-lvl-${m}" onclick="ce_setSHMode('${m}')">${modeLabels[m]}</div>`).join('')}
       </div>
@@ -6325,24 +6370,53 @@ function ce_newSHQuestion() {
     const target = pick(pool);
     ceShState.answer = target;
     const distractors = shuffle(pool.filter(s => s !== target)).slice(0, 3);
-    const opts = shuffle([target, ...distractors]);
-    qEl.innerHTML = `
-      <div style="text-align:center; margin-bottom:14px;">${fp_shapeSVG(target)}</div>
-      <div class="mcq-opts" style="justify-content:center;">
-        ${opts.map(s => `<div class="mcq-opt big" style="padding:8px;" onclick="ce_checkSH(this, '${s}')">${fp_shapeSVG(s)}</div>`).join('')}
-      </div>
-    `;
+    if (ceShState.grade === 1) {
+      // Grade 1: picture-to-picture matching, no reading required.
+      const opts = shuffle([target, ...distractors]);
+      qEl.innerHTML = `
+        <div style="text-align:center; margin-bottom:14px;">${fp_shapeSVG(target)}</div>
+        <div class="mcq-opts" style="justify-content:center;">
+          ${opts.map(s => `<div class="mcq-opt big" style="padding:8px;" onclick="ce_checkSH(this, '${s}')">${fp_shapeSVG(s)}</div>`).join('')}
+        </div>
+      `;
+    } else {
+      // Grade 2/3: harder than just spotting the twin picture - name the
+      // shape shown, from a word-option MCQ.
+      const opts = shuffle([target, ...distractors]);
+      qEl.innerHTML = `
+        <div style="text-align:center; margin-bottom:10px;">${fp_shapeSVG(target)}</div>
+        <div class="q-box">${tr('What shape is this?', 'Watter vorm is dit?')}</div>
+        <div class="mcq-opts">${opts.map(s => `<div class="mcq-opt" onclick="ce_checkSH(this, '${s}')">${tr(s, FP_SHAPE_NAME_AF[s])}</div>`).join('')}</div>
+      `;
+    }
   } else if (mode === 'match3d') {
-    const target = pick(CE_SHAPES_3D);
-    ceShState.answer = target.name;
-    const distractors = shuffle(CE_SHAPES_3D.filter(s => s.name !== target.name)).slice(0, 3);
-    const opts = shuffle([target, ...distractors]);
-    qEl.innerHTML = `
-      <div style="text-align:center; font-size:3.5rem; margin-bottom:14px;">${target.icon}</div>
-      <div class="mcq-opts" style="justify-content:center;">
-        ${opts.map(s => `<div class="mcq-opt big" style="font-size:2.2rem;" onclick="ce_checkSH(this, '${s.name}')">${s.icon}</div>`).join('')}
-      </div>
-    `;
+    const pool3D = ceShState.grade >= 3 ? CE_SHAPES_3D_G3 : CE_SHAPES_3D;
+    const target = pick(pool3D);
+    if (ceShState.grade === 1) {
+      // Grade 1: picture-to-picture matching, no reading required.
+      ceShState.answer = target.name;
+      const distractors = shuffle(pool3D.filter(s => s.name !== target.name)).slice(0, 3);
+      const opts = shuffle([target, ...distractors]);
+      qEl.innerHTML = `
+        <div style="text-align:center; font-size:3.5rem; margin-bottom:14px;">${target.icon}</div>
+        <div class="mcq-opts" style="justify-content:center;">
+          ${opts.map(s => `<div class="mcq-opt big" style="font-size:2.2rem;" onclick="ce_checkSH(this, '${s.name}')">${s.icon}</div>`).join('')}
+        </div>
+      `;
+    } else {
+      // Grade 2/3: name the underlying solid (sphere/cube/cylinder/cone,
+      // plus rectangular prism/pyramid in Grade 3) rather than just
+      // spotting the matching picture.
+      ceShState.answer = target.family;
+      const famPool = [...new Map(pool3D.map(s => [s.family, s.familyAf])).entries()];
+      const distractors = shuffle(famPool.filter(([f]) => f !== target.family)).slice(0, 3);
+      const opts = shuffle([[target.family, target.familyAf], ...distractors]);
+      qEl.innerHTML = `
+        <div style="text-align:center; font-size:3.5rem; margin-bottom:14px;">${target.icon}</div>
+        <div class="q-box">${tr('What 3D shape is this?', 'Watter 3D-vorm is dit?')}</div>
+        <div class="mcq-opts">${opts.map(([f, fAf]) => `<div class="mcq-opt" onclick="ce_checkSH(this, '${f}')">${tr(f, fAf)}</div>`).join('')}</div>
+      `;
+    }
   } else if (mode === 'symmetry') {
     const correctItem = pick(CE_SYMMETRY_ITEMS.filter(i => i.symmetric));
     const wrongItems = shuffle(CE_SYMMETRY_ITEMS.filter(i => !i.symmetric)).slice(0, 3);
@@ -6613,6 +6687,34 @@ function ce_timeOptions(h, m, granularity) {
   }
   return shuffle([...opts]);
 }
+/** Draws a ruler from 0 up to rulerEndMM (millimetres), with a measured
+ * bar laid along it from 0 to objectEndMM, for the Grade 2/3 "read the
+ * ruler" version of the length mode. showMM draws the in-between mm ticks
+ * (Grade 3); Grade 2 only shows whole-cm ticks and numbers, since that's
+ * the precision it reads to. viewBox units are 4 per mm so labels stay a
+ * sane font-size regardless of how the SVG is actually scaled by CSS. */
+function ce_rulerSVG(rulerEndMM, objectEndMM, showMM) {
+  const S = 4, PAD = 10, baseY = 46, H = 76;
+  const W = rulerEndMM * S + PAD * 2;
+  let ticks = '';
+  for (let mm = 0; mm <= rulerEndMM; mm++) {
+    const isCM = mm % 10 === 0;
+    const isHalfCM = mm % 10 === 5;
+    if (!showMM && !isCM) continue;
+    const x = PAD + mm * S;
+    const tickLen = isCM ? 16 : (isHalfCM ? 11 : 6);
+    ticks += `<line x1="${x}" y1="${baseY}" x2="${x}" y2="${baseY - tickLen}" stroke="var(--text)" stroke-width="${isCM ? 1.6 : 1}" />`;
+    if (isCM) ticks += `<text x="${x}" y="${baseY - 20}" font-size="12" text-anchor="middle" fill="var(--text)">${mm / 10}</text>`;
+  }
+  const objW = objectEndMM * S;
+  return `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%; max-width:480px; height:auto; display:block; margin:12px auto;" role="img" aria-label="${tr('ruler', 'liniaal')}">
+      <rect x="${PAD}" y="${baseY - 3}" width="${rulerEndMM * S}" height="7" fill="var(--card-bg)" stroke="var(--border)" stroke-width="1.5" rx="1" />
+      ${ticks}
+      <rect x="${PAD}" y="${baseY + 10}" width="${objW}" height="15" fill="var(--coral)" rx="3" />
+    </svg>
+  `;
+}
 let ceMsState = { grade: 1, term: 1, mode: 'length', modes: [], timeGranularity: 'hour', unitsRange: [3, 10], correct: 0, attempted: 0, answer: null };
 function ce_renderMeasure(cfg) {
   ceMsState = { grade: cfg.grade, term: cfg.term, mode: cfg.modes[0], modes: cfg.modes, timeGranularity: cfg.timeGranularity, unitsRange: cfg.unitsRange || [3, 10], correct: 0, attempted: 0, answer: null };
@@ -6626,7 +6728,7 @@ function ce_renderMeasure(cfg) {
     <div class="card">
       <h2 class="activity-title">⚖️ ${tr(`Measurement: Term ${cfg.term}`, `Meting: Kwartaal ${cfg.term}`)}</h2>
       <p class="subtext">${tr('Look at the pictures and tap your answer.', 'Kyk na die prentjies en tik jou antwoord.')}</p>
-      ${tutorHTML('fp_measure')}
+      ${tutorHTML(cfg.grade === 1 ? 'fp_measure' : 'fp_measure_g23')}
       <div class="mcq-opts">
         ${cfg.modes.map(m => `<div class="mcq-opt" id="cems-lvl-${m}" onclick="ce_setMSMode('${m}')">${modeLabels[m]}</div>`).join('')}
       </div>
@@ -6647,6 +6749,42 @@ function ce_newMSQuestion() {
   const qEl = document.getElementById('cems-question');
   const mode = ceMsState.mode;
   if (mode === 'length') {
+    if (ceMsState.grade >= 2) {
+      // Grade 2 reads a ruler to the nearest whole cm; Grade 3 adds mm
+      // precision on top - the object's length is never a round cm on its
+      // own in Grade 3, so the question genuinely needs the mm ticks, not
+      // just the cm numbers.
+      const showMM = ceMsState.grade >= 3;
+      const cmPart = randInt(2, showMM ? 14 : 15);
+      const mmOffset = showMM ? randInt(1, 9) : 0;
+      const objectMM = cmPart * 10 + mmOffset;
+      const ceilToCM = objectMM + ((10 - objectMM % 10) % 10);
+      const rulerEndMM = ceilToCM + randInt(1, 3) * 10;
+      let options;
+      if (showMM) {
+        const fmt = (cm, mm) => `${cm} cm ${mm} mm`;
+        const answerLabel = fmt(cmPart, mmOffset);
+        ceMsState.answer = answerLabel;
+        const pool = new Set([answerLabel]);
+        const candidates = [
+          [cmPart, Math.max(0, mmOffset - 1)], [cmPart, Math.min(9, mmOffset + 1)],
+          [Math.max(1, cmPart - 1), mmOffset], [cmPart + 1, mmOffset],
+        ];
+        for (const [c, m] of candidates) { if (pool.size >= 4) break; pool.add(fmt(c, m)); }
+        while (pool.size < 4) pool.add(fmt(randInt(1, 17), randInt(0, 9)));
+        options = shuffle([...pool]);
+      } else {
+        ceMsState.answer = cmPart;
+        options = g1MCQOptions(cmPart, 1, 20, 4);
+      }
+      qEl.innerHTML = `
+        <div class="q-box">${showMM ? tr('How long is the bar? Read the ruler in cm and mm.', 'Hoe lank is die balk? Lees die liniaal in cm en mm.') : tr('How long is the bar? Read the ruler in cm.', 'Hoe lank is die balk? Lees die liniaal in cm.')}</div>
+        ${ce_rulerSVG(rulerEndMM, objectMM, showMM)}
+        <div class="mcq-opts">${options.map(o => `<div class="mcq-opt big" onclick="ce_checkMS(this, '${String(o).replace(/'/g, "\\'")}')">${o}</div>`).join('')}</div>
+      `;
+      return;
+    }
+    // Grade 1: the original "which bar is longer/shorter" sight comparison.
     const wA = randInt(50, 260);
     let wB = randInt(50, 260);
     if (wB === wA) wB += 30;
@@ -7587,10 +7725,10 @@ const G2_SHAPE_POOL_BY_TERM = [
   ['Circle', 'Triangle', 'Square', 'Rectangle', 'Pentagon', 'Hexagon', 'Oval', 'Rhombus', 'Trapezium'],
   FP_SHAPE_DEFS.map(s => s.name),
 ];
-function g2_renderShapes_t1() { ce_renderShapes({ grade: 2, term: 1, modes: ['match2d', 'match3d', 'symmetry', 'properties', 'position'], pool2D: G2_SHAPE_POOL_BY_TERM[0] }); }
-function g2_renderShapes_t2() { ce_renderShapes({ grade: 2, term: 2, modes: ['match2d', 'match3d', 'symmetry', 'properties', 'position'], pool2D: G2_SHAPE_POOL_BY_TERM[1] }); }
-function g2_renderShapes_t3() { ce_renderShapes({ grade: 2, term: 3, modes: ['match2d', 'match3d', 'symmetry', 'properties', 'position'], pool2D: G2_SHAPE_POOL_BY_TERM[2] }); }
-function g2_renderShapes_t4() { ce_renderShapes({ grade: 2, term: 4, modes: ['match2d', 'match3d', 'symmetry', 'properties', 'position'], pool2D: G2_SHAPE_POOL_BY_TERM[3] }); }
+function g2_renderShapes_t1() { ce_renderShapes({ grade: 2, term: 1, modes: ['match2d', 'match3d', 'properties', 'position'], pool2D: G2_SHAPE_POOL_BY_TERM[0] }); }
+function g2_renderShapes_t2() { ce_renderShapes({ grade: 2, term: 2, modes: ['match2d', 'match3d', 'properties', 'position'], pool2D: G2_SHAPE_POOL_BY_TERM[1] }); }
+function g2_renderShapes_t3() { ce_renderShapes({ grade: 2, term: 3, modes: ['match2d', 'match3d', 'properties', 'position'], pool2D: G2_SHAPE_POOL_BY_TERM[2] }); }
+function g2_renderShapes_t4() { ce_renderShapes({ grade: 2, term: 4, modes: ['match2d', 'match3d', 'properties', 'position'], pool2D: G2_SHAPE_POOL_BY_TERM[3] }); }
 
 function g2_renderMoney_t1() { ce_renderMoney({ grade: 2, term: 1, modes: ['total', 'compare', 'change'], coinPool: FP_COINS_SMALL, notePool: [], maxItems: 3 }); }
 function g2_renderMoney_t2() { ce_renderMoney({ grade: 2, term: 2, modes: ['total', 'compare', 'change'], coinPool: FP_COINS_SMALL, notePool: FP_NOTES.slice(0, 1), maxItems: 3 }); }
@@ -7622,10 +7760,13 @@ function g2_renderWordProb_t4() { ce_renderWordProb({ grade: 2, term: 4, max: 99
 // division too, alongside multiplication - both are genuine Grade 3
 // CAPS content (times tables and their inverse).
 // =====================================================================
-function g3_renderShapes_t1() { ce_renderShapes({ grade: 3, term: 1, modes: ['properties', 'position', 'match2d', 'symmetry'], pool2D: FP_SHAPE_DEFS.map(s => s.name) }); }
-function g3_renderShapes_t2() { ce_renderShapes({ grade: 3, term: 2, modes: ['properties', 'position', 'match3d', 'symmetry'], pool2D: FP_SHAPE_DEFS.map(s => s.name) }); }
-function g3_renderShapes_t3() { ce_renderShapes({ grade: 3, term: 3, modes: ['properties', 'position', 'symmetry'], pool2D: FP_SHAPE_DEFS.map(s => s.name) }); }
-function g3_renderShapes_t4() { ce_renderShapes({ grade: 3, term: 4, modes: ['properties', 'position', 'match2d', 'match3d', 'symmetry'], pool2D: FP_SHAPE_DEFS.map(s => s.name) }); }
+function g3_renderShapes_t1() { ce_renderShapes({ grade: 3, term: 1, modes: ['properties', 'position', 'match2d'], pool2D: FP_SHAPE_DEFS.map(s => s.name) }); }
+function g3_renderShapes_t2() { ce_renderShapes({ grade: 3, term: 2, modes: ['properties', 'position', 'match3d'], pool2D: FP_SHAPE_DEFS.map(s => s.name) }); }
+// Term 3 lost its only distinct mode (symmetry) when that was pulled back to
+// Grade 1 only, so it picks up both match2d and match3d here rather than
+// being left with just properties/position like terms 1 and 2 individually.
+function g3_renderShapes_t3() { ce_renderShapes({ grade: 3, term: 3, modes: ['properties', 'position', 'match2d', 'match3d'], pool2D: FP_SHAPE_DEFS.map(s => s.name) }); }
+function g3_renderShapes_t4() { ce_renderShapes({ grade: 3, term: 4, modes: ['properties', 'position', 'match2d', 'match3d'], pool2D: FP_SHAPE_DEFS.map(s => s.name) }); }
 
 function g3_renderMoney_t1() { ce_renderMoney({ grade: 3, term: 1, modes: ['total', 'compare', 'change'], coinPool: FP_COINS_BIG, notePool: FP_NOTES.slice(0, 2), maxItems: 4 }); }
 function g3_renderMoney_t2() { ce_renderMoney({ grade: 3, term: 2, modes: ['total', 'compare', 'change'], coinPool: FP_COINS_BIG, notePool: FP_NOTES.slice(0, 3), maxItems: 4 }); }
