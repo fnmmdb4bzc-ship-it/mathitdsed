@@ -698,6 +698,41 @@
   .m-ruler-svg { display: block; }
   .m-ruler-readout { font-size: 1.2rem; font-weight: 800; color: var(--ocean-dark); margin-top: 10px; }
 
+  /* ---- Scales (digital, dial and balance) ---- */
+  .m-obj-chip {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    width: 68px; padding: 6px 4px; border: 2px solid var(--border); border-radius: 10px; background: #fff;
+    cursor: pointer; user-select: none; transition: transform 0.1s, border-color 0.1s; text-align: center;
+  }
+  .m-obj-chip:hover { border-color: var(--coral); transform: scale(1.05); }
+  .m-obj-chip-icon { font-size: 1.7rem; line-height: 1; }
+  .m-obj-chip-label { font-size: 0.68rem; font-weight: 700; color: var(--text-soft); line-height: 1.1; }
+  .m-weight-chip {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 52px; height: 52px; border-radius: 50%; background: #c7ccd1; border: 2px solid #8b9198;
+    font-weight: 800; font-size: 0.85rem; color: #30343a; cursor: pointer; user-select: none; transition: transform 0.1s;
+  }
+  .m-weight-chip:hover { transform: scale(1.06); }
+  .m-weight-chip span { font-size: 0.62rem; font-weight: 700; }
+  .m-scale-digital-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; margin: 10px 0; }
+  .m-scale-pan {
+    min-height: 90px; min-width: 160px; border: 2px dashed var(--border); border-radius: 12px; padding: 10px;
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: #fafcff;
+  }
+  .m-scale-pan-item { font-size: 1.9rem; cursor: pointer; line-height: 1; }
+  .m-scale-digital-body { background: #12303B; border-radius: 10px; padding: 14px 20px; box-shadow: inset 0 0 0 3px rgba(255,255,255,0.08); }
+  .m-scale-digital-display { font-family: 'Courier New', monospace; font-size: 1.6rem; font-weight: 800; color: #79E6A3; letter-spacing: 1px; }
+  .m-dial-wrap { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
+  .m-dial-svg { touch-action: none; }
+  .m-dial-readout { font-size: 1.05rem; font-weight: 800; color: var(--ocean-dark); min-width: 180px; max-width: 280px; }
+  .m-bal-svg { display: block; margin: 10px 0; touch-action: none; }
+
+  /* ---- Capacity: jug, cups and spoons ---- */
+  .m-jug-row { display: flex; flex-wrap: wrap; gap: 28px; margin: 10px 0; }
+  .m-jug-col { text-align: center; }
+  .m-jug-label { font-weight: 800; color: var(--ocean-dark); margin-bottom: 4px; }
+  .m-jug-svg { touch-action: none; }
+
   /* ---- Hundred chart / skip counting grid ---- */
   .m-hundred-grid { display: grid; grid-template-columns: repeat(10, 38px); grid-template-rows: repeat(10, 38px); gap: 3px; }
   .m-hundred-cell { display: flex; align-items: center; justify-content: center; border-radius: 6px; background: #fff; border: 2px solid var(--border); font-weight: 700; font-size: 0.82rem; cursor: pointer; color: var(--text-soft); transition: 0.1s; }
@@ -2915,6 +2950,13 @@ function mathitRenderWelcome() {
       New accounts are checked by the practice before they are switched on.
     </p>
     <div id="mathit-welcome-feedback" class="feedback"></div>
+    <hr style="border:none; border-top:1.5px solid var(--border); margin:22px 0 16px;" />
+    <p class="subtext" style="margin-bottom:10px;">
+      Not ready to sign up yet? You can look around first, no email needed.
+    </p>
+    <div style="display:flex; justify-content:center;">
+      <button class="secondary" onclick="window.open('preview.html', '_blank', 'noopener')">👀 Try a Free Preview</button>
+    </div>
   </div>`;
 }
 
@@ -6750,37 +6792,35 @@ function ce_newMSQuestion() {
   const mode = ceMsState.mode;
   if (mode === 'length') {
     if (ceMsState.grade >= 2) {
-      // Grade 2 reads a ruler to the nearest whole cm; Grade 3 adds mm
-      // precision on top - the object's length is never a round cm on its
-      // own in Grade 3, so the question genuinely needs the mm ticks, not
-      // just the cm numbers.
+      // Grade 2 reads a ruler to the nearest whole cm. Grade 3 also reads
+      // mm, but every question asks for a single whole number in ONE unit -
+      // never a compound answer like "7 cm 3 mm" - and the bar's end always
+      // lines up exactly on a tick, so there is nothing to estimate. Grade 3
+      // still covers both units Debby asked for, just across questions: on
+      // any given question the ruler is sometimes read in cm, sometimes in
+      // mm, rather than mixing the two into one answer a Foundation Phase
+      // learner has to hold in their head at once.
       const showMM = ceMsState.grade >= 3;
-      const cmPart = randInt(2, showMM ? 14 : 15);
-      const mmOffset = showMM ? randInt(1, 9) : 0;
-      const objectMM = cmPart * 10 + mmOffset;
+      const askMM = showMM && Math.random() < 0.5;
+      let objectMM, promptText, options;
+      if (askMM) {
+        objectMM = randInt(15, 145);
+        ceMsState.answer = objectMM;
+        promptText = tr('How long is the bar? Read the ruler in mm.', 'Hoe lank is die balk? Lees die liniaal in mm.');
+        options = g1MCQOptions(objectMM, 1, 200, 4);
+      } else {
+        const cmValue = randInt(2, showMM ? 14 : 15);
+        objectMM = cmValue * 10;
+        ceMsState.answer = cmValue;
+        promptText = tr('How long is the bar? Read the ruler in cm.', 'Hoe lank is die balk? Lees die liniaal in cm.');
+        options = g1MCQOptions(cmValue, 1, 20, 4);
+      }
       const ceilToCM = objectMM + ((10 - objectMM % 10) % 10);
       const rulerEndMM = ceilToCM + randInt(1, 3) * 10;
-      let options;
-      if (showMM) {
-        const fmt = (cm, mm) => `${cm} cm ${mm} mm`;
-        const answerLabel = fmt(cmPart, mmOffset);
-        ceMsState.answer = answerLabel;
-        const pool = new Set([answerLabel]);
-        const candidates = [
-          [cmPart, Math.max(0, mmOffset - 1)], [cmPart, Math.min(9, mmOffset + 1)],
-          [Math.max(1, cmPart - 1), mmOffset], [cmPart + 1, mmOffset],
-        ];
-        for (const [c, m] of candidates) { if (pool.size >= 4) break; pool.add(fmt(c, m)); }
-        while (pool.size < 4) pool.add(fmt(randInt(1, 17), randInt(0, 9)));
-        options = shuffle([...pool]);
-      } else {
-        ceMsState.answer = cmPart;
-        options = g1MCQOptions(cmPart, 1, 20, 4);
-      }
       qEl.innerHTML = `
-        <div class="q-box">${showMM ? tr('How long is the bar? Read the ruler in cm and mm.', 'Hoe lank is die balk? Lees die liniaal in cm en mm.') : tr('How long is the bar? Read the ruler in cm.', 'Hoe lank is die balk? Lees die liniaal in cm.')}</div>
+        <div class="q-box">${promptText}</div>
         ${ce_rulerSVG(rulerEndMM, objectMM, showMM)}
-        <div class="mcq-opts">${options.map(o => `<div class="mcq-opt big" onclick="ce_checkMS(this, '${String(o).replace(/'/g, "\\'")}')">${o}</div>`).join('')}</div>
+        <div class="mcq-opts">${options.map(o => `<div class="mcq-opt big" onclick="ce_checkMS(this, ${o})">${o}</div>`).join('')}</div>
       `;
       return;
     }
@@ -11759,6 +11799,10 @@ const MANIP_TOOLS = [
   { id: 'doubling', icon: '🪞', title: 'Doubling and Halving', titleAf: 'Verdubbel en Halveer' },
   { id: 'protractor', icon: '📐', title: 'Protractor (Angles)', titleAf: 'Gradeboog (Hoeke)' },
   { id: 'ruler', icon: '📏', title: 'Ruler (cm & mm)', titleAf: 'Liniaal (cm en mm)' },
+  { id: 'digitalscale', icon: '📟', title: 'Digital Scale (Mass)', titleAf: 'Digitale Skaal (Massa)' },
+  { id: 'dialscale', icon: '🧭', title: 'Dial Scale (Mass)', titleAf: 'Wyserskaal (Massa)' },
+  { id: 'balancescale', icon: '⚖️', title: 'Balance Scale (Mass)', titleAf: 'Balansskaal (Massa)' },
+  { id: 'capacity', icon: '🫗', title: 'Jug, Cups and Spoons (Capacity)', titleAf: 'Kan, Koppies en Lepels (Kapasiteit)' },
   { id: 'skipcount', icon: '🔁', title: 'Skip-Counting Chart', titleAf: 'Spring-teltabel' },
   { id: 'hundredchart', icon: '💯', title: 'Hundred Chart', titleAf: 'Honderdkaart' },
   { id: 'unitconvert', icon: '🔄', title: 'Metric Unit Converter', titleAf: 'Metrieke Eenheidsomskakelaar' },
@@ -11786,6 +11830,8 @@ function manipGoTo(id) {
     dice: manipInitDice, multdiv: manipInitMultDiv, grouping: manipInitGrouping, doubling: manipInitDoubling,
     protractor: manipInitProtractor, ruler: manipInitRuler, skipcount: manipInitSkipCount,
     hundredchart: manipInitHundredChart, unitconvert: manipInitUnitConvert, rounding: manipInitRounding,
+    digitalscale: manipInitDigitalScale, dialscale: manipInitDialScale, balancescale: manipInitBalanceScale,
+    capacity: manipInitCapacity,
   };
   fns[id]();
   window.scrollTo(0, 0);
@@ -13438,6 +13484,508 @@ function manipRulerRenderSVG() {
 }
 function manipRulerToggleReadout() { manipRulerShowReadout = !manipRulerShowReadout; manipRulerRenderSVG(); }
 function manipRulerRandom() { manipRulerMM = 5 + Math.floor(Math.random() * (MANIP_RULER_MAXMM - 5)); manipRulerRenderSVG(); }
+
+// ---- Scales (Mass): Digital, Dial (analogue) and Balance ----
+// Realistic, classroom-plausible masses for familiar objects - approximate
+// teaching values in the same spirit as MANIP_UNIT_REFS above, not lab
+// measurements. They exist so the three scales below always have something
+// recognisable to weigh, the same way MANIP_DENOMS gives the Money tool
+// real-looking notes and coins instead of abstract numbers.
+const MANIP_MASS_OBJECTS = [
+  { icon: '✏️', label: 'Pencil', labelAf: 'Potlood', g: 5 },
+  { icon: '🍓', label: 'Strawberry', labelAf: 'Aarbei', g: 12 },
+  { icon: '🍞', label: 'Slice of Bread', labelAf: 'Snytjie Brood', g: 30 },
+  { icon: '🥚', label: 'Egg', labelAf: 'Eier', g: 50 },
+  { icon: '🍫', label: 'Chocolate Bar', labelAf: 'Sjokoladestaaf', g: 50 },
+  { icon: '🎾', label: 'Tennis Ball', labelAf: 'Tennisbal', g: 58 },
+  { icon: '🍇', label: 'Bunch of Grapes', labelAf: 'Tros Druiwe', g: 80 },
+  { icon: '🍌', label: 'Banana', labelAf: 'Piesang', g: 120 },
+  { icon: '🍎', label: 'Apple', labelAf: 'Appel', g: 150 },
+  { icon: '🥔', label: 'Potato', labelAf: 'Aartappel', g: 170 },
+  { icon: '🍊', label: 'Orange', labelAf: 'Lemoen', g: 200 },
+  { icon: '👟', label: 'Shoe', labelAf: 'Skoen', g: 250 },
+  { icon: '📖', label: 'Exercise Book', labelAf: 'Oefeningboek', g: 300 },
+  { icon: '🧸', label: 'Teddy Bear', labelAf: 'Teddiebeer', g: 400 },
+  { icon: '🍚', label: 'Bag of Rice', labelAf: 'Sak Rys', g: 1000 },
+  { icon: '🍉', label: 'Watermelon', labelAf: 'Waatlemoen', g: 3000 },
+];
+// A real classroom gram/kilogram weight set, placed one piece at a time (or
+// several of the same piece) on the Balance Scale to find an object's mass.
+const MANIP_MASS_WEIGHTS_G = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
+function manipFormatMass(g) {
+  if (g < 1000) return g + ' g';
+  const kg = Math.round((g / 1000) * 1000) / 1000;
+  return g + ' g (' + kg + ' kg)';
+}
+function manipMassPaletteHTML(onclickFn) {
+  return MANIP_MASS_OBJECTS.map((o, i) =>
+    `<div class="m-obj-chip" onclick="${onclickFn}(${i})" title="${tr(o.label, o.labelAf)}">
+       <span class="m-obj-chip-icon">${o.icon}</span><span class="m-obj-chip-label">${tr(o.label, o.labelAf)}</span>
+     </div>`).join('');
+}
+
+// ---- Digital Scale ----
+let manipDScalePan = [];
+let manipDScaleTargetG = null;
+const MANIP_DSCALE_MAXG = 5000; // a typical digital kitchen scale tops out around here
+function manipInitDigitalScale() {
+  manipDScalePan = [];
+  manipDScaleTargetG = null;
+  document.getElementById('manip-container').innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0;">${tr('Digital Scale (Mass)', 'Digitale Skaal (Massa)')}</h3>
+      <p class="m-help">${tr('Click an object to place it on the scale. Click an object already on the scale to take it off. The digital display updates straight away, just like a real kitchen scale.', 'Klik \'n voorwerp om dit op die skaal te plaas. Klik \'n voorwerp wat reeds op die skaal is om dit af te haal. Die digitale skerm werk onmiddellik op, net soos \'n regte kombuisskaal.')}</p>
+      <div class="m-row" id="mdsc-palette"></div>
+      <div class="m-scale-digital-wrap">
+        <div class="m-scale-pan" id="mdsc-pan"></div>
+        <div class="m-scale-digital-body">
+          <div class="m-scale-digital-display" id="mdsc-display">0 g</div>
+        </div>
+      </div>
+      <div class="m-row">
+        <button class="secondary small" onclick="manipDScaleClear()">${tr('Clear Scale', 'Maak Skaal Skoon')}</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">${tr('Challenge', 'Uitdaging')}</h3>
+      <div class="m-row">
+        <button class="action" onclick="manipDScaleNewChallenge()">${tr('New Target Mass', 'Nuwe Teikenmassa')}</button>
+        <span id="mdsc-challenge-target" style="font-weight:700;">-</span>
+        <button class="secondary" onclick="manipDScaleCheck()">${tr('Check My Total', 'Gaan My Totaal Na')}</button>
+      </div>
+      <div id="mdsc-feedback" class="feedback"></div>
+    </div>
+  `;
+  document.getElementById('mdsc-palette').innerHTML = manipMassPaletteHTML('manipDScaleAdd');
+  manipDScaleRender();
+}
+function manipDScaleAdd(i) { manipDScalePan.push(i); manipDScaleRender(); }
+function manipDScaleRemove(idx) { manipDScalePan.splice(idx, 1); manipDScaleRender(); }
+function manipDScaleClear() { manipDScalePan = []; manipDScaleRender(); }
+function manipDScaleTotal() { return manipDScalePan.reduce((s, i) => s + MANIP_MASS_OBJECTS[i].g, 0); }
+function manipDScaleRender() {
+  const panEl = document.getElementById('mdsc-pan');
+  panEl.innerHTML = manipDScalePan.map((i, idx) => {
+    const o = MANIP_MASS_OBJECTS[i];
+    return `<span class="m-scale-pan-item" onclick="manipDScaleRemove(${idx})" title="${tr('Remove', 'Verwyder')}">${o.icon}</span>`;
+  }).join('');
+  const total = manipDScaleTotal();
+  document.getElementById('mdsc-display').textContent = total > MANIP_DSCALE_MAXG ? tr('Err (too heavy)', 'Fout (te swaar)') : manipFormatMass(total);
+}
+function manipDScaleNewChallenge() {
+  // Build the target by sampling 2-3 real objects and summing their mass, so
+  // it is always exactly reachable with the same palette the child is
+  // clicking - the same approach as the Money challenge's random target.
+  const n = 2 + Math.floor(Math.random() * 2);
+  let total = 0;
+  for (let k = 0; k < n; k++) total += MANIP_MASS_OBJECTS[Math.floor(Math.random() * MANIP_MASS_OBJECTS.length)].g;
+  manipDScaleTargetG = total;
+  document.getElementById('mdsc-challenge-target').textContent = tr('Make: ', 'Maak: ') + manipFormatMass(manipDScaleTargetG);
+  const fb = document.getElementById('mdsc-feedback'); fb.className = 'feedback'; fb.textContent = '';
+}
+function manipDScaleCheck() {
+  const fb = document.getElementById('mdsc-feedback');
+  if (manipDScaleTargetG === null) { fb.className = 'feedback bad'; fb.textContent = tr('Click "New Target Mass" first.', 'Klik eers "Nuwe Teikenmassa".'); return; }
+  const total = manipDScaleTotal();
+  if (total === manipDScaleTargetG) { fb.className = 'feedback good'; fb.textContent = tr('Correct! Well done.', 'Reg! Mooi so.'); }
+  else { fb.className = 'feedback bad'; fb.textContent = tr(`Not quite. The scale currently reads ${manipFormatMass(total)}.`, `Nie heeltemal reg nie. Die skaal wys tans ${manipFormatMass(total)}.`); }
+}
+
+// ---- Dial Scale (analogue, a needle sweeping a round dial) ----
+let manipDialPan = [];
+let manipDialShowReadout = true;
+const MANIP_DIAL_MAXG = 1000; // a small analogue scale, deliberately smaller than the digital one
+const MANIP_DIAL_MAJOR_STEP = 200, MANIP_DIAL_MINOR_STEP = 50;
+function manipInitDialScale() {
+  manipDialPan = [];
+  manipDialShowReadout = true;
+  document.getElementById('manip-container').innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0;">${tr('Dial Scale (Mass)', 'Wyserskaal (Massa)')}</h3>
+      <p class="m-help">${tr('Click an object to place it on the scale and watch the needle swing. Unlike the digital scale, you have to read the dial yourself - and this little scale only goes up to 1000 g (1 kg), just like a real one.', 'Klik \'n voorwerp om dit op die skaal te plaas en kyk hoe die wyser swaai. Anders as die digitale skaal moet jy die wyser self aflees - en hierdie klein skaal gaan net tot 1000 g (1 kg), net soos \'n regte een.')}</p>
+      <div class="m-row" id="mdial-palette"></div>
+      <div class="m-dial-wrap">
+        <svg class="m-dial-svg" id="mdial-svg" width="300" height="230" viewBox="0 0 300 230"></svg>
+        <div>
+          <div class="m-dial-readout" id="mdial-readout"></div>
+          <div class="m-row">
+            <button class="secondary small" onclick="manipDialToggleReadout()">${tr('Show / Hide reading', 'Wys / Versteek aflesing')}</button>
+            <button class="secondary small" onclick="manipDialClear()">${tr('Clear Scale', 'Maak Skaal Skoon')}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('mdial-palette').innerHTML = manipMassPaletteHTML('manipDialAdd');
+  manipDialRender();
+}
+function manipDialAdd(i) { manipDialPan.push(i); manipDialRender(); }
+function manipDialRemove(idx) { manipDialPan.splice(idx, 1); manipDialRender(); }
+function manipDialClear() { manipDialPan = []; manipDialRender(); }
+function manipDialTotal() { return manipDialPan.reduce((s, i) => s + MANIP_MASS_OBJECTS[i].g, 0); }
+function manipDialToggleReadout() { manipDialShowReadout = !manipDialShowReadout; manipDialRender(); }
+function manipDialRender() {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('mdial-svg');
+  svg.innerHTML = '';
+  const mk = (tag, attrs) => { const el = document.createElementNS(NS, tag); Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v)); return el; };
+  const NUM_FONT = 'Arial, Helvetica, sans-serif';
+  const cx = 150, cy = 130, rOuter = 100;
+  const thetaStart = -135, thetaEnd = 135; // degrees; 0 = straight up, positive = clockwise
+  const total = manipDialTotal();
+  const overloaded = total > MANIP_DIAL_MAXG;
+  const shownG = Math.min(total, MANIP_DIAL_MAXG);
+  const frac = shownG / MANIP_DIAL_MAXG;
+  const pointAt = (deg, radius) => {
+    const rad = deg * Math.PI / 180;
+    return { x: cx + radius * Math.sin(rad), y: cy - radius * Math.cos(rad) };
+  };
+  svg.appendChild(mk('circle', { cx, cy, r: rOuter + 14, fill: overloaded ? '#FBECEC' : '#fff', stroke: '#7A5610', 'stroke-width': 3 }));
+  for (let g = 0; g <= MANIP_DIAL_MAXG; g += MANIP_DIAL_MINOR_STEP) {
+    const isMajor = g % MANIP_DIAL_MAJOR_STEP === 0;
+    const deg = thetaStart + (g / MANIP_DIAL_MAXG) * (thetaEnd - thetaStart);
+    const p1 = pointAt(deg, rOuter), p2 = pointAt(deg, rOuter - (isMajor ? 16 : 9));
+    svg.appendChild(mk('line', { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, stroke: '#5C3D0A', 'stroke-width': isMajor ? 2.5 : 1.2 }));
+    if (isMajor) {
+      const lp = pointAt(deg, rOuter - 30);
+      const t = mk('text', { x: lp.x, y: lp.y + 4, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 800, 'font-family': NUM_FONT, fill: '#5C3D0A' });
+      t.textContent = g;
+      svg.appendChild(t);
+    }
+  }
+  const gLabel = mk('text', { x: cx, y: cy + rOuter - 42, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700, 'font-family': NUM_FONT, fill: '#7A5610' });
+  gLabel.textContent = 'g';
+  svg.appendChild(gLabel);
+  const needleDeg = thetaStart + frac * (thetaEnd - thetaStart);
+  const tip = pointAt(needleDeg, rOuter - 14);
+  svg.appendChild(mk('line', { x1: cx, y1: cy, x2: tip.x, y2: tip.y, stroke: overloaded ? 'var(--bad)' : 'var(--coral)', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+  svg.appendChild(mk('circle', { cx, cy, r: 7, fill: '#5C3D0A' }));
+
+  const readoutEl = document.getElementById('mdial-readout');
+  if (manipDialShowReadout) {
+    readoutEl.textContent = overloaded
+      ? tr(`Overloaded! That is more than this scale's limit of ${MANIP_DIAL_MAXG} g. Try fewer or lighter objects.`, `Oorlaai! Dit is meer as hierdie skaal se limiet van ${MANIP_DIAL_MAXG} g. Probeer minder of ligter voorwerpe.`)
+      : tr(`Reading: ${manipFormatMass(total)}`, `Aflesing: ${manipFormatMass(total)}`);
+  } else {
+    readoutEl.textContent = tr('Reading hidden. Try reading the dial yourself first!', 'Aflesing versteek. Probeer eers self die wyser aflees!');
+  }
+}
+
+// ---- Balance Scale (two-pan: compare two objects, or find a mass with standard weights) ----
+let manipBalMode = 'compare';
+let manipBalActiveSide = 'left';
+let manipBalLeftObj = null;
+let manipBalRightObj = null;
+let manipBalMysteryObj = null;
+let manipBalWeightsTray = [];
+function manipInitBalanceScale() {
+  manipBalMode = 'compare';
+  manipBalActiveSide = 'left';
+  manipBalLeftObj = null; manipBalRightObj = null;
+  manipBalMysteryObj = null; manipBalWeightsTray = [];
+  document.getElementById('manip-container').innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0;">${tr('Balance Scale (Mass)', 'Balansskaal (Massa)')}</h3>
+      <p class="m-help">${tr('A real two-pan balance scale. The beam tips down on the heavier side, and sits level when both sides have the same mass.', '\'n Regte tweepan-balansskaal. Die balk sak af aan die swaarder kant, en staan plat wanneer beide kante dieselfde massa het.')}</p>
+      <div class="mcq-opts">
+        <div class="mcq-opt" id="mbal-mode-compare" onclick="manipBalSetMode('compare')">${tr('Compare Two Objects', 'Vergelyk Twee Voorwerpe')}</div>
+        <div class="mcq-opt" id="mbal-mode-weigh" onclick="manipBalSetMode('weigh')">${tr('Find the Mass with Weights', 'Vind die Massa met Gewigte')}</div>
+      </div>
+      <svg class="m-bal-svg" id="mbal-svg" width="360" height="260" viewBox="0 0 360 260"></svg>
+      <div id="mbal-body"></div>
+    </div>
+  `;
+  manipBalMarkMode();
+  manipBalRenderBody();
+}
+function manipBalMarkMode() {
+  ['compare', 'weigh'].forEach(m => document.getElementById('mbal-mode-' + m).classList.toggle('correct', manipBalMode === m));
+}
+function manipBalSetMode(m) {
+  manipBalMode = m;
+  manipBalActiveSide = 'left';
+  manipBalLeftObj = null; manipBalRightObj = null;
+  manipBalMysteryObj = null; manipBalWeightsTray = [];
+  manipBalMarkMode();
+  manipBalRenderBody();
+}
+function manipBalSetSide(side) { manipBalActiveSide = side; manipBalRenderBody(); }
+function manipBalCompareAdd(i) {
+  if (manipBalActiveSide === 'left') { manipBalLeftObj = i; if (manipBalRightObj === null) manipBalActiveSide = 'right'; }
+  else { manipBalRightObj = i; if (manipBalLeftObj === null) manipBalActiveSide = 'left'; }
+  manipBalRenderBody();
+}
+function manipBalClearSide(side) {
+  if (side === 'left') manipBalLeftObj = null; else manipBalRightObj = null;
+  manipBalActiveSide = side;
+  manipBalRenderBody();
+}
+function manipBalNewMystery() {
+  manipBalMysteryObj = Math.floor(Math.random() * MANIP_MASS_OBJECTS.length);
+  manipBalWeightsTray = [];
+  manipBalRenderBody();
+}
+function manipBalWeightAdd(g) { manipBalWeightsTray.push(g); manipBalRenderBody(); }
+function manipBalWeightRemove(idx) { manipBalWeightsTray.splice(idx, 1); manipBalRenderBody(); }
+function manipBalClearWeights() { manipBalWeightsTray = []; manipBalRenderBody(); }
+function manipBalLeftTotal() {
+  if (manipBalMode === 'weigh') return manipBalMysteryObj === null ? 0 : MANIP_MASS_OBJECTS[manipBalMysteryObj].g;
+  return manipBalLeftObj === null ? 0 : MANIP_MASS_OBJECTS[manipBalLeftObj].g;
+}
+function manipBalRightTotal() {
+  if (manipBalMode === 'weigh') return manipBalWeightsTray.reduce((s, g) => s + g, 0);
+  return manipBalRightObj === null ? 0 : MANIP_MASS_OBJECTS[manipBalRightObj].g;
+}
+function manipBalRenderBody() {
+  const bodyEl = document.getElementById('mbal-body');
+  if (manipBalMode === 'compare') {
+    bodyEl.innerHTML = `
+      <div class="m-row">
+        <div class="mcq-opt ${manipBalActiveSide === 'left' ? 'correct' : ''}" onclick="manipBalSetSide('left')">${tr('⬅ Placing on Left Pan', '⬅ Plaas op Linkerpan')}</div>
+        <div class="mcq-opt ${manipBalActiveSide === 'right' ? 'correct' : ''}" onclick="manipBalSetSide('right')">${tr('Placing on Right Pan ➡', 'Plaas op Regterpan ➡')}</div>
+      </div>
+      <div class="m-row" id="mbal-palette"></div>
+      <div class="m-row">
+        <button class="secondary small" onclick="manipBalClearSide('left')">${tr('Clear Left', 'Maak Links Skoon')}</button>
+        <button class="secondary small" onclick="manipBalClearSide('right')">${tr('Clear Right', 'Maak Regs Skoon')}</button>
+      </div>
+      <div id="mbal-feedback" class="feedback info"></div>
+    `;
+    document.getElementById('mbal-palette').innerHTML = manipMassPaletteHTML('manipBalCompareAdd');
+  } else {
+    const mysteryHTML = manipBalMysteryObj === null
+      ? tr('Click "New Mystery Object" to begin.', 'Klik "Nuwe Geheime Voorwerp" om te begin.')
+      : `${MANIP_MASS_OBJECTS[manipBalMysteryObj].icon} ${tr('Mystery object: mass unknown', 'Geheime voorwerp: massa onbekend')}`;
+    bodyEl.innerHTML = `
+      <div class="m-row">
+        <button class="action" onclick="manipBalNewMystery()">${tr('New Mystery Object', 'Nuwe Geheime Voorwerp')}</button>
+        <span style="font-weight:700;">${mysteryHTML}</span>
+      </div>
+      <p class="m-help">${tr('Add standard weights to the right pan until the beam is level.', 'Voeg standaardgewigte by die regterpan totdat die balk plat staan.')}</p>
+      <div class="m-row" id="mbal-weight-palette"></div>
+      <div class="m-row">
+        <span>${tr('Weights on the right pan:', 'Gewigte op die regterpan:')} <b id="mbal-weight-total">0 g</b></span>
+        <button class="secondary small" onclick="manipBalClearWeights()">${tr('Clear Weights', 'Maak Gewigte Skoon')}</button>
+      </div>
+      <div class="m-tray" id="mbal-weight-tray"></div>
+      <div id="mbal-feedback" class="feedback info"></div>
+    `;
+    document.getElementById('mbal-weight-palette').innerHTML = MANIP_MASS_WEIGHTS_G.map(g =>
+      `<div class="m-weight-chip" onclick="manipBalWeightAdd(${g})" title="${tr('Add', 'Voeg by')} ${g} g">${g}<span>g</span></div>`).join('');
+    document.getElementById('mbal-weight-tray').innerHTML = manipBalWeightsTray.map((g, idx) =>
+      `<div class="m-weight-chip" onclick="manipBalWeightRemove(${idx})" title="${tr('Remove', 'Verwyder')}">${g}<span>g</span></div>`).join('');
+    document.getElementById('mbal-weight-total').textContent = manipFormatMass(manipBalRightTotal());
+  }
+  manipBalRenderSVG();
+  manipBalUpdateFeedback();
+}
+function manipBalUpdateFeedback() {
+  const fb = document.getElementById('mbal-feedback');
+  if (!fb) return;
+  if (manipBalMode === 'compare') {
+    if (manipBalLeftObj === null || manipBalRightObj === null) { fb.className = 'feedback info'; fb.textContent = tr('Place one object on each pan.', 'Plaas een voorwerp op elke pan.'); return; }
+    const L = MANIP_MASS_OBJECTS[manipBalLeftObj], R = MANIP_MASS_OBJECTS[manipBalRightObj];
+    const Lname = tr(L.label, L.labelAf), Rname = tr(R.label, R.labelAf);
+    if (L.g === R.g) {
+      fb.className = 'feedback good';
+      fb.textContent = tr(`Balanced! The ${Lname} and the ${Rname} have the same mass: ${manipFormatMass(L.g)} each.`, `In balans! Die ${Lname} en die ${Rname} het dieselfde massa: ${manipFormatMass(L.g)} elk.`);
+    } else {
+      const heavier = L.g > R.g ? Lname : Rname, heavierG = Math.max(L.g, R.g);
+      const lighter = L.g > R.g ? Rname : Lname, lighterG = Math.min(L.g, R.g);
+      fb.className = 'feedback info';
+      fb.textContent = tr(`The ${heavier} (${manipFormatMass(heavierG)}) is heavier than the ${lighter} (${manipFormatMass(lighterG)}).`, `Die ${heavier} (${manipFormatMass(heavierG)}) is swaarder as die ${lighter} (${manipFormatMass(lighterG)}).`);
+    }
+  } else {
+    if (manipBalMysteryObj === null) { fb.className = 'feedback info'; fb.textContent = ''; return; }
+    const obj = MANIP_MASS_OBJECTS[manipBalMysteryObj];
+    const name = tr(obj.label, obj.labelAf);
+    const mysteryG = obj.g, right = manipBalRightTotal();
+    if (right === mysteryG) { fb.className = 'feedback good'; fb.textContent = tr(`Balanced! The ${name} has a mass of ${manipFormatMass(mysteryG)}.`, `In balans! Die ${name} het 'n massa van ${manipFormatMass(mysteryG)}.`); }
+    else if (right < mysteryG) { fb.className = 'feedback info'; fb.textContent = tr('Still too light on the right - add more weights.', 'Nog te lig regs - voeg meer gewigte by.'); }
+    else { fb.className = 'feedback info'; fb.textContent = tr('Too heavy on the right - take some weights off.', 'Te swaar regs - haal \'n paar gewigte af.'); }
+  }
+}
+function manipBalRenderSVG() {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('mbal-svg');
+  svg.innerHTML = '';
+  const mk = (tag, attrs) => { const el = document.createElementNS(NS, tag); Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v)); return el; };
+  const cx = 180, cyPivot = 80, halfBeam = 120, hangerDrop = 60, panW = 76, panH = 16;
+  const leftTotal = manipBalLeftTotal(), rightTotal = manipBalRightTotal();
+  const diff = leftTotal - rightTotal;
+  // Saturating tilt: even a small real difference (a pencil vs. nothing)
+  // shows a faint tip, while a huge one (a pencil vs. a watermelon) stays
+  // capped rather than spinning the beam past vertical. tanh gives both for
+  // free, always within [-maxTilt, maxTilt].
+  const maxTilt = 16;
+  const tilt = Math.abs(diff) < 0.0001 ? 0 : maxTilt * Math.tanh(diff / 140);
+  // stand (fixed - does not tip)
+  svg.appendChild(mk('line', { x1: cx, y1: cyPivot, x2: cx, y2: 235, stroke: '#7A5610', 'stroke-width': 8, 'stroke-linecap': 'round' }));
+  svg.appendChild(mk('line', { x1: cx - 50, y1: 235, x2: cx + 50, y2: 235, stroke: '#7A5610', 'stroke-width': 8, 'stroke-linecap': 'round' }));
+  // Positive rotate() in SVG turns the beam clockwise, which would push the
+  // RIGHT end down - the opposite of "left heavier tips left down" - so the
+  // sign is flipped once here rather than juggled at every call site below.
+  const beamGroup = mk('g', { transform: `rotate(${(-tilt).toFixed(2)} ${cx} ${cyPivot})` });
+  beamGroup.appendChild(mk('line', { x1: cx - halfBeam, y1: cyPivot, x2: cx + halfBeam, y2: cyPivot, stroke: '#7A5610', 'stroke-width': 6, 'stroke-linecap': 'round' }));
+  const hangerL = { x: cx - halfBeam, y: cyPivot }, hangerR = { x: cx + halfBeam, y: cyPivot };
+  [{ hanger: hangerL, which: 'left' }, { hanger: hangerR, which: 'right' }].forEach(({ hanger, which }) => {
+    // Counter-rotate by +tilt so each pan hangs level no matter how far the
+    // beam itself has tipped, the same as a real gimballed balance pan.
+    const panGroup = mk('g', { transform: `rotate(${tilt.toFixed(2)} ${hanger.x} ${hanger.y})` });
+    panGroup.appendChild(mk('line', { x1: hanger.x, y1: hanger.y, x2: hanger.x, y2: hanger.y + hangerDrop, stroke: '#9c7a3c', 'stroke-width': 2 }));
+    panGroup.appendChild(mk('path', {
+      d: `M ${hanger.x - panW / 2} ${hanger.y + hangerDrop} Q ${hanger.x} ${hanger.y + hangerDrop + panH} ${hanger.x + panW / 2} ${hanger.y + hangerDrop}`,
+      fill: '#FBF0DA', stroke: '#7A5610', 'stroke-width': 2.5,
+    }));
+    const icons = which === 'left'
+      ? (manipBalMode === 'weigh' ? (manipBalMysteryObj !== null ? [MANIP_MASS_OBJECTS[manipBalMysteryObj].icon] : []) : (manipBalLeftObj !== null ? [MANIP_MASS_OBJECTS[manipBalLeftObj].icon] : []))
+      : (manipBalMode === 'weigh' ? manipBalWeightsTray.map(() => '⚪') : (manipBalRightObj !== null ? [MANIP_MASS_OBJECTS[manipBalRightObj].icon] : []));
+    icons.slice(0, 6).forEach((icon, i) => {
+      const t = mk('text', { x: hanger.x - 14 + (i % 3) * 14, y: hanger.y + hangerDrop - 6 - Math.floor(i / 3) * 18, 'text-anchor': 'middle', 'font-size': 20 });
+      t.textContent = icon;
+      panGroup.appendChild(t);
+    });
+    beamGroup.appendChild(panGroup);
+  });
+  svg.appendChild(beamGroup);
+  svg.appendChild(mk('circle', { cx, cy: cyPivot, r: 8, fill: '#5C3D0A' }));
+}
+
+// ---- Capacity: Jug, Cups and Spoons ----
+const MANIP_CAP_MAXML = 1000;
+const MANIP_CAP_PXPERML = 0.16;
+let manipCapML = { a: 300, b: 650 };
+let manipCapTargetML = null;
+// Everyday capacity references, the same "grounded in something real"
+// spirit as MANIP_UNIT_REFS above, but for the everyday kitchen measures
+// (cup, tablespoon, teaspoon) a measuring jug set actually uses - these
+// aren't SI units, so they don't belong in MANIP_UNIT_REFS itself.
+const MANIP_CAP_REFS = [
+  { icon: '🫗', label: 'Full jug', labelAf: 'Volle kan', ml: 1000 },
+  { icon: '☕', label: 'Cup', labelAf: 'Koppie', ml: 250 },
+  { icon: '🥄', label: 'Tablespoon', labelAf: 'Eetlepel', ml: 15 },
+  { icon: '🥄', label: 'Teaspoon', labelAf: 'Teelepel', ml: 5 },
+];
+function manipInitCapacity() {
+  manipCapML = { a: 300, b: 650 };
+  manipCapTargetML = null;
+  document.getElementById('manip-container').innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0;">${tr('Measuring Jugs', 'Maatkanne')}</h3>
+      <p class="m-help">${tr('Drag the handle next to each jug up or down to pour in liquid, then read its volume in ml off the scale. Compare the two jugs below.', 'Sleep die handvatsel langs elke kan op of af om vloeistof in te gooi, lees dan die volume in ml van die skaal af. Vergelyk die twee kanne hieronder.')}</p>
+      <div class="m-jug-row">
+        <div class="m-jug-col">
+          <div class="m-jug-label">${tr('Jug A', 'Kan A')}</div>
+          <svg class="m-jug-svg" id="mcap-jug-a-svg" width="140" height="230" viewBox="0 0 140 230"></svg>
+        </div>
+        <div class="m-jug-col">
+          <div class="m-jug-label">${tr('Jug B', 'Kan B')}</div>
+          <svg class="m-jug-svg" id="mcap-jug-b-svg" width="140" height="230" viewBox="0 0 140 230"></svg>
+        </div>
+      </div>
+      <div class="m-convert-result" id="mcap-compare"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">${tr('Cups and Spoons', 'Koppies en Lepels')}</h3>
+      <p class="m-help">${tr('Everyday measures you might use instead of a jug, and about how much of Jug A they add up to.', 'Alledaagse maateenhede wat jy in plaas van \'n kan kan gebruik, en omtrent hoeveel van Kan A hulle beloop.')}</p>
+      <div class="m-convert-refs" id="mcap-refs"></div>
+      <div class="m-convert-result" id="mcap-breakdown"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">${tr('Challenge', 'Uitdaging')}</h3>
+      <div class="m-row">
+        <button class="action" onclick="manipCapNewChallenge()">${tr('New Target Volume', 'Nuwe Teikenvolume')}</button>
+        <span id="mcap-challenge-target" style="font-weight:700;">-</span>
+        <button class="secondary" onclick="manipCapCheck()">${tr('Check Jug A', 'Gaan Kan A Na')}</button>
+      </div>
+      <div id="mcap-feedback" class="feedback"></div>
+    </div>
+  `;
+  document.getElementById('mcap-refs').innerHTML = MANIP_CAP_REFS.map(r =>
+    `<div class="m-unit-ref"><span class="m-unit-ref-icon">${r.icon}</span><span><b>1 ${tr(r.label, r.labelAf)}</b> ${tr('is about', 'is omtrent')} ${r.ml} ml</span></div>`
+  ).join('');
+  manipCapRenderJugSVG('a');
+  manipCapRenderJugSVG('b');
+  manipCapUpdateCompare();
+  manipCapUpdateBreakdown();
+}
+function manipCapRenderJugSVG(which) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('mcap-jug-' + which + '-svg');
+  svg.innerHTML = '';
+  const mk = (tag, attrs) => { const el = document.createElementNS(NS, tag); Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v)); return el; };
+  const NUM_FONT = 'Arial, Helvetica, sans-serif';
+  const jugX = 15, jugW = 75, bottomY = 210, pxml = MANIP_CAP_PXPERML;
+  const topY = bottomY - MANIP_CAP_MAXML * pxml;
+  svg.appendChild(mk('rect', { x: jugX, y: topY, width: jugW, height: bottomY - topY, fill: '#eef7fb', stroke: '#075985', 'stroke-width': 2.5, rx: 6 }));
+  for (let ml = 0; ml <= MANIP_CAP_MAXML; ml += 50) {
+    const isMajor = ml % 100 === 0;
+    const y = bottomY - ml * pxml;
+    svg.appendChild(mk('line', { x1: jugX, y1: y, x2: jugX + (isMajor ? 16 : 9), y2: y, stroke: '#075985', 'stroke-width': isMajor ? 2 : 1 }));
+    if (isMajor) {
+      const t = mk('text', { x: jugX + 20, y: y + 4, 'font-size': 10.5, 'font-weight': 700, 'font-family': NUM_FONT, fill: '#075985' });
+      t.textContent = ml;
+      svg.appendChild(t);
+    }
+  }
+  const ml = manipCapML[which];
+  const fillH = Math.max(0, Math.min(MANIP_CAP_MAXML, ml)) * pxml;
+  svg.appendChild(mk('rect', { x: jugX + 2, y: bottomY - fillH, width: jugW - 4, height: Math.max(0, fillH), fill: '#5BAEDC', opacity: 0.8 }));
+  const handleY = bottomY - fillH;
+  svg.appendChild(mk('line', { x1: jugX + jugW, y1: handleY, x2: jugX + jugW + 18, y2: handleY, stroke: 'var(--coral)', 'stroke-width': 2, 'stroke-dasharray': '3,3' }));
+  const handle = mk('circle', { cx: jugX + jugW + 22, cy: handleY, r: 11, fill: 'var(--coral)', stroke: '#fff', 'stroke-width': 2, style: 'cursor:ns-resize;' });
+  svg.appendChild(handle);
+  const readout = mk('text', { x: jugX + jugW / 2, y: 225, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 800, 'font-family': NUM_FONT, fill: '#075985' });
+  readout.textContent = ml + ' ml';
+  svg.appendChild(readout);
+
+  function onMove(evt) {
+    const rect = svg.getBoundingClientRect();
+    const scaleY = svg.viewBox.baseVal.height / rect.height;
+    const py = (evt.clientY - rect.top) * scaleY;
+    let newml = Math.round((bottomY - py) / pxml / 10) * 10;
+    newml = Math.max(0, Math.min(MANIP_CAP_MAXML, newml));
+    manipCapML[which] = newml;
+    manipCapRenderJugSVG(which);
+    manipCapUpdateCompare();
+    if (which === 'a') manipCapUpdateBreakdown();
+  }
+  function onUp() { window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); }
+  handle.addEventListener('pointerdown', (evt) => { evt.preventDefault(); window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp); });
+}
+function manipCapUpdateCompare() {
+  const el = document.getElementById('mcap-compare');
+  if (!el) return;
+  const a = manipCapML.a, b = manipCapML.b;
+  if (a === b) el.textContent = tr(`Jug A and Jug B both hold ${a} ml. They are equal.`, `Kan A en Kan B hou beide ${a} ml. Hulle is gelyk.`);
+  else {
+    const more = a > b ? 'A' : 'B', less = a > b ? 'B' : 'A', diff = Math.abs(a - b);
+    el.textContent = tr(`Jug ${more} has ${diff} ml more than Jug ${less} (${a} ml vs ${b} ml).`, `Kan ${more} het ${diff} ml meer as Kan ${less} (${a} ml vs ${b} ml).`);
+  }
+}
+function manipCapUpdateBreakdown() {
+  const el = document.getElementById('mcap-breakdown');
+  if (!el) return;
+  let remaining = manipCapML.a;
+  const cups = Math.floor(remaining / 250); remaining -= cups * 250;
+  const tbsp = Math.floor(remaining / 15); remaining -= tbsp * 15;
+  const tsp = Math.floor(remaining / 5); remaining -= tsp * 5;
+  el.textContent = tr(
+    `Jug A (${manipCapML.a} ml) is about ${cups} cup(s) + ${tbsp} tablespoon(s) + ${tsp} teaspoon(s), with ${remaining} ml left over.`,
+    `Kan A (${manipCapML.a} ml) is omtrent ${cups} koppie(s) + ${tbsp} eetlepel(s) + ${tsp} teelepel(s), met ${remaining} ml oor.`
+  );
+}
+function manipCapNewChallenge() {
+  manipCapTargetML = Math.floor(Math.random() * 21) * 50; // multiples of 50, 0 to 1000
+  document.getElementById('mcap-challenge-target').textContent = tr('Fill Jug A to: ', 'Vul Kan A tot: ') + manipCapTargetML + ' ml';
+  const fb = document.getElementById('mcap-feedback'); fb.className = 'feedback'; fb.textContent = '';
+}
+function manipCapCheck() {
+  const fb = document.getElementById('mcap-feedback');
+  if (manipCapTargetML === null) { fb.className = 'feedback bad'; fb.textContent = tr('Click "New Target Volume" first.', 'Klik eers "Nuwe Teikenvolume".'); return; }
+  if (manipCapML.a === manipCapTargetML) { fb.className = 'feedback good'; fb.textContent = tr('Correct! Well done.', 'Reg! Mooi so.'); }
+  else { fb.className = 'feedback bad'; fb.textContent = tr(`Not quite. Jug A currently holds ${manipCapML.a} ml.`, `Nie heeltemal reg nie. Kan A hou tans ${manipCapML.a} ml.`); }
+}
 
 // ---- Shared 1-100 grid renderer (used by Hundred Chart and Skip-Counting) ----
 function manipRenderHundredGrid(containerId, opts) {
