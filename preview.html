@@ -723,15 +723,21 @@
   .m-scale-digital-body { background: #12303B; border-radius: 10px; padding: 14px 20px; box-shadow: inset 0 0 0 3px rgba(255,255,255,0.08); }
   .m-scale-digital-display { font-family: 'Courier New', monospace; font-size: 1.6rem; font-weight: 800; color: #79E6A3; letter-spacing: 1px; }
   .m-dial-wrap { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
-  .m-dial-svg { touch-action: none; }
-  .m-dial-readout { font-size: 1.05rem; font-weight: 800; color: var(--ocean-dark); min-width: 180px; max-width: 280px; }
-  .m-bal-svg { display: block; margin: 10px 0; touch-action: none; }
+  .m-dial-readout { font-size: 1.05rem; font-weight: 800; color: var(--ocean-dark); flex: 1 1 180px; max-width: 280px; }
+  .m-bal-svg { margin: 10px 0; }
 
   /* ---- Capacity: jug, cups and spoons ---- */
   .m-jug-row { display: flex; flex-wrap: wrap; gap: 28px; margin: 10px 0; }
-  .m-jug-col { text-align: center; }
+  .m-jug-col { text-align: center; max-width: 100%; }
   .m-jug-label { font-weight: 800; color: var(--ocean-dark); margin-bottom: 4px; }
-  .m-jug-svg { touch-action: none; }
+  /* These three tools' SVGs are drawn at a fixed pixel size (matching the
+     existing Ruler/Protractor), but unlike those two - which either scroll
+     (Ruler) or are the only thing on their row (Protractor) - these sit
+     beside readout text in a space that can be genuinely narrow: the
+     floating Tools drawer docked beside an activity can be as little as
+     340px wide. max-width/height:auto lets each SVG shrink to fit instead
+     of pushing its neighbour off the edge of that panel. */
+  .m-dial-svg, .m-bal-svg, .m-jug-svg { max-width: 100%; height: auto; display: block; touch-action: none; }
 
   /* ---- Hundred chart / skip counting grid ---- */
   .m-hundred-grid { display: grid; grid-template-columns: repeat(10, 38px); grid-template-rows: repeat(10, 38px); gap: 3px; }
@@ -3325,31 +3331,49 @@ const FP_SHAPES = [
 // carries its own geometric family name (EN+AF) rather than that being
 // parsed back out of the parenthesised object name, which only exists for
 // G1's own flavour text.
+// Kept at exactly 4 real-world examples per family (16 entries total) so
+// the match3d game below has an evenly-sized pool to draw from - with only
+// 11 entries and 2-3 per family, the smaller families repeated noticeably
+// more often than the bigger ones, which read as "the same thing keeps
+// coming up". "Box (cube)" / 📦 stays dropped: a parcel emoji usually
+// renders as a clearly non-cube cuboid (wider/taller than it is deep),
+// which taught the opposite of what the entry's own name claimed - a
+// custom-drawn cube icon (ce_solidIconSVG('cube'), hoisted below since
+// it's a function declaration) takes that family's 4th slot instead.
+// "Tent (cone)" / ⛺ and "Closed umbrella (cone)" / 🌂 were dropped too:
+// a real camping tent's ridge shape is a triangular prism, not a cone,
+// and a closed umbrella's silhouette doesn't read clearly as a cone to a
+// young child either - both were flagged as "incorrect"-feeling examples.
+// Christmas tree and circus tent are genuinely cone-shaped (a single
+// pointed apex over a round base) and a custom-drawn party hat
+// (ce_solidIconSVG('cone')) rounds the family out to 4 with zero ambiguity.
 const FP_3D_OBJECTS = [
   { name: 'Ball (sphere)', nameAf: 'Bal (sfeer)', icon: '⚽', family: 'Sphere', familyAf: 'Sfeer' },
   { name: 'Orange (sphere)', nameAf: 'Lemoen (sfeer)', icon: '🍊', family: 'Sphere', familyAf: 'Sfeer' },
   { name: 'Globe (sphere)', nameAf: 'Wêreldbol (sfeer)', icon: '🌍', family: 'Sphere', familyAf: 'Sfeer' },
-  // "Box (cube)" / 📦 was dropped: a parcel emoji usually renders as a
-  // clearly non-cube cuboid (wider/taller than it is deep), which taught
-  // the opposite of what the entry's own name claimed. Dice and an ice
-  // cube are both genuinely cube-shaped, so the family still has two solid
-  // real-world examples without that mismatch.
+  { name: 'Billiard ball (sphere)', nameAf: 'Snoekerbal (sfeer)', icon: '🎱', family: 'Sphere', familyAf: 'Sfeer' },
   { name: 'Dice (cube)', nameAf: 'Dobbelsteen (kubus)', icon: '🎲', family: 'Cube', familyAf: 'Kubus' },
   { name: 'Ice cube (cube)', nameAf: 'Ysblokkie (kubus)', icon: '🧊', family: 'Cube', familyAf: 'Kubus' },
+  { name: 'Gift box (cube)', nameAf: 'Geskenkdoos (kubus)', icon: '🎁', family: 'Cube', familyAf: 'Kubus' },
+  { name: 'Building block (cube)', nameAf: 'Boublokkie (kubus)', icon: ce_solidIconSVG('cube'), family: 'Cube', familyAf: 'Kubus' },
   { name: 'Cylinder (tin can)', nameAf: 'Silinder (blik)', icon: '🥫', family: 'Cylinder', familyAf: 'Silinder' },
   { name: 'Candle (cylinder)', nameAf: 'Kers (silinder)', icon: '🕯️', family: 'Cylinder', familyAf: 'Silinder' },
   { name: 'Drum (cylinder)', nameAf: 'Tamboer (silinder)', icon: '🥁', family: 'Cylinder', familyAf: 'Silinder' },
+  { name: 'Toilet paper roll (cylinder)', nameAf: 'Toiletpapier-rol (silinder)', icon: '🧻', family: 'Cylinder', familyAf: 'Silinder' },
   { name: 'Cone (ice cream cone)', nameAf: 'Keël (roomysoontjie)', icon: '🍦', family: 'Cone', familyAf: 'Keël' },
-  { name: 'Tent (cone)', nameAf: 'Tent (keël)', icon: '⛺', family: 'Cone', familyAf: 'Keël' },
-  { name: 'Closed umbrella (cone)', nameAf: 'Toe sambreel (keël)', icon: '🌂', family: 'Cone', familyAf: 'Keël' },
+  { name: 'Christmas tree (cone)', nameAf: 'Kersboom (keël)', icon: '🎄', family: 'Cone', familyAf: 'Keël' },
+  { name: 'Circus tent (cone)', nameAf: 'Sirkustent (keël)', icon: '🎪', family: 'Cone', familyAf: 'Keël' },
+  { name: 'Party hat (cone)', nameAf: 'Partytjiehoed (keël)', icon: ce_solidIconSVG('cone'), family: 'Cone', familyAf: 'Keël' },
 ];
-/** Small isometric-style line icons for the two Grade-3-only solids that
- * have no accurate, unambiguous emoji to stand in for them: there is no
- * pyramid emoji at all, and every "box"-style emoji reads as a cube rather
- * than a distinctly non-cube rectangular prism (see the FP_3D_OBJECTS note
- * above). Drawn flat (no per-theme color logic needed - see artifact note)
- * using the app's own palette so they sit visually with the rest of the
- * activity rather than looking like a stock icon dropped in. */
+/** Small isometric-style line icons for the solids that have no accurate,
+ * unambiguous emoji to stand in for them: there is no pyramid emoji at
+ * all, every "box"-style emoji reads as a cube rather than a distinctly
+ * non-cube rectangular prism, and the cube/cone emoji candidates were
+ * either missing or too ambiguous for a young child (see the
+ * FP_3D_OBJECTS note above). Drawn flat (no per-theme color logic needed -
+ * see artifact note) using the app's own palette so they sit visually
+ * with the rest of the activity rather than looking like a stock icon
+ * dropped in. */
 function ce_solidIconSVG(kind) {
   const stroke = 'var(--text)', fill = 'var(--coral)';
   if (kind === 'rectPrism') {
@@ -3359,6 +3383,25 @@ function ce_solidIconSVG(kind) {
       <polygon points="14,40 74,40 74,70 14,70" fill="${fill}" fill-opacity="0.85" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round" />
       <polygon points="14,40 30,26 90,26 74,40" fill="${fill}" fill-opacity="0.55" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round" />
       <polygon points="74,40 90,26 90,56 74,70" fill="${fill}" fill-opacity="0.7" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round" />
+    </svg>`;
+  }
+  if (kind === 'cube') {
+    // Same isometric technique as rectPrism above, but with the front face's
+    // width and height equal, so it reads as unmistakably a cube rather
+    // than the deliberately-flattened rectangular prism.
+    return `<svg width="64" height="58" viewBox="0 0 100 90">
+      <polygon points="22,34 68,34 68,80 22,80" fill="${fill}" fill-opacity="0.85" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round" />
+      <polygon points="22,34 38,20 84,20 68,34" fill="${fill}" fill-opacity="0.55" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round" />
+      <polygon points="68,34 84,20 84,66 68,80" fill="${fill}" fill-opacity="0.7" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round" />
+    </svg>`;
+  }
+  if (kind === 'cone') {
+    // A party hat: an unmistakable cone, drawn rather than borrowed from an
+    // emoji whose real-world shape (a closed umbrella, an A-frame tent) was
+    // too much of a stretch to teach "cone" from reliably.
+    return `<svg width="64" height="58" viewBox="0 0 100 90">
+      <ellipse cx="50" cy="76" rx="30" ry="9" fill="${fill}" fill-opacity="0.55" stroke="${stroke}" stroke-width="2.5" />
+      <polygon points="50,8 20,76 80,76" fill="${fill}" fill-opacity="0.85" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round" />
     </svg>`;
   }
   return `<svg width="64" height="58" viewBox="0 0 100 90">
@@ -6433,7 +6476,15 @@ function ce_newSHQuestion() {
     }
   } else if (mode === 'match3d') {
     const pool3D = ceShState.grade >= 3 ? CE_SHAPES_3D_G3 : CE_SHAPES_3D;
-    const target = pick(pool3D);
+    // pick() has no memory of its own, so without this the same object can
+    // (and, with a small-ish pool, visibly does) come up two or three times
+    // in a row. One resample is enough to break that up while still letting
+    // the same shape FAMILY repeat (a Grade 2/3 learner naming "sphere"
+    // twice in a row isn't a problem - seeing the exact same ball twice is
+    // what read as "buggy").
+    let target = pick(pool3D);
+    if (pool3D.length > 1 && target.name === ceShState.lastMatch3D) target = pick(pool3D.filter(s => s.name !== target.name));
+    ceShState.lastMatch3D = target.name;
     if (ceShState.grade === 1) {
       // Grade 1: picture-to-picture matching, no reading required.
       ceShState.answer = target.name;
