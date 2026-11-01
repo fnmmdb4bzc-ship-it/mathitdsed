@@ -1765,7 +1765,7 @@ const SECTIONS_BY_LEVEL = {
   // it does not run through scoreHTML()/mathitReportProgress like the quiz
   // activities do - a game result is not a "practice attempt" in that sense.
   games: [
-    { title: 'Games', keys: ['game_race20', 'game_connect4', 'game_multconnect4', 'game_ticteen', 'game_tangram', 'game_dominoes', 'game_partners10', 'game_numberbattle', 'game_add5cards', 'game_flipout', 'game_snakesladders', 'game_ten', 'game_pyramid', 'game_horseshoe', 'game_colorclash', 'game_shop'] },
+    { title: 'Games', keys: ['game_race20', 'game_connect4', 'game_multconnect4', 'game_ticteen', 'game_tangram', 'game_dominoes', 'game_partners10', 'game_numberbattle', 'game_add5cards', 'game_flipout', 'game_snakesladders', 'game_ten', 'game_pyramid', 'game_horseshoe', 'game_colorclash', 'game_shop', 'game_measurearcade'] },
   ],
   // Fractopia: a standalone illustrated "fraction town" adventure (its own
   // landing page, character setup and 7-level town map) rather than
@@ -2013,6 +2013,15 @@ const ACTIVITIES = {
   game_horseshoe: { icon: '🧲', title: 'Horse Shoe', desc: 'Take turns flipping a card into the middle and claim any two cards there that add up to 10. Face cards = 10, Ace = 1. Most cards when the deck is empty wins!' },
   game_colorclash: { icon: '🎨', title: 'Color Clash', desc: 'Match the top card by color or number and empty your hand first. Skip, Reverse and Wild work as usual - but +2 and Wild +4 cards make you solve a quick sum to draw fewer cards!' },
   game_shop: { icon: '🛍️', title: 'Shop Shop!', desc: 'Run the till! Tap real South African coins and notes to pay the exact price, or work out and hand back the right change. A new item and price every round.' },
+  // A separate live classroom app (its own site, its own backend), not a
+  // solo activity like the other Games-tab entries above, so it does not
+  // get a builder in the goTo() table below the normal way - clicking it
+  // opens measure-arcade/index.html in a new tab instead of rendering
+  // anything inside MathIT. See the "game_measurearcade" entry in goTo()'s
+  // builders table. Deliberately NOT added to MATHIT_PREVIEW_ACTIVITIES
+  // below: it needs a teacher to create a live room first, which makes no
+  // sense for a solo, anonymous preview visitor to land on.
+  game_measurearcade: { icon: '🕹️', title: 'Measure Arcade', desc: 'A live classroom game for mass, capacity and time (Grade 6). One person creates a room and shares the code on a big screen; everyone else joins on their own device and plays along in real time. Opens in a new tab - English only, and needs everyone online together, so it is best played as a class rather than alone.' },
   frac_town: { icon: '🏘️', title: 'Fraction Town Adventure', desc: 'Explore a whole town built around fractions! Pick a character, then visit the bakery, castle, farm, café and more to practise fractions of a whole, equivalence, comparing, simple arithmetic, ordering, and decimals - one level per building.' },
 };
 
@@ -3288,6 +3297,13 @@ function goTo(key) {
     game_horseshoe: hs_render,
     game_colorclash: cc_render,
     game_shop: () => sh_render(shState ? shState.mode : 'pay'),
+    // Measure Arcade is a standalone site with its own backend (Supabase),
+    // not a mode rendered inside MathIT - see the ACTIVITIES comment above.
+    // Opened with noopener (same reasoning as the Free Preview button: no
+    // need for the new tab to be able to reach back into this window), then
+    // setLevel('games') redraws the Games grid so the tile's own click
+    // doesn't leave the app on a half-navigated screen.
+    game_measurearcade: () => { window.open('measure-arcade/index.html', '_blank', 'noopener'); setLevel('games'); },
     frac_town: frac_town_render,
     // Every CAPS Senior Phase activity runs the same engine, named by its key.
     ...Object.fromEntries(SP_KEYS.map(k => [k, () => sp_render(k)])),
@@ -8652,6 +8668,31 @@ function g4_clockSVG(h, m) {
 // ---- Shared draggable clock-hands component, used by "Set the Time" modes ----
 // (kept separate from the Manipulatives clock so each quiz activity gets its own
 // independent state and DOM ids, but reuses the same drag mechanics.)
+/**
+ * Which hand (hour/minute) a tap at `info` should grab, given the clock's
+ * current reading. Shared by both clock-drag implementations in this file
+ * (the quiz's qclk_* and the Manipulatives Interactive Clock's manipClock*),
+ * so a fix here fixes both at once.
+ *
+ * Picks by angle - which hand is actually pointing toward the tap - rather
+ * than by a fixed band of distance from the centre. That distance-band
+ * approach was the previous behaviour, and it was wrong: a hand can be
+ * grabbed anywhere along its length, so a tap close to the hub, aimed at
+ * the long minute hand, always grabbed the short hour hand instead, no
+ * matter where either hand actually pointed. Distance from centre is kept
+ * only as the tie-breaker for the one case angle alone cannot resolve: the
+ * two hands sitting at (almost) the same angle, which happens near every
+ * quarter hour - there, "close to the hub" vs "out near the rim" is still
+ * the more useful signal, since it mirrors the hands' own different lengths.
+ */
+function clockPickHand(hour, minute, info, pickRadius) {
+  const hourDeg = (hour % 12) * 30 + minute * 0.5;
+  const minDeg = minute * 6;
+  const angDiff = (a, b) => { const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
+  const hourDiff = angDiff(info.deg, hourDeg), minDiff = angDiff(info.deg, minDeg);
+  if (Math.abs(hourDiff - minDiff) < 8) return info.dist <= pickRadius ? 'hour' : 'minute';
+  return hourDiff < minDiff ? 'hour' : 'minute';
+}
 function qclk_pointerInfo(svgId, evt) {
   const svg = document.getElementById(svgId);
   const rect = svg.getBoundingClientRect();
@@ -8702,7 +8743,7 @@ function qclk_buildSVG(svgId, state, onChange) {
   grabDisc.onpointerdown = (evt) => {
     const info = qclk_pointerInfo(svgId, evt);
     if (info.dist < 15) return;
-    state.dragTarget = info.dist <= HAND_PICK_RADIUS ? 'hour' : 'minute';
+    state.dragTarget = clockPickHand(state.hour, state.minute, info, HAND_PICK_RADIUS);
     evt.preventDefault();
   };
   if (state._moveHandler) window.removeEventListener('pointermove', state._moveHandler);
@@ -12622,7 +12663,7 @@ function manipClockBuildSVG() {
   manipClockGrabDisc.onpointerdown = (evt) => {
     const info = manipClockPointerInfo(evt);
     if (info.dist < 15) return;
-    manipClock.dragTarget = info.dist <= HAND_PICK_RADIUS ? 'hour' : 'minute';
+    manipClock.dragTarget = clockPickHand(manipClock.hour, manipClock.minute, info, HAND_PICK_RADIUS);
     evt.preventDefault();
   };
   if (manipClockMoveHandler) window.removeEventListener('pointermove', manipClockMoveHandler);
@@ -13646,18 +13687,28 @@ function manipDScaleCheck() {
 let manipDialPan = [];
 let manipDialShowReadout = true;
 const MANIP_DIAL_MAXG = 1000; // a small analogue scale, deliberately smaller than the digital one
-const MANIP_DIAL_MAJOR_STEP = 200, MANIP_DIAL_MINOR_STEP = 50;
+// Three tiers now, not two: the labelled numbers every 200g, a medium tick
+// every 50g (the old minor step), and a fine, unlabelled tick every 10g.
+// The fine tier was added because the realistic object masses this scale
+// weighs (a tennis ball at 58g, a potato at 170g...) mostly fall nowhere
+// near a multiple of 50 - with only 50g ticks to go on, most readings were
+// not actually readable off the dial at all, which is what made this feel
+// broken rather than just "needs practice". 10g ticks get most single
+// objects, and plenty of combinations, close enough to read exactly, the
+// same way a real analogue kitchen scale's fine graduations work.
+const MANIP_DIAL_MAJOR_STEP = 200, MANIP_DIAL_MID_STEP = 50, MANIP_DIAL_MINOR_STEP = 10;
 function manipInitDialScale() {
   manipDialPan = [];
   manipDialShowReadout = true;
   document.getElementById('manip-container').innerHTML = `
     <div class="card">
       <h3 style="margin-top:0;">${tr('Dial Scale (Mass)', 'Wyserskaal (Massa)')}</h3>
-      <p class="m-help">${tr('Click an object to place it on the scale and watch the needle swing. Unlike the digital scale, you have to read the dial yourself - and this little scale only goes up to 1000 g (1 kg), just like a real one.', 'Klik \'n voorwerp om dit op die skaal te plaas en kyk hoe die wyser swaai. Anders as die digitale skaal moet jy die wyser self aflees - en hierdie klein skaal gaan net tot 1000 g (1 kg), net soos \'n regte een.')}</p>
+      <p class="m-help">${tr('Click an object to place it on the scale and watch the needle swing. Click an object already on the scale to take it off. Unlike the digital scale, you have to read the dial yourself - and this little scale only goes up to 1000 g (1 kg), just like a real one.', 'Klik \'n voorwerp om dit op die skaal te plaas en kyk hoe die wyser swaai. Klik \'n voorwerp wat reeds op die skaal is om dit af te haal. Anders as die digitale skaal moet jy die wyser self aflees - en hierdie klein skaal gaan net tot 1000 g (1 kg), net soos \'n regte een.')}</p>
       <div class="m-row" id="mdial-palette"></div>
       <div class="m-dial-wrap">
         <svg class="m-dial-svg" id="mdial-svg" width="300" height="230" viewBox="0 0 300 230"></svg>
         <div>
+          <div class="m-scale-pan" id="mdial-pan"></div>
           <div class="m-dial-readout" id="mdial-readout"></div>
           <div class="m-row">
             <button class="secondary small" onclick="manipDialToggleReadout()">${tr('Show / Hide reading', 'Wys / Versteek aflesing')}</button>
@@ -13676,6 +13727,11 @@ function manipDialClear() { manipDialPan = []; manipDialRender(); }
 function manipDialTotal() { return manipDialPan.reduce((s, i) => s + MANIP_MASS_OBJECTS[i].g, 0); }
 function manipDialToggleReadout() { manipDialShowReadout = !manipDialShowReadout; manipDialRender(); }
 function manipDialRender() {
+  const panEl = document.getElementById('mdial-pan');
+  panEl.innerHTML = manipDialPan.map((i, idx) => {
+    const o = MANIP_MASS_OBJECTS[i];
+    return `<span class="m-scale-pan-item" onclick="manipDialRemove(${idx})" title="${tr('Remove', 'Verwyder')}">${o.icon}</span>`;
+  }).join('');
   const NS = 'http://www.w3.org/2000/svg';
   const svg = document.getElementById('mdial-svg');
   svg.innerHTML = '';
@@ -13694,9 +13750,11 @@ function manipDialRender() {
   svg.appendChild(mk('circle', { cx, cy, r: rOuter + 14, fill: overloaded ? '#FBECEC' : '#fff', stroke: '#7A5610', 'stroke-width': 3 }));
   for (let g = 0; g <= MANIP_DIAL_MAXG; g += MANIP_DIAL_MINOR_STEP) {
     const isMajor = g % MANIP_DIAL_MAJOR_STEP === 0;
+    const isMid = g % MANIP_DIAL_MID_STEP === 0;
     const deg = thetaStart + (g / MANIP_DIAL_MAXG) * (thetaEnd - thetaStart);
-    const p1 = pointAt(deg, rOuter), p2 = pointAt(deg, rOuter - (isMajor ? 16 : 9));
-    svg.appendChild(mk('line', { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, stroke: '#5C3D0A', 'stroke-width': isMajor ? 2.5 : 1.2 }));
+    const tickLen = isMajor ? 16 : isMid ? 11 : 5;
+    const p1 = pointAt(deg, rOuter), p2 = pointAt(deg, rOuter - tickLen);
+    svg.appendChild(mk('line', { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, stroke: '#5C3D0A', 'stroke-width': isMajor ? 2.5 : isMid ? 1.2 : 0.7 }));
     if (isMajor) {
       const lp = pointAt(deg, rOuter - 30);
       const t = mk('text', { x: lp.x, y: lp.y + 4, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 800, 'font-family': NUM_FONT, fill: '#5C3D0A' });
