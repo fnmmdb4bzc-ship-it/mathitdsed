@@ -961,6 +961,46 @@
   .r20-fill-p { background: var(--ocean); }
   .r20-fill-c { background: var(--coral); }
   .r20-track-total { width: 34px; text-align: right; font-weight: 800; flex-shrink: 0; }
+  /* ---------- Measure Arcade ---------- */
+  .arc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 12px 0; }
+  .arc-cell {
+    background: var(--surface-2); border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 10px 4px; font-weight: 700; font-size: 0.85rem; cursor: pointer; color: var(--text);
+    font-family: inherit;
+  }
+  .arc-cell:hover:not(:disabled) { border-color: var(--ocean); }
+  .arc-cell.on { background: var(--good-bg); border-color: var(--good); color: var(--good); }
+  .arc-cell.win { outline: 3px solid var(--coral); }
+  .arc-cell:disabled { cursor: default; opacity: 0.85; }
+  .arc-parcels { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .arc-parcel {
+    background: var(--surface-2); border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 10px 12px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; gap: 4px; font-size: 0.82rem; color: var(--text); font-family: inherit;
+  }
+  .arc-parcel:disabled { opacity: 0.4; cursor: default; }
+  .arc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .arc-chip {
+    background: var(--ocean-light); border: 1.5px solid var(--ocean); border-radius: 20px;
+    padding: 4px 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; color: var(--navy-dark);
+    font-family: inherit;
+  }
+  .arc-table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+  .arc-table td { padding: 4px 6px; border-bottom: 1px dashed var(--border); font-size: 0.9rem; }
+  .arc-ings { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .arc-ing {
+    background: var(--surface-2); border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 8px 12px; font-size: 0.82rem; font-weight: 700; cursor: pointer; color: var(--text);
+    text-align: center; font-family: inherit;
+  }
+  .arc-ing[aria-pressed="true"] { border-color: var(--ocean); box-shadow: 0 0 0 2px var(--ocean-light); }
+  .arc-ing.ok { background: var(--good-bg); border-color: var(--good); }
+  .arc-ing.no { background: var(--bad-bg); border-color: var(--bad); }
+  .arc-instr { max-width: 240px; margin: 10px auto; }
+  .arc-instr svg { width: 100%; height: auto; touch-action: none; }
+  .arc-nudge { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 8px 0; }
+  .arc-stop { color: var(--text-soft); font-weight: 700; }
+  .arc-stop.done { color: var(--good); }
   /* One row that scans sideways, never a wrapped block. Measured on a landscape
      iPad it was 250px over five rows, which is nearly a third of the screen
      spent choosing a puzzle you have already chosen, and it pushed the board
@@ -2006,13 +2046,13 @@ const ACTIVITIES = {
   game_horseshoe: { icon: '🧲', title: 'Horse Shoe', desc: 'Take turns flipping a card into the middle and claim any two cards there that add up to 10. Face cards = 10, Ace = 1. Most cards when the deck is empty wins!' },
   game_colorclash: { icon: '🎨', title: 'Color Clash', desc: 'Match the top card by color or number and empty your hand first. Skip, Reverse and Wild work as usual - but +2 and Wild +4 cards make you solve a quick sum to draw fewer cards!' },
   game_shop: { icon: '🛍️', title: 'Shop Shop!', desc: 'Run the till! Tap real South African coins and notes to pay the exact price, or work out and hand back the right change. A new item and price every round.' },
-  // A separate live classroom app (its own site, its own backend), not a
-  // solo activity like the other Games-tab entries above, so it does not
-  // get a builder in the goTo() table below the normal way - clicking it
-  // opens measure-arcade/index.html in a new tab instead of rendering
-  // anything inside MathIT. See the "game_measurearcade" entry in goTo()'s
-  // builders table.
-  game_measurearcade: { icon: '🕹️', title: 'Measure Arcade', desc: 'A live classroom game for mass, capacity and time (Grade 6). One person creates a room and shares the code on a big screen; everyone else joins on their own device and plays along in real time. Opens in a new tab - English only, and needs everyone online together, so it is best played as a class rather than alone.' },
+  // Four quick measurement games (mass, capacity, time), levelled across
+  // Grades 1-6, played solo right here - no room code, no second device,
+  // no teacher needed to start it. Ported from the original classroom
+  // version of Measure Arcade (which needed a teacher-led room and its own
+  // backend); this one renders inside MathIT like every other game below.
+  // English-only for now, like Levels 7-8 and Fraction Town.
+  game_measurearcade: { icon: '🕹️', title: 'Measure Arcade', desc: 'Four quick games for mass, capacity and time: Measure Bingo, Courier Challenge, Bakery Rush and Beat the Train. Choose a level from Grade 1-2 up to Grade 5-6, then play on your own - no code and no second device needed. English only for now.' },
   frac_town: { icon: '🏘️', title: 'Fraction Town Adventure', desc: 'Explore a whole town built around fractions! Pick a character, then visit the bakery, castle, farm, café and more to practise fractions of a whole, equivalence, comparing, simple arithmetic, ordering, and decimals - one level per building.' },
 };
 
@@ -3180,13 +3220,7 @@ function goTo(key) {
     game_horseshoe: hs_render,
     game_colorclash: cc_render,
     game_shop: () => sh_render(shState ? shState.mode : 'pay'),
-    // Measure Arcade is a standalone site with its own backend (Supabase),
-    // not a mode rendered inside MathIT - see the ACTIVITIES comment above.
-    // Opened with noopener (same reasoning as the Free Preview button: no
-    // need for the new tab to be able to reach back into this window), then
-    // setLevel('games') redraws the Games grid so the tile's own click
-    // doesn't leave the app on a half-navigated screen.
-    game_measurearcade: () => { window.open('measure-arcade/index.html', '_blank', 'noopener'); setLevel('games'); },
+    game_measurearcade: arc_entry,
     frac_town: frac_town_render,
     // Every CAPS Senior Phase activity runs the same engine, named by its key.
     ...Object.fromEntries(SP_KEYS.map(k => [k, () => sp_render(k)])),
@@ -20286,6 +20320,420 @@ function sh_checkPay() {
       : tr(`That's too much - take away ${fp_formatCents(total - target)}.`, `Dit is te veel - haal ${fp_formatCents(total - target)} weg.`);
   }
 }
+
+// ---------- Measure Arcade (native, single-player) ----------
+// Ported from the original standalone Measure Arcade site (which needed a
+// teacher to create a room, share a 4-letter code, and run the lesson from
+// a second "teacher" screen, talking to its own Supabase backend) into a
+// game that plays solo, right here, with nothing saved anywhere: no room
+// code, no teacher/learner split, no second device, no network calls.
+// Levelled across three bands (Tier A = Grades 1-2, Tier B = Grades 3-4,
+// Tier C = Grades 5-6, matching the original's Grade 6 Term 4 scope) so it
+// is playable right through Foundation and Intermediate Phase rather than
+// Grade 6 only. The band boundaries below are my best-effort
+// differentiation, not a CAPS citation - worth a sanity check against the
+// actual CAPS measurement pacing per grade/term.
+// English-only for now, like Levels 7-8 and Fraction Town.
+const ARC_U = { mass: ['kg', 'g'], cap: ['ℓ', 'mℓ'] };
+function arc_fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+function arc_dec(v) { const w = Math.floor(v / 1000), r = v % 1000; return r ? w + ',' + String(r).padStart(3, '0').replace(/0+$/, '') : String(w); }
+function arc_pad(n) { return String(n).padStart(2, '0'); }
+function arc_hm(t) { return `${arc_pad(Math.floor(t / 60) % 24)}:${arc_pad(t % 60)}`; }
+function arc_dur(m) { const h = Math.floor(m / 60), r = m % 60; return h && r ? `${h} h ${r} min` : h ? `${h} h` : `${r} min`; }
+function arc_bigForm(v, c) { const [B, s] = ARC_U[c], k = Math.floor(v / 1000), g = v % 1000; return (k && g && Math.random() < .5) ? `${k} ${B} ${g} ${s}` : `${arc_dec(v)} ${B}`; }
+function arc_anyForm(v, c) { const [B, s] = ARC_U[c]; const opts = [`${arc_dec(v)} ${B}`, `${arc_fmt(v)} ${s}`]; if (v >= 1000 && v % 1000) opts.push(`${Math.floor(v / 1000)} ${B} ${v % 1000} ${s}`); return pick(opts); }
+function arc_el(tag, attrs, parent) { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function arc_svgXY(svg, e) { const r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal; return [(e.clientX - r.left) * vb.width / r.width, (e.clientY - r.top) * vb.height / r.height]; }
+function arc_dragOn(svg, fn, end) { let on = false; svg.addEventListener('pointerdown', e => { on = true; svg.setPointerCapture(e.pointerId); fn(e); e.preventDefault(); }); svg.addEventListener('pointermove', e => { if (on) fn(e); }); ['pointerup', 'pointercancel'].forEach(t => svg.addEventListener(t, () => { if (on && end) end(); on = false; })); }
+
+const ARC_TIERS = [
+  { id: 'A', label: 'Grade 1-2', sub: 'Whole numbers, one unit at a time.' },
+  { id: 'B', label: 'Grade 3-4', sub: 'Friendly numbers, simple conversions.' },
+  { id: 'C', label: 'Grade 5-6', sub: 'Full conversions and 24-hour time.' },
+];
+let arcState = null;
+function arc_entry() {
+  mathitBumpRun();
+  if (!arcState) arcState = { tier: 'C', screen: 'menu' };
+  arc_render();
+}
+function arc_render() {
+  ({ menu: arc_renderMenu, bingo: arc_renderBingo, courier: arc_renderCourier, bakery: arc_renderBakery, train: arc_renderTrain })[arcState.screen]();
+}
+function arc_toMenu() { arcState.screen = 'menu'; arc_render(); }
+function arc_setTier(t) { arcState.tier = t; arc_renderMenu(); }
+function arc_start(game) {
+  arcState.screen = game;
+  if (game === 'bingo') arcState.bingo = arc_genBingo(arcState.tier);
+  if (game === 'courier') { arcState.courier = arc_genCourier(arcState.tier); arcState.courier.g = { loaded: [], sent: false, stars: 0, msg: null }; }
+  if (game === 'bakery') arcState.bakery = arc_genBakery(arcState.tier);
+  if (game === 'train') { arcState.train = arc_genTrain(arcState.tier); arcState.train.g = arc_trainNew(arcState.train); }
+  arc_render();
+}
+function arc_renderMenu() {
+  const tier = ARC_TIERS.find(t => t.id === arcState.tier);
+  app.innerHTML = `
+    ${backBtn()}
+    <div class="card">
+      <h2 class="activity-title">🕹️ Measure Arcade</h2>
+      <p class="subtext">Four quick measurement games: mass, capacity and time. Pick a level, then pick a game. Nothing here is saved - just play.</p>
+      <div class="curr-switch">
+        ${ARC_TIERS.map(t => `<button class="curr-btn ${arcState.tier === t.id ? 'active' : ''}" onclick="arc_setTier('${t.id}')">${t.label}</button>`).join('')}
+        <span class="curr-note">${tier.sub}</span>
+      </div>
+    </div>
+    <div class="grid">
+      ${arc_tile('bingo', '🔄', 'Measure Bingo', 'Change the call to match a cell on your card, then tap it.')}
+      ${arc_tile('courier', '📦', 'Courier Challenge', 'Load the truck as close to the limit as you can, without going over.')}
+      ${arc_tile('bakery', '🧁', 'Bakery Rush', 'Scale a recipe, then measure every ingredient on the scale or jug.')}
+      ${arc_tile('train', '🚆', 'Beat the Train', 'Plan a day out using a timetable, and work out each time along the way.')}
+    </div>
+  `;
+}
+function arc_tile(key, icon, title, desc) {
+  return `<div class="tile" style="--tile-color: var(--ocean); --tile-bg: var(--ocean-light);" onclick="arc_start('${key}')">
+    <div class="dot">${icon}</div><div><h3>${title}</h3><p>${desc}</p></div></div>`;
+}
+function arc_back() { return `<button class="backbtn" onclick="arc_toMenu()" style="margin-left:0">&#8592; Measure Arcade</button>`; }
+
+/* ---------- Measure Bingo ---------- */
+const ARC_LINES = (() => { const L = []; for (let r = 0; r < 4; r++) { L.push([0, 1, 2, 3].map(c => r * 4 + c)); L.push([0, 1, 2, 3].map(c => c * 4 + r)); } L.push([0, 5, 10, 15], [3, 6, 9, 12]); return L; })();
+function arc_bingoItem(tier) {
+  const c = pick(['mass', 'cap', 'time']);
+  if (c === 'time') {
+    if (tier === 'A') {
+      const h = randInt(1, 12), half = Math.random() < 0.5;
+      return { c, cell: `${arc_pad(h)}:${half ? '30' : '00'}`, call: half ? `half past ${h}` : `${h} o'clock` };
+    }
+    if (tier === 'B') {
+      const h = randInt(1, 12), m = pick([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
+      return { c, cell: `${arc_pad(h)}:${arc_pad(m)}`, call: m === 0 ? `${h} o'clock` : `${m} min past ${h}` };
+    }
+    const v = randInt(5, 36) * 5; let call;
+    if (v < 60 || Math.random() < .55) { const s = randInt(7 * 12, 16 * 12) * 5; call = `${arc_hm(s)} to ${arc_hm(s + v)}`; } else call = arc_dur(v);
+    return { c, cell: `${v} min`, call };
+  }
+  if (tier === 'A') { const v = randInt(1, 10) * 1000; const label = `${v / 1000} ${ARC_U[c][0]}`; return { c, cell: label, call: label }; }
+  if (tier === 'B') { const v = randInt(1, 30) * 100; return { c, cell: `${arc_fmt(v)} ${ARC_U[c][1]}`, call: arc_bigForm(v, c) }; }
+  const v = Math.random() < .2 ? pick([250, 450, 600, 750, 800, 850, 950]) : randInt(1, 4) * 1000 + pick([0, 50, 150, 250, 300, 450, 500, 600, 750, 800, 20]);
+  return { c, cell: `${arc_fmt(v)} ${ARC_U[c][1]}`, call: arc_bigForm(v, c) };
+}
+function arc_genBingo(tier) {
+  const pool = [], seen = new Set();
+  let guard = 0;
+  while (pool.length < 28 && guard++ < 2000) { const it = arc_bingoItem(tier); if (!seen.has(it.cell)) { seen.add(it.cell); it.id = pool.length; pool.push(it); } }
+  const n = Math.min(16, pool.length);
+  return { pool, order: shuffle(pool.map(p => p.id)), ci: 0, card: shuffle(pool.map(p => p.id)).slice(0, n), covered: [], resp: {}, miss: 0, bingo: false, msg: null };
+}
+function arc_renderBingo() {
+  const g = arcState.bingo, call = g.pool[g.order[g.ci]], last = g.ci >= g.order.length - 1;
+  const winLine = ARC_LINES.find(l => l.every(k => g.covered.includes(g.card[k])));
+  const cells = g.card.map((id, k) => { const it = g.pool[id]; return `<button class="arc-cell${g.covered.includes(id) ? ' on' : ''}${winLine && winLine.includes(k) ? ' win' : ''}" onclick="arc_bingoTap(${id})" ${g.covered.includes(id) || g.bingo ? 'disabled' : ''}>${esc(it.cell)}</button>`; }).join('');
+  const fb = g.msg ? `<div class="feedback ${g.msg.ok ? 'good' : 'bad'}">${esc(g.msg.text)}</div>` : '';
+  app.innerHTML = `
+    ${backBtn()}${arc_back()}
+    <div class="card">
+      <h2 class="activity-title">🔄 Measure Bingo</h2>
+      <p class="subtext">Change the call to match the same amount on your card, then tap it. Four in a row, column, or the four corners - that's bingo!</p>
+      <div class="q-box">${g.bingo ? 'BINGO! Well done!' : esc(call.call)}</div>
+      <div class="arc-grid">${cells}</div>
+      ${fb}
+      <div style="margin-top:10px">
+        <button class="secondary" onclick="arc_bingoSkip()" ${g.resp[g.ci] || g.bingo ? 'disabled' : ''}>Not on my card</button>
+        <button class="action" onclick="arc_bingoNext()" ${!g.bingo && (!g.resp[g.ci] || last) ? 'disabled' : ''}>${g.bingo ? 'Play again' : 'Next call'}</button>
+      </div>
+      <p class="subtext" style="margin-top:10px">Mistakes: ${g.miss}</p>
+    </div>`;
+}
+function arc_bingoTap(id) {
+  const g = arcState.bingo; if (g.bingo || g.resp[g.ci] || g.covered.includes(id)) return;
+  const call = g.pool[g.order[g.ci]];
+  if (id === g.order[g.ci]) {
+    g.covered.push(id); g.resp[g.ci] = 'hit';
+    const win = ARC_LINES.some(l => l.every(k => g.covered.includes(g.card[k])));
+    if (win) { g.bingo = true; g.msg = { ok: true, text: 'BINGO! Shout it out!' }; } else g.msg = { ok: true, text: `Yes! ${call.call} = ${call.cell}` };
+  } else { g.miss++; g.msg = { ok: false, text: `Not ${g.pool[id].cell}. Change the call again.` }; }
+  arc_renderBingo();
+}
+function arc_bingoSkip() {
+  const g = arcState.bingo; if (g.bingo || g.resp[g.ci]) return;
+  const callId = g.order[g.ci];
+  if (g.card.includes(callId)) { g.miss++; g.msg = { ok: false, text: "It IS on your card - look again." }; }
+  else { g.resp[g.ci] = 'skip'; g.msg = { ok: true, text: "Correct, that's not on your card." }; }
+  arc_renderBingo();
+}
+function arc_bingoNext() {
+  const g = arcState.bingo;
+  if (g.bingo) { arcState.bingo = arc_genBingo(arcState.tier); return arc_renderBingo(); }
+  if (!g.resp[g.ci]) return;
+  g.ci = Math.min(g.ci + 1, g.order.length - 1); g.msg = null;
+  arc_renderBingo();
+}
+
+/* ---------- Courier Challenge ---------- */
+function arc_genCourier(tier) {
+  if (tier === 'A') {
+    const n = 4, limit = 10000, parcels = [];
+    while (parcels.length < n) { const v = randInt(1, 5) * 1000; parcels.push({ v, f: `${v / 1000} kg` }); }
+    let best = 0; for (let m = 0; m < (1 << n); m++) { let s = 0; for (let i = 0; i < n; i++) if (m >> i & 1) s += parcels[i].v; if (s <= limit && s > best) best = s; }
+    return { parcels, best, limit, unit: 'kg' };
+  }
+  if (tier === 'B') {
+    const n = 6, limit = 2000, parcels = [];
+    while (parcels.length < n) { const v = randInt(2, 20) * 100; parcels.push({ v, f: `${arc_fmt(v)} g` }); }
+    let best = 0; for (let m = 0; m < (1 << n); m++) { let s = 0; for (let i = 0; i < n; i++) if (m >> i & 1) s += parcels[i].v; if (s <= limit && s > best) best = s; }
+    return { parcels, best, limit, unit: 'g' };
+  }
+  const parcels = []; while (parcels.length < 8) { const v = randInt(6, 40) * 50; parcels.push({ v, f: arc_anyForm(v, 'mass') }); }
+  let best = 0; for (let m = 0; m < 256; m++) { let s = 0; for (let i = 0; i < 8; i++) if (m >> i & 1) s += parcels[i].v; if (s <= 5000 && s > best) best = s; }
+  return { parcels, best, limit: 5000, unit: 'g' };
+}
+function arc_renderCourier() {
+  const s = arcState.courier, g = s.g;
+  const tot = g.loaded.reduce((a, i) => a + s.parcels[i].v, 0);
+  const limitLabel = s.unit === 'kg' ? (s.limit / 1000) + ' kg' : arc_fmt(s.limit) + ' g';
+  const parcels = s.parcels.map((p, i) => `<button class="arc-parcel" onclick="arc_courierToggle(${i})" ${g.loaded.includes(i) || g.sent ? 'disabled' : ''}>📦<span>${esc(p.f)}</span></button>`).join('');
+  const chips = g.loaded.map(i => `<button class="arc-chip" onclick="arc_courierOff(${i})" ${g.sent ? 'disabled' : ''}>${esc(s.parcels[i].f)} ✕</button>`).join('') || `<span class="subtext">Empty. Tap a parcel to load it.</span>`;
+  const fb = g.msg ? `<div class="feedback ${g.msg.ok ? 'good' : 'bad'}">${esc(g.msg.text)}</div>` : '';
+  app.innerHTML = `
+    ${backBtn()}${arc_back()}
+    <div class="card">
+      <h2 class="activity-title">📦 Courier Challenge</h2>
+      <p class="subtext">Load the truck as close to ${limitLabel} as you can, without going over. Work out the total, then type it in.</p>
+      <div class="arc-parcels">${parcels}</div>
+      <div class="q-box">Truck (limit ${limitLabel})</div>
+      <div class="arc-chips">${chips}</div>
+      ${g.sent ? '' : `<div style="margin-top:10px"><input type="number" id="arc-cour-in" placeholder="total in ${s.unit}" style="width:140px"> ${s.unit} <button class="action" onclick="arc_courierSend()">Send the truck</button></div>`}
+      ${fb}
+      ${g.sent ? `<div class="subtext" style="margin-top:8px;font-size:1.1rem">${'★'.repeat(g.stars)}${'☆'.repeat(3 - g.stars)}</div><button class="action" onclick="arc_courierNew()">New parcels</button>` : ''}
+    </div>`;
+}
+function arc_courierToggle(i) { const g = arcState.courier.g; if (g.sent) return; g.loaded.push(i); g.msg = null; arc_renderCourier(); }
+function arc_courierOff(i) { const g = arcState.courier.g; if (g.sent) return; g.loaded = g.loaded.filter(x => x !== i); arc_renderCourier(); }
+function arc_courierSend() {
+  const s = arcState.courier, g = s.g;
+  const tot = g.loaded.reduce((a, i) => a + s.parcels[i].v, 0);
+  if (!tot) { g.msg = { ok: false, text: 'Load some parcels first.' }; return arc_renderCourier(); }
+  const raw = document.getElementById('arc-cour-in').value;
+  const n = parseFloat(raw);
+  if (isNaN(n)) { g.msg = { ok: false, text: `Type the total in ${s.unit} first.` }; return arc_renderCourier(); }
+  const typed = s.unit === 'kg' ? Math.round(n * 1000) : Math.round(n);
+  if (typed !== tot) { g.msg = { ok: false, text: "Check your adding, then try again." }; return arc_renderCourier(); }
+  if (tot > s.limit) { g.msg = { ok: false, text: "That's over the limit! Take a parcel off." }; return arc_renderCourier(); }
+  const star = tot === s.best ? 3 : (s.best - tot) <= Math.max(1, Math.round(s.limit * 0.05)) ? 2 : 1;
+  g.sent = true; g.stars = star;
+  g.msg = { ok: true, text: star === 3 ? 'Perfect load! That is the best possible.' : 'Sent! A fuller load was possible - see if you can beat it next time.' };
+  arc_renderCourier();
+}
+function arc_courierNew() { arcState.courier = arc_genCourier(arcState.tier); arcState.courier.g = { loaded: [], sent: false, stars: 0, msg: null }; arc_renderCourier(); }
+
+/* ---------- Bakery Rush ---------- */
+const ARC_RECIPES = [
+  { name: 'Pancakes', items: [['Flour', 'mass', 250], ['Milk', 'cap', 500], ['Sugar', 'mass', 50], ['Oil', 'cap', 50]] },
+  { name: 'Muffins', items: [['Flour', 'mass', 300], ['Sugar', 'mass', 150], ['Milk', 'cap', 250], ['Butter', 'mass', 100]] },
+  { name: 'Scones', items: [['Flour', 'mass', 500], ['Butter', 'mass', 100], ['Milk', 'cap', 200], ['Sugar', 'mass', 100]] },
+  { name: 'Banana bread', items: [['Flour', 'mass', 400], ['Bananas', 'mass', 600], ['Milk', 'cap', 100], ['Oil', 'cap', 100]] },
+  { name: 'Flapjacks', items: [['Oats', 'mass', 450], ['Butter', 'mass', 200], ['Syrup', 'cap', 150], ['Water', 'cap', 250]] },
+];
+function arc_genBakery(tier) {
+  const rec = pick(ARC_RECIPES);
+  let items = rec.items, f = 1, fname = 'As written', fop = '';
+  if (tier === 'A') { items = rec.items.slice(0, 2); }
+  else if (tier === 'B') { items = rec.items.slice(0, 3); f = 2; fname = 'Double batch'; fop = '× 2'; }
+  else {
+    items = rec.items;
+    const fs = [[2, 'Double batch', '× 2'], [3, 'Triple batch', '× 3']];
+    if (rec.items.every(i => i[2] % 100 === 0)) fs.push([.5, 'Half batch', '÷ 2']);
+    [f, fname, fop] = pick(fs);
+    if (rec.items.some(i => i[2] * f > (i[1] === 'cap' ? 2000 : 4950))) [f, fname, fop] = fs[0];
+  }
+  return {
+    name: rec.name, f, fname, fop,
+    items: items.map(([n, c, v]) => ({ n, c, base: v, need: Math.round(v * f), shown: tier === 'C' ? arc_anyForm(v, c) : `${arc_fmt(v)} ${ARC_U[c][1]}` })),
+    g: { set: items.map(() => 0), baked: false, tries: 0, stars: 0, st: [], cur: 0, msg: null },
+  };
+}
+function arc_renderBakery() {
+  const s = arcState.bakery, g = s.g, k = g.cur, i = s.items[k];
+  const ings = s.items.map((it, idx) => `<button class="arc-ing${g.st[idx] ? (' ' + g.st[idx]) : ''}" onclick="arc_bakeryPick(${idx})" aria-pressed="${idx === k}">${esc(it.n)}<br><span>${g.set[idx] ? arc_fmt(g.set[idx]) + ' ' + ARC_U[it.c][1] : 'not measured'}</span></button>`).join('');
+  const fb = g.msg ? `<div class="feedback ${g.msg.ok ? 'good' : 'bad'}">${esc(g.msg.text)}</div>` : '';
+  app.innerHTML = `
+    ${backBtn()}${arc_back()}
+    <div class="card">
+      <h2 class="activity-title">🧁 Bakery Rush</h2>
+      <p class="subtext">Order: <b>${esc(s.fname)}</b>${s.fop ? ` (${s.fop})` : ''}. The table below is the recipe for ONE batch.</p>
+      <table class="arc-table">${s.items.map(x => `<tr><td>${esc(x.n)}</td><td style="text-align:right;font-weight:700">${esc(x.shown)}</td></tr>`).join('')}</table>
+      <div class="arc-ings">${ings}</div>
+      <h3 style="margin:14px 0 6px">${esc(i.n)}: measure ${arc_fmt(i.need)} ${ARC_U[i.c][1]} (${i.c === 'mass' ? 'use the scale' : 'use the jug'})</h3>
+      <div id="arc-instr" class="arc-instr"></div>
+      <div id="arc-nudge" class="arc-nudge"></div>
+      <div class="subtext" id="arc-readout" style="text-align:center"></div>
+      <div style="margin-top:10px"><button class="action" onclick="arc_bakeryBake()" ${g.baked ? 'disabled' : ''}>Bake!</button></div>
+      ${fb}
+      ${g.baked ? `<div class="subtext" style="margin-top:6px;font-size:1.1rem">${'★'.repeat(g.stars)}${'☆'.repeat(3 - g.stars)}</div><button class="action" onclick="arc_bakeryNew()">Next order</button>` : ''}
+    </div>`;
+  arc_bakeryWireInstrument();
+}
+function arc_bakeryWireInstrument() {
+  const s = arcState.bakery, g = s.g, k = g.cur, i = s.items[k];
+  const host = document.getElementById('arc-instr'); if (!host) return;
+  const readout = () => { const rd = document.getElementById('arc-readout'); if (rd) rd.textContent = g.set[k] ? `${arc_fmt(g.set[k])} ${ARC_U[i.c][1]} = ${arc_dec(g.set[k])} ${ARC_U[i.c][0]}` : ''; };
+  const api = (i.c === 'mass' ? arc_scaleSVG : arc_jugSVG)(host, v => { g.set[k] = v; readout(); }, () => {});
+  api.set(g.set[k] || 0); readout();
+  const nudge = document.getElementById('arc-nudge'); nudge.innerHTML = '';
+  const steps = [-100, -50, 50, 100], max = i.c === 'mass' ? 4950 : 2000;
+  steps.forEach(d => { const b = document.createElement('button'); b.className = 'secondary small'; b.textContent = (d < 0 ? '−' : '+') + Math.abs(d) + ' ' + ARC_U[i.c][1]; b.disabled = g.baked; b.onclick = () => { g.set[k] = Math.max(0, Math.min(max, g.set[k] + d)); api.set(g.set[k]); readout(); }; nudge.appendChild(b); });
+}
+function arc_bakeryPick(idx) { arcState.bakery.g.cur = idx; arc_renderBakery(); }
+function arc_bakeryBake() {
+  const s = arcState.bakery, g = s.g;
+  let right = 0; g.tries++;
+  s.items.forEach((x, j) => { const ok = g.set[j] === x.need; g.st[j] = ok ? 'ok' : 'no'; if (ok) right++; });
+  if (right === s.items.length) {
+    g.baked = true; g.stars = g.tries <= 1 ? 3 : g.tries === 2 ? 2 : 1;
+    g.msg = { ok: true, text: `Perfect ${s.name.toLowerCase()}! Every ingredient is right.` };
+  } else {
+    g.msg = { ok: false, text: `${right} of ${s.items.length} right. Check the red ingredients and measure them again.` };
+  }
+  arc_renderBakery();
+}
+function arc_bakeryNew() { arcState.bakery = arc_genBakery(arcState.tier); arc_renderBakery(); }
+function arc_scaleSVG(host, onv, onend) {
+  const svg = arc_el('svg', { viewBox: '0 0 240 240', 'aria-label': 'Scale, 0 to 5 kg. Drag to set.' }, host);
+  arc_el('rect', { x: 6, y: 6, width: 228, height: 228, rx: 30, fill: 'var(--sand-light)', stroke: 'var(--sand)', 'stroke-width': 4 }, svg);
+  const cx = 120, cy = 120, Rr = 100;
+  arc_el('circle', { cx, cy, r: Rr + 4, fill: '#fff', stroke: 'var(--navy-dark)', 'stroke-width': 2 }, svg);
+  for (let i = 0; i < 100; i++) {
+    const a = (i * 3.6 - 90) * Math.PI / 180, maj = i % 20 === 0, mid = i % 2 === 0, l = maj ? 15 : mid ? 8 : 4;
+    arc_el('line', { x1: cx + Rr * Math.cos(a), y1: cy + Rr * Math.sin(a), x2: cx + (Rr - l) * Math.cos(a), y2: cy + (Rr - l) * Math.sin(a), stroke: 'var(--navy-dark)', 'stroke-width': maj ? 2.4 : mid ? 1 : .6 }, svg);
+    if (maj) { const t = arc_el('text', { x: cx + (Rr - 30) * Math.cos(a), y: cy + (Rr - 30) * Math.sin(a) + 5, 'text-anchor': 'middle', 'font-size': 15, fill: 'var(--navy-dark)' }, svg); t.textContent = i / 20 + ' kg'; }
+  }
+  const t2 = arc_el('text', { x: cx, y: cy + 34, 'text-anchor': 'middle', 'font-size': 8.5, fill: 'var(--text-soft)' }, svg); t2.textContent = 'small mark = 50 g';
+  const nd = arc_el('g', {}, svg);
+  arc_el('path', { d: `M${cx} ${cy + 14} L${cx - 5} ${cy} L${cx} ${cy - Rr + 8} L${cx + 5} ${cy} Z`, fill: 'var(--sand)', stroke: 'var(--navy-dark)', 'stroke-width': 1 }, nd);
+  arc_el('circle', { cx, cy, r: 7, fill: 'var(--navy-dark)' }, svg);
+  const set = v => nd.setAttribute('transform', `rotate(${v / 5000 * 360} ${cx} ${cy})`);
+  arc_dragOn(svg, e => { const [x, y] = arc_svgXY(svg, e); let a = Math.atan2(y - cy, x - cx) * 180 / Math.PI + 90; if (a < 0) a += 360; let v = Math.round(a / 360 * 100) * 50; if (v >= 5000) v = a > 350 ? 0 : 4950; set(v); onv(v); }, onend);
+  set(0);
+  return { set };
+}
+function arc_jugSVG(host, onv, onend) {
+  const svg = arc_el('svg', { viewBox: '0 0 240 280', 'aria-label': 'Jug, 0 to 2 litres. Drag up and down.' }, host);
+  const x = 50, w = 120, top = 30, bot = 262, H = bot - top - 10;
+  arc_el('path', { d: `M${x + w} ${top + 30} C${x + w + 45} ${top + 30} ${x + w + 45} ${top + 120} ${x + w} ${top + 120}`, fill: 'none', stroke: 'var(--ocean)', 'stroke-width': 10, 'stroke-linecap': 'round' }, svg);
+  arc_el('rect', { x, y: top - 10, width: w, height: bot - top + 10, rx: 10, fill: 'var(--ocean-light)' }, svg);
+  const wa = arc_el('rect', { x: x + 2, width: w - 4, fill: 'var(--ocean)', opacity: .6 }, svg);
+  arc_el('rect', { x, y: top - 10, width: w, height: bot - top + 10, rx: 10, fill: 'none', stroke: 'var(--ocean)', 'stroke-width': 4 }, svg);
+  const yOf = ml => bot - ml / 2000 * H;
+  for (let ml = 50; ml <= 2000; ml += 50) {
+    const y = yOf(ml), maj = ml % 500 === 0, mid = ml % 100 === 0;
+    arc_el('line', { x1: x, y1: y, x2: x + (maj ? 34 : mid ? 18 : 9), y2: y, stroke: 'var(--navy-dark)', 'stroke-width': maj ? 2.4 : mid ? 1.1 : .6 }, svg);
+    if (maj) { const t = arc_el('text', { x: x + 40, y: y + 5, 'font-size': 15, fill: 'var(--navy-dark)' }, svg); t.textContent = { 500: '500 mℓ', 1000: '1 ℓ', 1500: '1,5 ℓ', 2000: '2 ℓ' }[ml]; }
+  }
+  const set = v => { const y = yOf(v); wa.setAttribute('y', y); wa.setAttribute('height', Math.max(0, bot - y)); };
+  arc_dragOn(svg, e => { const [, y] = arc_svgXY(svg, e); let v = Math.round((bot - y) / H * 40) * 50; v = Math.max(0, Math.min(2000, v)); set(v); onv(v); }, onend);
+  set(0);
+  return { set };
+}
+
+/* ---------- Beat the Train ---------- */
+function arc_genTrain(tier) {
+  if (tier === 'A') {
+    const gap = 60, start = randInt(7, 9) * 60, deps = []; for (let t = 7 * 60; t <= 18 * 60; t += gap) deps.push(t);
+    return { start, legs: [['Home', 'Park', 60, deps.slice()], ['Park', 'Home', 60, deps.slice()]], stays: { Park: 60 }, deadline: null };
+  }
+  if (tier === 'B') {
+    const gap = pick([10, 15]), start = randInt(8, 10) * 60, deps = []; for (let t = 7 * 60; t <= 18 * 60; t += gap) deps.push(t);
+    return { start, legs: [['Home', 'Shop', 15, deps.slice()], ['Shop', 'Home', 15, deps.slice()]], stays: { Shop: pick([20, 30, 40]) }, deadline: null };
+  }
+  const legs = [['Home', 'Zoo', randInt(5, 9) * 5], ['Zoo', 'Harbour', randInt(4, 7) * 5], ['Harbour', 'Home', randInt(8, 12) * 5]];
+  legs.forEach(L => { const gap = pick([20, 25, 30, 40]), off = randInt(0, gap / 5 - 1) * 5, deps = []; for (let t = 6 * 60 + off; t <= 21 * 60; t += gap) deps.push(t); L.push(deps); });
+  return { start: randInt(97, 104) * 5, legs, stays: { Zoo: randInt(18, 30) * 5, Harbour: randInt(12, 24) * 5 }, deadline: 17 * 60 };
+}
+function arc_trainNew(trip) { return { leg: 0, step: 0, now: trip.start, picked: null, log: [], right: 0, wrong: 0, tries: 0, done: false, msg: null }; }
+function arc_trainQ(trip, g) {
+  if (g.done) return { text: `Home at ${arc_hm(g.now)}.`, want: null, kind: 'done', wantText: '' };
+  const [a, b, j, deps] = trip.legs[g.leg], next = deps.find(d => d >= g.now);
+  if (g.step === 0) return { kind: 'pick', want: next, wantText: arc_hm(next), text: `It is ${arc_hm(g.now)} at ${a}. Tap the first train you can catch to ${b}.` };
+  if (g.step === 1) return { kind: 'dur', want: next - g.now, wantText: arc_dur(next - g.now), text: `It is ${arc_hm(g.now)}. How long do you wait for the ${arc_hm(next)} train?` };
+  if (g.step === 2) return { kind: 'dur', want: j, wantText: arc_dur(j), text: `How long is the trip from ${a} to ${b}? (Look at the timetable.)` };
+  if (g.step === 3) { const stay = trip.stays[b] || 0; return { kind: 'time', want: next + j + stay, wantText: arc_hm(next + j + stay), text: `You arrive at ${b} at ${arc_hm(next + j)} and stay for ${arc_dur(stay)}. What time do you leave ${b}?` }; }
+  return { kind: 'dur', want: g.now - trip.start, wantText: arc_dur(g.now - trip.start), text: `You left home at ${arc_hm(trip.start)} and got back at ${arc_hm(g.now)}. How long was your whole day out?` };
+}
+function arc_trainAdvance(trip, g) {
+  const [a, b, j, deps] = trip.legs[g.leg], next = deps.find(d => d >= g.now);
+  if (g.step === 0) g.step = 1;
+  else if (g.step === 1) g.step = 2;
+  else if (g.step === 2) { g.log.push(`${arc_hm(next)} train ${a} to ${b}, arrived ${arc_hm(next + j)}`); if (b === 'Home') { g.now = next + j; g.step = 4; } else g.step = 3; }
+  else if (g.step === 3) { const stay = trip.stays[b] || 0; g.now = next + j + stay; g.log.push(`Stayed at ${b} for ${arc_dur(stay)}, left at ${arc_hm(g.now)}`); g.leg++; g.step = 0; g.picked = null; }
+  else g.done = true;
+  g.tries = 0;
+}
+function arc_renderTrain() {
+  const s = arcState.train, g = s.g, q = arc_trainQ(s, g);
+  const stops = ['Home', ...s.legs.map(l => l[1])];
+  const route = stops.map((x, k) => `<span class="arc-stop${k <= (g.done ? stops.length - 1 : g.leg) ? ' done' : ''}">${esc(x)}</span>`).join(' &rarr; ');
+  let table = '';
+  if (!g.done && q.kind === 'pick') {
+    const [a, b, j, deps] = s.legs[g.leg], vis = deps.filter(d => d >= g.now - 60 && d <= g.now + 180);
+    table = `<div class="q-box" style="background:var(--surface-2)"><b>Trains from ${esc(a)} to ${esc(b)}</b>
+      <table class="arc-table">${vis.map(d => `<tr><td><button class="secondary small" onclick="arc_trainPick(${d})">${arc_hm(d)}</button></td><td>arrives ${arc_hm(d + j)}</td></tr>`).join('')}</table></div>`;
+  }
+  const input = q.kind === 'dur'
+    ? `<div style="margin:10px 0"><input type="number" id="arc-dh" placeholder="h" style="width:60px"> h <input type="number" id="arc-dm" placeholder="min" style="width:70px"> min</div>`
+    : q.kind === 'time'
+    ? `<div style="margin:10px 0"><input type="number" id="arc-th" placeholder="hh" style="width:60px"> : <input type="number" id="arc-tm" placeholder="mm" style="width:60px"></div>`
+    : '';
+  const fb = g.msg ? `<div class="feedback ${g.msg.ok ? 'good' : 'bad'}">${esc(g.msg.text)}</div>` : '';
+  const end = g.done ? `<div class="q-box">${s.deadline ? (g.now <= s.deadline ? `Home at ${arc_hm(g.now)}. You beat the ${arc_hm(s.deadline)} deadline by ${arc_dur(s.deadline - g.now)}!` : `Home at ${arc_hm(g.now)}. That's ${arc_dur(g.now - s.deadline)} after ${arc_hm(s.deadline)}.`) : `Home at ${arc_hm(g.now)}. Nice work!`}</div><button class="action" onclick="arc_trainNewTrip()">New trip</button>` : '';
+  app.innerHTML = `
+    ${backBtn()}${arc_back()}
+    <div class="card">
+      <h2 class="activity-title">🚆 Beat the Train</h2>
+      <p class="subtext">Plan a day out using the timetable, and work out each time along the way.</p>
+      <div class="q-box">${route}</div>
+      ${table}
+      ${g.done ? end : `<div class="q-box">${esc(q.text)}</div>${input}${q.kind === 'pick' ? '' : `<button class="action" onclick="arc_trainCheck()">Check</button>`}`}
+      ${fb}
+      <div class="arc-trip-log">${g.log.slice(-3).map(x => `<div class="subtext">${esc(x)}</div>`).join('')}</div>
+    </div>`;
+}
+function arc_trainPick(d) { arcState.train.g.picked = d; arcState.train.g.msg = null; arc_trainCheckPick(d); }
+function arc_trainCheckPick(got) {
+  const s = arcState.train, g = s.g, q = arc_trainQ(s, g);
+  if (got === q.want) { g.right++; g.msg = { ok: true, text: `Correct! ${q.wantText}.` }; arc_trainAdvance(s, g); }
+  else {
+    g.wrong++; g.tries++;
+    if (g.tries < 2) { g.msg = { ok: false, text: "That's not the first train you can catch. Look at the time now, and try again." }; return arc_renderTrain(); }
+    g.msg = { ok: false, text: `The answer was ${q.wantText}. Let's keep going.` };
+    g.picked = q.want; arc_trainAdvance(s, g);
+  }
+  arc_renderTrain();
+}
+function arc_trainCheck() {
+  const s = arcState.train, g = s.g, q = arc_trainQ(s, g);
+  let got;
+  if (q.kind === 'dur') {
+    const a = document.getElementById('arc-dh').value, b = document.getElementById('arc-dm').value;
+    if (!a && !b) { g.msg = { ok: false, text: 'Type a number in the boxes.' }; return arc_renderTrain(); }
+    const x = parseInt(a || '0', 10), y = parseInt(b || '0', 10);
+    if (isNaN(x) || isNaN(y)) { g.msg = { ok: false, text: 'Use numbers only.' }; return arc_renderTrain(); }
+    got = x * 60 + y;
+  } else {
+    const x = parseInt(document.getElementById('arc-th').value, 10), y = parseInt(document.getElementById('arc-tm').value, 10);
+    if (isNaN(x) || isNaN(y) || x > 23 || y > 59) { g.msg = { ok: false, text: 'Type the time as hours and minutes, for example 14 and 05.' }; return arc_renderTrain(); }
+    got = x * 60 + y;
+  }
+  if (got === q.want) { g.right++; g.msg = { ok: true, text: `Correct! ${q.wantText}.` }; arc_trainAdvance(s, g); }
+  else {
+    g.wrong++; g.tries++;
+    if (g.tries < 2) { g.msg = { ok: false, text: q.kind === 'time' ? 'Not yet. Add the hours first, then the minutes.' : 'Not yet. Count on to the next whole hour, then add the rest.' }; return arc_renderTrain(); }
+    g.msg = { ok: false, text: `The answer was ${q.wantText}. Let's keep going.` };
+    arc_trainAdvance(s, g);
+  }
+  arc_renderTrain();
+}
+function arc_trainNewTrip() { arcState.train = arc_genTrain(arcState.tier); arcState.train.g = arc_trainNew(arcState.train); arc_renderTrain(); }
 
 // ---------- Fractopia: Fraction Town Adventure (iframe) ----------
 // A self-contained standalone app (its own landing page, character setup,
